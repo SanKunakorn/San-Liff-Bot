@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ตรวจสอบสิทธิ์การเข้าใช้งาน - San BOT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="js/config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Prompt', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 min-h-screen flex items-center justify-center p-4">
+
+  <div class="glass-card rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl">
+    <!-- Icon/Badge Header -->
+    <div class="relative w-24 h-24 mx-auto mb-4">
+      <img id="profile-picture" class="w-24 h-24 rounded-full border-4 border-amber-500 shadow-lg object-cover" 
+           src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231e3a8a'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" alt="Profile" />
+      <div id="status-icon" class="absolute -bottom-1 -right-1 bg-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow">
+        ⏳
+      </div>
+    </div>
+
+    <!-- User Information -->
+    <h2 id="display-name" class="text-xl font-bold text-slate-800">กำลังตรวจสอบข้อมูล...</h2>
+    <p id="user-role-badge" class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold mt-2">
+      สถานะ: รออนุมัติสิทธิ์ (Pending)
+    </p>
+
+    <!-- Detailed Status Box -->
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 my-5 text-left text-sm text-slate-600">
+      <div class="flex items-center space-x-2 text-slate-800 font-semibold mb-1">
+        <span>🛡️</span>
+        <span>ระบบความปลอดภัยงานสืบสวน</span>
+      </div>
+      <p id="status-message" class="text-xs leading-relaxed text-slate-600">
+        บัญชี LINE ของท่านได้ลงทะเบียนในระบบเรียบร้อยแล้ว แต่อยู่ระหว่างรอผู้ดูแลระบบ (Admin) ตรวจสอบและอนุมัติสิทธิ์เข้าใช้งาน
+      </p>
+      <div class="mt-3 pt-2 border-t border-slate-200 text-[11px] text-slate-400 font-mono break-all" id="line-uid-display">
+        UID: กำลังโหลด...
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-2">
+      <button onclick="recheckAuth()" class="w-full py-3 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold rounded-xl shadow-lg transition-all transform active:scale-95 text-sm flex items-center justify-center gap-2">
+        <span>🔄</span> ตรวจสอบสถานะอีกครั้ง
+      </button>
+      
+      <button onclick="copyUid()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">
+        📋 คัดลอก LINE UID เพื่อแจ้งแอดมิน
+      </button>
+
+      <button onclick="closeLiffWindow()" class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1">
+        <span>🚪</span> ปิดหน้าต่าง
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function closeLiffWindow() {
+      if (typeof liff !== 'undefined' && liff.closeWindow) {
+        liff.closeWindow();
+      }
+    }
+  </script>
+
+  <script>
+    let currentUid = '';
+
+    async function init() {
+      try {
+        const liffId = (typeof CONFIG !== 'undefined' && CONFIG.LIFF_ID) ? CONFIG.LIFF_ID : "2004593216-XbA9wj26";
+        await liff.init({ liffId });
+
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        currentUid = profile.userId;
+        
+        document.getElementById("display-name").textContent = profile.displayName || "เจ้าหน้าที่";
+        document.getElementById("line-uid-display").textContent = "UID: " + currentUid;
+        
+        const pictureEl = document.getElementById("profile-picture");
+        if (profile.pictureUrl) {
+          pictureEl.src = profile.pictureUrl;
+        }
+
+        // ตรวจสอบข้อมูลสิทธิ์ล่าสุด
+        const user = getCurrentUser();
+        if (user) {
+          updateUIWithUser(user);
+        } else {
+          await recheckAuth();
+        }
+
+      } catch (err) {
+        console.error("LIFF register error:", err);
+      }
+    }
+
+    function updateUIWithUser(user) {
+      const badge = document.getElementById("user-role-badge");
+      const msg = document.getElementById("status-message");
+      const icon = document.getElementById("status-icon");
+
+      if (user.status === 'Approved') {
+        badge.className = "inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold mt-2";
+        badge.textContent = `สถานะ: อนุมัติแล้ว (${user.role})`;
+        msg.textContent = "บัญชีของท่านได้รับการอนุมัติเรียบร้อยแล้ว กำลังนำท่านเข้าสู่ระบบ...";
+        icon.className = "absolute -bottom-1 -right-1 bg-emerald-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow";
+        icon.textContent = "✅";
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 1200);
+      } else if (user.status === 'Blocked') {
+        badge.className = "inline-block px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold mt-2";
+        badge.textContent = "สถานะ: บัญชีถูกระงับสิทธิ์";
+        msg.textContent = "บัญชีของท่านถูกระงับการเข้าใช้งาน กรุณาติดต่อผู้ดูแลระบบเพื่อขอข้อมูลเพิ่มเติม";
+        icon.className = "absolute -bottom-1 -right-1 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow";
+        icon.textContent = "🚫";
+      } else {
+        badge.className = "inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold mt-2";
+        badge.textContent = `สถานะ: รอการอนุมัติสิทธิ์ (${user.role || 'Officer'})`;
+        msg.textContent = "บัญชี LINE ของท่านได้ลงทะเบียนแล้ว อยู่ระหว่างรอผู้ดูแลระบบตรวจสอบและอนุมัติสิทธิ์เข้าใช้งาน";
+        icon.className = "absolute -bottom-1 -right-1 bg-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow";
+        icon.textContent = "⏳";
+      }
+    }
+
+    async function recheckAuth() {
+      if (!currentUid) return;
+      try {
+        const authRes = await checkUserAuth(currentUid, document.getElementById("display-name").textContent);
+        if (authRes && authRes.user) {
+          updateUIWithUser(authRes.user);
+        }
+      } catch (e) {
+        alert("ไม่สามารถติดต่อเซิร์ฟเวอร์เพื่อตรวจสอบสิทธิ์ได้");
+      }
+    }
+
+    function copyUid() {
+      if (!currentUid) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(currentUid).then(() => {
+          alert('คัดลอก LINE UID แล้ว:\n' + currentUid);
+        });
+      } else {
+        prompt('คัดลอก UID นี้:', currentUid);
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

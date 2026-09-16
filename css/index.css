@@ -1,0 +1,423 @@
+body {
+    box-sizing: border-box;
+    font-family: 'Prompt', 'Sarabun', sans-serif;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 40%, #dbeafe 100%);
+    min-height: 100vh;
+    color: #0f172a;
+}
+
+/* Modern Light Animated Police Background */
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animated-bg {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 40%, #e0e7ff 100%);
+    position: relative;
+}
+
+.animated-bg::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.06) 0%, transparent 60%),
+        radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Sticky Top Bar & Header/Nav Stacking Guarantee */
+.sticky-top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50 !important;
+}
+
+header.liff-header {
+    position: relative;
+    z-index: 50 !important;
+}
+
+nav.main-nav {
+    position: relative;
+    z-index: 45 !important;
+}
+
+/* Modern Clean Glass Light Cards */
+.glass {
+    background: rgba(255, 255, 255, 0.92); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.06);
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px -5px rgba(30, 58, 138, 0.08);
+    color: #0f172a;
+}
+
+.glass-dark {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    color: #0f172a;
+}
+
+/* Modern Navigation Button Styles (Light Theme) */
+.nav-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid #cbd5e1;
+    color: #1e3a8a;
+    font-family: 'Prompt', 'Sarabun', sans-serif;
+    font-weight: 700;
+    border-radius: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.nav-btn:hover {
+    background: #ffffff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.15);
+}
+
+.nav-btn.active {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    border-color: #1e3a8a;
+    box-shadow: 0 8px 20px -4px rgba(30, 58, 138, 0.35);
+    transform: translateY(-2px);
+    color: #ffffff !important;
+}
+
+/* Card Hover Effects */
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px -8px rgba(30, 58, 138, 0.12);
+}
+
+        /* Input & Date Field Styling (Light Theme Enforced & Overflow Fixed) */
+        input[type="date"],
+        input[type="time"],
+        input[type="datetime-local"] {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            color-scheme: light !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            min-height: 48px !important;
+            max-height: 54px !important;
+            box-sizing: border-box !important;
+            display: block !important;
+            line-height: normal !important;
+            border: 2px solid #bfdbfe !important;
+            border-radius: 0.75rem !important;
+            padding: 0.65rem 1rem !important;
+            font-size: 0.95rem !important;
+        }
+
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left !important;
+            min-height: 1.5em !important;
+            color: #0f172a !important;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0.8 !important;
+            cursor: pointer !important;
+            padding: 4px !important;
+            filter: invert(0.2) !important;
+        }
+
+        .input-glow {
+            transition: all 0.3s ease;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+
+        .input-glow:focus {
+            background-color: #f8faff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+            outline: none;
+        }
+
+        /* Mobile Touch Optimization */
+        .touch-manipulation {
+            touch-action: manipulation;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Icon Bounce Animation */
+        .floating {
+            animation: cyber-floating 4s ease-in-out infinite;
+        }
+
+        @keyframes cyber-floating {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                /* เปลี่ยนแสงนีออนเป็นแสงสีฟ้าอ่อน */
+                filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.2)); 
+            }
+            50% {
+                transform: translateY(-10px) rotate(2deg);
+                filter: drop-shadow(0 10px 15px rgba(59, 130, 246, 0.4));
+            }
+        }
+
+        /* Search Tab Active State */
+        .search-tab {
+            position: relative;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(59, 130, 246, 0.1);
+            color: #1e40af;
+            transition: all 0.3s ease;
+        }
+
+        .search-tab:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-tab.active {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+
+        .search-tab.active::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+        }
+
+        @view-transition {
+            navigation: auto;
+        }
+
+        /* ========================================
+           BOTTOM NAVIGATION BAR (Mobile Light Glass)
+        ======================================== */
+        .bottom-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1.5px solid #e2e8f0 !important;
+            box-shadow: 0 -4px 20px rgba(30, 58, 138, 0.08);
+        }
+
+        .bottom-nav-btn {
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #64748b;
+            min-width: 56px;
+            font-weight: 700;
+        }
+
+        .bottom-nav-btn:hover {
+            color: #1e3a8a;
+        }
+
+        .bottom-nav-btn.active-bottom,
+        .bottom-nav-btn:focus {
+            color: #1e3a8a !important;
+            transform: translateY(-2px);
+        }
+
+        .bottom-nav-btn.active-bottom span:first-child {
+            filter: drop-shadow(0 2px 8px rgba(30, 58, 138, 0.3));
+        }
+
+        /* ปรับ margin bottom แนว main content บน mobile เพื่อไม่ถูก bottom nav ทับ */
+        @media (max-width: 639px) {
+            main {
+                padding-bottom: 5.5rem;
+            }
+            footer {
+                margin-bottom: 4.5rem;
+            }
+        }
+
+        /* ========================================
+           PAGE TRANSITION ANIMATION
+        ======================================== */
+        .page-content {
+            animation: pageSlideIn 0.25s ease-out;
+        }
+
+        @keyframes pageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========================================
+           SKELETON LOADING
+        ======================================== */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f4ff 25%, #dbeafe 50%, #f0f4ff 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ========================================
+           PULSE BADGE (Online Status)
+        ======================================== */
+        .pulse-badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse-green 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.7; }
+        }
+
+        /* ========================================
+           INVESTIGATION CARD STYLES
+        ======================================== */
+        .inv-tab-btn {
+            transition: all 0.25s ease;
+            background: rgba(255,255,255,0.8);
+            border: 2px solid rgba(59, 130, 246, 0.1);
+            color: #1e40af;
+            font-weight: 700;
+        }
+
+        .inv-tab-btn.active {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: #fff;
+            border-color: #1e3a8a;
+            box-shadow: 0 8px 20px -4px rgba(30, 58, 138, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .inv-timeline-dot {
+            width: 14px;
+            height: 14px;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
+            flex-shrink: 0;
+        }
+
+        /* ========================================
+           MODERN INTELLIGENCE SEARCH HUB STYLES
+        ======================================== */
+        .search-tab-pill {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.85);
+            border: 1.5px solid #e2e8f0;
+            color: #475569;
+            font-weight: 700;
+        }
+        .search-tab-pill:hover {
+            background: #ffffff;
+            border-color: #93c5fd;
+            color: #1e3a8a;
+            transform: translateY(-1px);
+        }
+        .search-tab-pill.active-phone {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+            color: #ffffff !important;
+            border-color: #059669 !important;
+            box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.35);
+        }
+        .search-tab-pill.active-ip {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%) !important;
+            color: #ffffff !important;
+            border-color: #1d4ed8 !important;
+            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.35);
+        }
+        .search-tab-pill.active-idcard {
+            background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%) !important;
+            color: #ffffff !important;
+            border-color: #6d28d9 !important;
+            box-shadow: 0 8px 20px -4px rgba(139, 92, 246, 0.35);
+        }
+        .search-tab-pill.active-vehicle {
+            background: linear-gradient(135deg, #be123c 0%, #e11d48 100%) !important;
+            color: #ffffff !important;
+            border-color: #be123c !important;
+            box-shadow: 0 8px 20px -4px rgba(225, 29, 72, 0.35);
+        }
+
+        .search-input-modern {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            transition: all 0.25s ease;
+            box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.03);
+        }
+        .search-input-modern:focus {
+            background: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+            outline: none;
+        }
+
+        /* ปิด card-hover บน touch device เพื่อป้องกัน hover ค้าง */
+        @media (hover: none) {
+            .card-hover:hover {
+                transform: none;
+                box-shadow: none;
+            }
+            .app-card:hover {
+                transform: none;
+            }
+        }
+
+        /* Embedded Fragment Sub-Page Rules */
+        #timecal-container #timecal-back-btn,
+        #sendflex-container #tracking-back-btn {
+            display: none !important;
+        }
+

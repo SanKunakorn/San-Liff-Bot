@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <script>
+    if (window.self === window.top && window.location.pathname.includes('TimeCal.html') && !window.location.search.includes('standalone=true')) {
+      window.location.replace('index.html?page=timecal');
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>CCTV Time Calculator & Detective Tools - San BOT</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'police-blue': '#1e3a8a',
+            'police-gold': '#d97706',
+          },
+          fontFamily: {
+            sans: ['Prompt', 'Sarabun', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300&family=Sarabun:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Main Police System Design CSS -->
+  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/timecal.css">
+  
+  <!-- Leaflet CSS & JS for Interactive Escape Route Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="js/config.js"></script>
+  <script defer src="js/timecal.js"></script>
+</head>
+
+<body class="animated-bg min-h-screen text-slate-800 antialiased py-3 sm:py-6 px-3 sm:px-6">
+
+  <div class="max-w-7xl mx-auto w-full">
+    <div class="glass rounded-3xl shadow-2xl p-4 sm:p-8 card-hover border border-white space-y-6">
+
+      <!-- ==================== POLICE SYSTEM HEADER ==================== -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b-2 border-blue-100">
+        <div class="flex items-center space-x-3 sm:space-x-4">
+          <button type="button" id="timecal-back-btn" onclick="goBackHome()"
+            class="w-11 h-11 bg-white hover:bg-blue-50 text-police-blue rounded-2xl flex items-center justify-center transition border-2 border-blue-200 shadow-sm flex-shrink-0 active:scale-95 cursor-pointer"
+            title="กลับหน้าหลัก">
+            <i class="fa-solid fa-arrow-left text-base"></i>
+          </button>
+          <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-900 rounded-2xl flex items-center justify-center shadow-xl floating flex-shrink-0 text-white">
+            <span class="text-3xl sm:text-4xl">⏱️</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-0.5">
+              <h1 id="app-title" class="text-xl sm:text-2xl md:text-3xl font-black text-police-blue">เครื่องมือสืบสวน & คำนวณเวลา (Time Calculator)</h1>
+              <span class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue text-[11px] font-bold border border-blue-200 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                CCTV & ROUTE SUITE
+              </span>
+            </div>
+            <p id="app-subtitle" class="text-gray-600 font-medium text-xs sm:text-sm">
+              คำนวณความต่างเวลากล้องวงจรปิด (Time Offset), แปลงเวลาจริง, บันทึกไทม์ไลน์ และจำลองเส้นทางหลบหนี
+            </p>
+          </div>
+        </div>
+
+        <!-- Live Clock & Status Badge -->
+        <div class="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-white via-blue-50/60 to-indigo-50/40 p-3 sm:p-3.5 shadow-sm flex items-center gap-3 self-start sm:self-auto flex-shrink-0">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-800 text-white flex items-center justify-center text-xl shadow-md flex-shrink-0">
+            🕐
+          </div>
+          <div>
+            <div class="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">เวลามาตรฐานสืบสวน</div>
+            <div id="live-clock" class="mono text-lg sm:text-xl font-black text-police-blue live-clock leading-tight">--:--:--</div>
+            <div id="live-date" class="text-[11px] font-bold text-slate-500">--/--/----</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <nav class="nav-tabs flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-slate-100 rounded-2xl border border-slate-200 text-xs sm:text-sm font-bold overflow-x-auto scrollbar-hide" role="tablist">
+        <button class="nav-tab active px-3.5 sm:px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer" role="tab" aria-selected="true" data-tab="tab-cctv">📹 CCTV Offset</button>
+        <button class="nav-tab px-3.5 sm:px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer" role="tab" aria-selected="false" data-tab="tab-routemap">🗺️ เส้นทางหลบหนี</button>
+        <button class="nav-tab px-3.5 sm:px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer" role="tab" aria-selected="false" data-tab="tab-timeline">📋 ไทม์ไลน์สืบสวน</button>
+        <button class="nav-tab px-3.5 sm:px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer" role="tab" aria-selected="false" data-tab="tab-calc">🧮 บวก/ลบ เวลา</button>
+        <button class="nav-tab px-3.5 sm:px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer" role="tab" aria-selected="false" data-tab="tab-stopwatch">⏱️ จับเวลา</button>
+        <button class="nav-tab px-3.5 sm:px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer" role="tab" aria-selected="false" data-tab="tab-countdown">⏳ นับถอยหลัง</button>
+        <button class="nav-tab px-3.5 sm:px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer" role="tab" aria-selected="false" data-tab="tab-convert">🔄 โซนเวลา</button>
+      </nav>
+
+      <!-- Main Content Container -->
+      <div class="space-y-6">
+
+        <!-- Tab 1: CCTV Time Calculator -->
+        <section class="tab-content active" id="tab-cctv">
+          <div class="space-y-6 fade-in">
+            <!-- Calculator Section -->
+            <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6">
+              <div class="flex items-center justify-between pb-3 border-b border-blue-100">
+                <h2 class="text-lg sm:text-xl font-black text-police-blue flex items-center gap-2">
+                  <span class="text-xl">🧮</span> คำนวณความต่างเวลา (Time Offset)
+                </h2>
+                <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold border border-blue-200">
+                  CCTV vs Real Time
+                </span>
+              </div>
+
+              <form id="calculator-form" class="space-y-6">
+                <!-- CCTV Section -->
+                <div class="bg-gradient-to-br from-amber-50/80 to-orange-50/40 rounded-2xl p-4 sm:p-5 border border-amber-200 shadow-sm">
+                  <h3 class="text-amber-900 font-extrabold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                    <span>📷</span> เวลาบนหน้าจอกล้องวงจรปิด (CCTV Time)
+                  </h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-slate-700 text-sm font-bold mb-2">📅 วันที่ในกล้อง</label>
+                      <input type="date" id="cctvDate" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                    </div>
+                    <div>
+                      <label class="block text-slate-700 text-sm font-bold mb-2">⏰ เวลาในกล้อง (ชม:นาที:วิ)</label>
+                      <input type="time" id="cctvTime" step="1" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Real Time Section -->
+                <div class="bg-gradient-to-br from-emerald-50/80 to-teal-50/40 rounded-2xl p-4 sm:p-5 border border-emerald-200 shadow-sm">
+                  <h3 class="text-emerald-900 font-extrabold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                    <span>✅</span> เวลาจริงขณะบันทึก / เทียบเวลาจริง (Real Time)
+                  </h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-slate-700 text-sm font-bold mb-2">📅 วันที่จริง</label>
+                      <input type="date" id="realDate" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                    </div>
+                    <div>
+                      <label class="block text-slate-700 text-sm font-bold mb-2">⏰ เวลาจริง</label>
+                      <div class="flex gap-2">
+                        <input type="time" id="realTime" step="1" class="input-field flex-1 px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                        <button type="button" onclick="captureCurrentTime()"
+                          class="btn-secondary px-4 py-3 bg-white hover:bg-emerald-50 text-emerald-800 border-2 border-emerald-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+                          <span>⏱️</span> <span class="hidden md:inline">จับเวลาปัจจุบัน</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Result Display -->
+                <div id="offsetResult" class="hidden rounded-2xl p-5 border-2 border-blue-200 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 shadow-sm space-y-4">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-blue-200">
+                    <h3 class="text-police-blue font-black flex items-center gap-2 text-base">
+                      <span>📊</span> ผลการวิเคราะห์ความต่างเวลา (Time Offset Result)
+                    </h3>
+                    <button type="button" id="btn-save-offset-timeline" onclick="sendCctvOffsetToTimeline()"
+                      class="btn-primary px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow active:scale-95 cursor-pointer">
+                      <span>➕</span> บันทึกเข้า Timeline สืบสวน
+                    </button>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center p-4 rounded-xl bg-white border border-blue-200 shadow-sm">
+                      <div class="text-slate-500 text-xs font-bold mb-1">ความต่างวัน</div>
+                      <div id="offset-days" class="mono text-xl font-black text-slate-800">0 วัน</div>
+                    </div>
+                    <div class="text-center p-4 rounded-xl bg-white border border-blue-200 shadow-sm">
+                      <div class="text-slate-500 text-xs font-bold mb-1">ความต่างเวลา (ชม:นาที:วินาที)</div>
+                      <div id="offset-time" class="mono text-xl font-black text-police-blue">00:00:00</div>
+                    </div>
+                    <div class="text-center p-4 rounded-xl bg-white border border-blue-200 shadow-sm">
+                      <div class="text-slate-500 text-xs font-bold mb-1">รวมเป็นวินาที</div>
+                      <div id="offset-total" class="mono text-xl font-black">0 วินาที</div>
+                    </div>
+                  </div>
+                  <div id="offset-description" class="text-center mt-2 text-sm font-bold text-slate-700 bg-white/70 py-2 px-4 rounded-xl border border-blue-100"></div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-3 flex-wrap">
+                  <button type="submit"
+                    class="btn-primary flex-1 md:flex-none px-6 py-3 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <span>🧮</span> คำนวณความต่างเวลา
+                  </button>
+                  <button type="button" onclick="resetCalculator()"
+                    class="btn-secondary flex-1 md:flex-none px-6 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <span>🔄</span> รีเซ็ต
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Converter Section (CCTV <-> Real) -->
+            <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6">
+              <div class="flex items-center justify-between pb-3 border-b border-blue-100">
+                <h2 class="text-lg sm:text-xl font-black text-police-blue flex items-center gap-2">
+                  <span>🔄</span> แปลงเวลากล้องวงจรปิด (Time Conversion)
+                </h2>
+                <span class="px-3 py-1 rounded-full bg-indigo-50 text-indigo-800 text-xs font-bold border border-indigo-200">
+                  Instant Converter
+                </span>
+              </div>
+
+              <form id="converter-form" class="space-y-6">
+                <div class="bg-gradient-to-br from-indigo-50/80 to-blue-50/40 rounded-2xl p-4 sm:p-5 border border-indigo-200 shadow-sm">
+                  <h3 class="text-indigo-950 font-extrabold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                    <span>📅</span> ข้อมูลเวลาที่ต้องการแปลง
+                  </h3>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label class="block text-slate-700 text-sm font-bold mb-2">วันที่</label>
+                      <input type="date" id="convertDate" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required onchange="updateConversion()">
+                    </div>
+                    <div>
+                      <label class="block text-slate-700 text-sm font-bold mb-2">เวลา (ชม:นาที:วิ)</label>
+                      <input type="time" id="convertTime" step="1" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required onchange="updateConversion()">
+                    </div>
+                    <div>
+                      <label class="block text-slate-700 text-sm font-bold mb-2">แปลงเป็น</label>
+                      <select id="convertType" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-bold bg-white text-slate-800 shadow-sm transition" required onchange="updateConversion()">
+                        <option value="">-- เลือกประเภทการแปลง --</option>
+                        <option value="toReal">แปลงเป็นเวลาจริง (จากเวลากล้อง)</option>
+                        <option value="toCCTV">แปลงเป็นเวลากล้อง (จากเวลาจริง)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Result Display -->
+                <div id="convertResult" class="hidden rounded-2xl p-5 border-2 border-sky-200 bg-gradient-to-br from-sky-50/90 to-blue-50/70 shadow-sm space-y-4">
+                  <h3 class="text-sky-950 font-black flex items-center gap-2 text-base">
+                    <span>✨</span> ผลลัพธ์การแปลงเวลา
+                  </h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="text-center p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+                      <div class="text-slate-500 text-xs font-bold mb-1">วันที่</div>
+                      <div id="result-date" class="mono text-xl font-black text-slate-800">--/--/----</div>
+                    </div>
+                    <div class="text-center p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+                      <div class="text-slate-500 text-xs font-bold mb-1">เวลา</div>
+                      <div id="result-time" class="mono text-xl font-black text-police-blue">--:--:--</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl p-4 border border-amber-200 bg-amber-50/80 text-slate-700 shadow-sm">
+                  <p class="text-xs sm:text-sm font-medium text-amber-950 flex items-start gap-2">
+                    <span class="text-base">💡</span>
+                    <span><strong>ข้อแนะนำ:</strong> ให้คำนวณความต่างเวลาในขั้นตอนด้านบนก่อน หากยังไม่ได้คำนวณ ระบบจะใช้ค่า Offset เป็น 0 วินาที</span>
+                  </p>
+                </div>
+
+                <div class="flex gap-3 flex-wrap">
+                  <button type="button" onclick="copyResult()" id="copy-btn"
+                    class="btn-primary flex-1 md:flex-none px-6 py-3 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-md active:scale-95 transition hidden items-center justify-center gap-2 cursor-pointer">
+                    <span>📋</span> คัดลอกผลลัพธ์
+                  </button>
+                  <button type="button" onclick="resetConverter()"
+                    class="btn-secondary flex-1 md:flex-none px-6 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <span>🔄</span> รีเซ็ต
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 2: Add/Subtract Time -->
+        <section class="tab-content" id="tab-calc">
+          <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6 fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-blue-100">
+              <h2 class="text-lg sm:text-xl font-black text-police-blue flex items-center gap-2">
+                <span>🧮</span> บวก / ลบ เวลา (Time Arithmetic)
+              </h2>
+            </div>
+            
+            <form id="calc-form" class="space-y-6" onsubmit="event.preventDefault();">
+              <div class="bg-indigo-50/50 rounded-2xl p-4 sm:p-5 border border-indigo-200 shadow-sm">
+                <h3 class="text-indigo-900 font-bold mb-4">📅 วันที่ตั้งต้น</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-slate-700 text-sm font-bold mb-2">วันที่</label>
+                    <input type="date" id="calcBaseDate" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-sm font-bold mb-2">เวลา</label>
+                    <input type="time" id="calcBaseTime" step="1" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-blue-50/50 rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-sm">
+                <h3 class="text-police-blue font-bold mb-4">➕➖ การคำนวณ</h3>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div>
+                    <label class="block text-slate-700 text-sm font-bold mb-2">การคำนวณ</label>
+                    <select id="calcOperation" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-bold bg-white text-slate-800 shadow-sm transition">
+                      <option value="add">+ บวกเวลา</option>
+                      <option value="sub">− ลบเวลา</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-sm font-bold mb-2">วัน</label>
+                    <input type="number" id="calcDays" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-sm font-bold mb-2">ชั่วโมง</label>
+                    <input type="number" id="calcHours" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-sm font-bold mb-2">นาที</label>
+                    <input type="number" id="calcMinutes" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-sm font-bold mb-2">วินาที</label>
+                    <input type="number" id="calcSeconds" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                  </div>
+                </div>
+              </div>
+
+              <div id="calcResult" class="hidden rounded-2xl p-5 border-2 border-sky-200 bg-sky-50/60 shadow-sm">
+                <h3 class="text-sky-900 font-bold mb-4 flex items-center gap-2 text-base"><span>✨</span> ผลลัพธ์</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="text-center p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-bold mb-1">เวลา</div>
+                    <div id="calc-result-time" class="mono text-2xl font-black text-police-blue">--:--:--</div>
+                  </div>
+                  <div class="text-center p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-xs font-bold mb-1">วันที่</div>
+                    <div id="calc-result-date" class="text-lg font-bold text-slate-800">--/--/----</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex gap-3 flex-wrap">
+                <button type="button" onclick="calculateTime()"
+                  class="btn-primary flex-1 md:flex-none px-6 py-3 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>🧮</span> คำนวณ
+                </button>
+                <button type="button" onclick="setCalcNow()"
+                  class="btn-secondary flex-1 md:flex-none px-6 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>⏱️</span> เวลาปัจจุบัน
+                </button>
+                <button type="reset" onclick="resetCalcForm()"
+                  class="btn-secondary flex-1 md:flex-none px-6 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>🔄</span> รีเซ็ต
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Tab 3: Stopwatch -->
+        <section class="tab-content" id="tab-stopwatch">
+          <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6 fade-in text-center">
+            <h2 class="text-lg sm:text-xl font-black text-police-blue flex items-center justify-center gap-2"><span>⏱️</span> จับเวลาสืบสวน (Stopwatch)</h2>
+            <div class="stopwatch-display text-slate-800 my-6" id="stopwatch-display">
+              00:00:00<span class="stopwatch-ms">.000</span>
+            </div>
+            <div class="flex gap-3 justify-center flex-wrap mb-4">
+              <button id="btn-sw-start"
+                class="btn-primary px-8 py-3 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-md active:scale-95 transition flex items-center gap-2 cursor-pointer">▶ เริ่ม</button>
+              <button id="btn-sw-lap"
+                class="btn-secondary px-8 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center gap-2 cursor-pointer" disabled>🏁 รอบ</button>
+              <button id="btn-sw-reset"
+                class="btn-secondary px-8 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center gap-2 cursor-pointer">↺ รีเซ็ต</button>
+            </div>
+            <div class="lap-list rounded-2xl p-4 border border-slate-200 bg-slate-50 text-left" id="lap-list"></div>
+          </div>
+        </section>
+
+        <!-- Tab 4: Countdown -->
+        <section class="tab-content" id="tab-countdown">
+          <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6 fade-in text-center">
+            <h2 class="text-lg sm:text-xl font-black text-police-blue flex items-center justify-center gap-2"><span>⏳</span> นับถอยหลัง (Countdown Timer)</h2>
+            <form id="countdown-form" class="space-y-6" onsubmit="event.preventDefault();">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">วัน</label>
+                  <input type="number" id="cd-days" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                </div>
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">ชั่วโมง</label>
+                  <input type="number" id="cd-hours" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                </div>
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">นาที</label>
+                  <input type="number" id="cd-minutes" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                </div>
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">วินาที</label>
+                  <input type="number" id="cd-seconds" min="0" value="0" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-mono bg-white text-slate-800 shadow-sm transition">
+                </div>
+              </div>
+              <div class="countdown-display text-slate-800 my-6" id="countdown-display">00:00:00</div>
+              <div class="flex gap-3 justify-center flex-wrap">
+                <button type="button" id="btn-cd-start"
+                  class="btn-primary px-8 py-3 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>▶</span> เริ่มนับถอยหลัง
+                </button>
+                <button type="button" id="btn-cd-stop"
+                  class="btn-danger px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer" disabled>
+                  <span>⏹</span> หยุด
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Tab 5: Timeline -->
+        <section class="tab-content" id="tab-timeline">
+          <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6 fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-blue-100">
+              <h2 class="text-lg sm:text-xl font-black text-police-blue flex items-center gap-2">
+                <span>📋</span> บันทึก Timeline เหตุการณ์สืบสวน
+              </h2>
+            </div>
+            <form id="timeline-form" class="space-y-6" onsubmit="event.preventDefault();">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">วันที่</label>
+                  <input type="date" id="tl-date" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">เวลา</label>
+                  <input type="time" id="tl-time" step="1" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                </div>
+              </div>
+              <div>
+                <label class="block text-slate-700 text-sm font-bold mb-2">รายละเอียดเหตุการณ์</label>
+                <textarea id="tl-desc" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" rows="3"
+                  placeholder="เช่น ผู้ต้องสงสัยเดินเข้าร้านสะดวกซื้อ ขี่รถ จยย. มุ่งหน้าสี่แยก" required></textarea>
+              </div>
+              <div class="flex gap-3 flex-wrap">
+                <button type="button" onclick="addTimelineItem()"
+                  class="btn-primary flex-1 md:flex-none px-6 py-3 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>+</span> เพิ่มเหตุการณ์
+                </button>
+                <button type="button" onclick="setTimelineNow()"
+                  class="btn-secondary flex-1 md:flex-none px-6 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>⏱️</span> เวลาปัจจุบัน
+                </button>
+                <button type="button" id="btn-tl-copy" onclick="copyTimeline()"
+                  class="btn-secondary flex-1 md:flex-none px-6 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold rounded-xl shadow-sm active:scale-95 transition items-center justify-center gap-2 cursor-pointer"
+                  style="display:none;">
+                  <span>📋</span> คัดลอก
+                </button>
+                <button type="button" id="btn-tl-clear" onclick="clearAllTimeline()"
+                  class="btn-danger flex-1 md:flex-none px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl shadow-sm active:scale-95 transition items-center justify-center gap-2 cursor-pointer"
+                  style="display:none;">
+                  <span>🗑</span> ล้างทั้งหมด
+                </button>
+              </div>
+            </form>
+            <div class="timeline-list rounded-2xl border border-slate-200 bg-slate-50/60 p-4" id="timeline-list"></div>
+          </div>
+        </section>
+
+        <!-- Tab 6: Time Zone Converter -->
+        <section class="tab-content" id="tab-convert">
+          <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6 fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-blue-100">
+              <h2 class="text-lg sm:text-xl font-black text-police-blue flex items-center gap-2">
+                <span>🔄</span> แปลงโซนเวลาทั่วโลก (World Time Zones)
+              </h2>
+            </div>
+            <form id="convert-form" class="space-y-6" onsubmit="event.preventDefault();">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">วันที่</label>
+                  <input type="date" id="convert-tz-date" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">เวลา</label>
+                  <input type="time" id="convert-tz-time" step="1" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" required>
+                </div>
+                <div>
+                  <label class="block text-slate-700 text-sm font-bold mb-2">จากโซนเวลา</label>
+                  <select id="convert-tz-from" class="input-field w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-bold bg-white text-slate-800 shadow-sm transition" required></select>
+                </div>
+              </div>
+              <button type="button" onclick="convertTimezone()"
+                class="btn-primary w-full px-6 py-3 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                <span>🔄</span> แปลงเวลา
+              </button>
+            </form>
+            <div id="convert-tz-result" class="hidden rounded-2xl p-5 border-2 border-sky-200 bg-sky-50/60 shadow-sm mt-6">
+              <h3 class="text-sky-900 font-bold mb-4 flex items-center gap-2 text-base"><span>✨</span> ผลลัพธ์</h3>
+              <div class="result-grid" id="result-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 7: Escape Route Interactive Map (แผนที่เส้นทางหลบหนี) -->
+        <section class="tab-content" id="tab-routemap">
+          <div class="space-y-6 fade-in">
+            <!-- Add Point Form -->
+            <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-7 shadow-sm space-y-6">
+              <div>
+                <h2 class="text-lg sm:text-xl font-black text-police-blue mb-1 flex items-center gap-2">
+                  <span>🗺️</span> แผนที่จำลองเส้นทางหลบหนีตามช่วงเวลา (Escape Route Tracker)
+                </h2>
+                <p class="text-xs text-slate-500 font-medium">บันทึกจุดที่พบเห็นคนร้ายหรือพาหนะตามลำดับเวลา เพื่อคำนวณระยะทาง ความเร็ว และวาดเส้นทางหลบหนีอัตโนมัติ</p>
+              </div>
+
+              <form id="route-point-form" class="space-y-4" onsubmit="event.preventDefault(); addRoutePoint();">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label class="block text-slate-700 text-xs font-bold mb-1">📅 วันที่พบ</label>
+                    <input type="date" id="rm-date" class="input-field w-full px-4 py-2.5 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue text-sm font-medium bg-white text-slate-800 shadow-sm transition" required>
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-xs font-bold mb-1">⏰ เวลาจริงในกล้อง</label>
+                    <input type="time" id="rm-time" step="1" class="input-field w-full px-4 py-2.5 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue text-sm font-medium bg-white text-slate-800 shadow-sm transition" required>
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-xs font-bold mb-1">📍 ละติจูด (Lat)</label>
+                    <input type="number" step="any" id="rm-lat" placeholder="13.7563"
+                      class="input-field w-full px-4 py-2.5 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue text-sm font-mono bg-white text-slate-800 shadow-sm transition" required>
+                  </div>
+                  <div>
+                    <label class="block text-slate-700 text-xs font-bold mb-1">📍 ลองจิจูด (Lng)</label>
+                    <input type="number" step="any" id="rm-lng" placeholder="100.5018"
+                      class="input-field w-full px-4 py-2.5 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue text-sm font-mono bg-white text-slate-800 shadow-sm transition" required>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div class="md:col-span-2">
+                    <label class="block text-slate-700 text-xs font-bold mb-1">📹 ชื่อกล้อง / จุดตรวจ / รายละเอียด</label>
+                    <input type="text" id="rm-note"
+                      placeholder="เช่น กล้องแยกไฟแดงปากทางเข้าหมู่บ้าน พบรถ จยย. ขี่มุ่งหน้าทิศเหนือ"
+                      class="input-field w-full px-4 py-2.5 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue text-sm font-medium bg-white text-slate-800 shadow-sm transition" required>
+                  </div>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="getCurrentGpsForRoute()"
+                      class="btn-secondary px-3 py-2.5 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 font-bold text-xs flex-1 flex items-center justify-center gap-1 shadow-sm active:scale-95 transition cursor-pointer">
+                      <span>📡</span> พิกัดปัจจุบัน
+                    </button>
+                    <button type="submit"
+                      class="btn-primary px-4 py-2.5 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold text-xs flex-1 flex items-center justify-center gap-1 shadow active:scale-95 transition cursor-pointer">
+                      <span>➕</span> บันทึกจุด
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="rounded-2xl p-4 border-2 border-blue-200 bg-white text-center shadow-sm">
+                <div class="text-xs font-bold text-blue-900 mb-1">📍 จำนวนจุดตรวจ</div>
+                <div id="rm-stat-points" class="text-xl sm:text-2xl font-black text-police-blue">0 จุด</div>
+              </div>
+              <div class="rounded-2xl p-4 border-2 border-emerald-200 bg-white text-center shadow-sm">
+                <div class="text-xs font-bold text-emerald-900 mb-1">📏 ระยะทางรวม</div>
+                <div id="rm-stat-distance" class="text-xl sm:text-2xl font-black text-emerald-700">0.00 กม.</div>
+              </div>
+              <div class="rounded-2xl p-4 border-2 border-purple-200 bg-white text-center shadow-sm">
+                <div class="text-xs font-bold text-purple-900 mb-1">⏱️ เวลาเดินทางรวม</div>
+                <div id="rm-stat-duration" class="text-xl sm:text-2xl font-black text-purple-700">0 นาที</div>
+              </div>
+              <div class="rounded-2xl p-4 border-2 border-amber-200 bg-white text-center shadow-sm">
+                <div class="text-xs font-bold text-amber-900 mb-1">⚡ ความเร็วเฉลี่ย</div>
+                <div id="rm-stat-speed" class="text-xl sm:text-2xl font-black text-amber-700">0.0 กม./ชม.</div>
+              </div>
+            </div>
+
+            <!-- Leaflet Interactive Map Container -->
+            <div class="rounded-2xl border-2 border-blue-200 bg-white p-4 shadow-sm overflow-hidden space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-black text-police-blue flex items-center gap-2">
+                  <span>🗺️</span> แผนที่เส้นทางการเคลื่อนที่ (Interactive Escape Map)
+                </h3>
+                <div class="flex gap-2 flex-wrap">
+                  <button type="button" onclick="exportEscapeRoutePDF()"
+                    class="px-3 py-1.5 bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-700 hover:to-red-800 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1 active:scale-95 cursor-pointer">
+                    <span>📄</span> พิมพ์รายงาน PDF
+                  </button>
+                  <button type="button" onclick="openAllInGoogleMaps()"
+                    class="btn-secondary px-3 py-1.5 bg-white hover:bg-blue-50 text-police-blue border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm active:scale-95 transition cursor-pointer">
+                    <span>🌐</span> ดูบน Google Maps
+                  </button>
+                  <button type="button" onclick="clearAllRoutePoints()"
+                    class="btn-danger px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm active:scale-95 transition cursor-pointer">
+                    <span>🗑️</span> ล้างจุดทั้งหมด
+                  </button>
+                </div>
+              </div>
+              <div id="leaflet-escape-map" style="height: 420px; width: 100%; border-radius: 14px; z-index: 10;"></div>
+            </div>
+
+            <!-- Route Points Table -->
+            <div class="rounded-2xl border-2 border-blue-200 bg-white p-4 md:p-6 shadow-sm overflow-x-auto">
+              <h3 class="text-sm font-black text-police-blue mb-3">📋 รายการจุดกล้องและช่วงเวลา (Waypoint List)</h3>
+              <div id="route-points-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+</body>
+
+</html>
