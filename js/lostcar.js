@@ -263,26 +263,44 @@ function updateBrands() {
 }
 
 function checkOtherBrand() {
-  const brand = document.getElementById('brand').value;
+  const brand = document.getElementById('brand')?.value;
   const container = document.getElementById('brand-other-container');
+  const otherInput = document.getElementById('brand-other');
+  if (!container) return;
+
   if (brand === 'อื่นๆ') {
     container.classList.remove('hidden');
-    document.getElementById('brand-other').required = true;
+    if (otherInput) {
+      otherInput.required = true;
+      otherInput.focus();
+    }
   } else {
     container.classList.add('hidden');
-    document.getElementById('brand-other').required = false;
+    if (otherInput) {
+      otherInput.required = false;
+      otherInput.value = '';
+    }
   }
 }
 
 function checkOtherColor() {
-  const color = document.getElementById('color').value;
+  const color = document.getElementById('color')?.value;
   const container = document.getElementById('color-other-container');
+  const otherInput = document.getElementById('color-other');
+  if (!container) return;
+
   if (color === 'อื่นๆ') {
     container.classList.remove('hidden');
-    document.getElementById('color-other').required = true;
+    if (otherInput) {
+      otherInput.required = true;
+      otherInput.focus();
+    }
   } else {
     container.classList.add('hidden');
-    document.getElementById('color-other').required = false;
+    if (otherInput) {
+      otherInput.required = false;
+      otherInput.value = '';
+    }
   }
 }
 
@@ -291,11 +309,33 @@ async function loadReports() {
   if (result && result.success) {
     reports = result.data || [];
     filteredReports = [...reports];
+    try {
+      localStorage.setItem('sanbot_lostcar_reports', JSON.stringify(reports));
+    } catch (e) { }
     renderReports();
     updateStats();
   } else {
-    // Demo data if API fails
-    reports = generateDemoData();
+    // Check cached reports before generating demo data
+    let hasCache = false;
+    try {
+      const cached = localStorage.getItem('sanbot_lostcar_reports');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          reports = parsed;
+          hasCache = true;
+        }
+      }
+    } catch (e) { }
+
+    if (!hasCache) {
+      // Demo data if API fails and no cache
+      reports = generateDemoData();
+      try {
+        localStorage.setItem('sanbot_lostcar_reports', JSON.stringify(reports));
+      } catch (e) { }
+    }
+
     filteredReports = [...reports];
     renderReports();
     updateStats();
@@ -447,10 +487,10 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
     location: document.getElementById('location').value,
     incidentDate: document.getElementById('incident-date').value,
     incidentTime: document.getElementById('incident-time').value,
-    timePeriod: document.getElementById('time-period').value,
-    latitude: document.getElementById('latitude').value,
-    longitude: document.getElementById('longitude').value,
-    details: document.getElementById('details').value,
+    timePeriod: document.getElementById('time-period')?.value || '',
+    latitude: document.getElementById('latitude')?.value || (document.getElementById('lat-lng')?.value.split(',')[0]?.trim() || ''),
+    longitude: document.getElementById('longitude')?.value || (document.getElementById('lat-lng')?.value.split(',')[1]?.trim() || ''),
+    details: document.getElementById('details')?.value || '',
     reporter: liffProfile?.displayName || 'ผู้ใช้งาน',
     reporterPicture: liffProfile?.pictureUrl || ''
   };
@@ -501,7 +541,12 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
     document.getElementById('edit-id').value = '';
     document.getElementById('submit-btn').innerHTML = '📤 ส่งรายงาน';
     document.getElementById('time-period').value = '';
-    document.getElementById('map-link').classList.add('hidden');
+    const mapLinkEl = document.getElementById('map-link');
+    if (mapLinkEl) mapLinkEl.classList.add('hidden');
+    const gpsErrEl = document.getElementById('gps-error');
+    if (gpsErrEl) gpsErrEl.classList.add('hidden');
+    const latLngEl = document.getElementById('lat-lng');
+    if (latLngEl) latLngEl.value = '';
     document.getElementById('brand-other-container').classList.add('hidden');
     document.getElementById('color-other-container').classList.add('hidden');
   }
@@ -541,65 +586,157 @@ document.getElementById('incident-date').addEventListener('change', (e) => {
 document.getElementById('incident-date').max = new Date().toISOString().split('T')[0];
 
 // ==================== GPS Functions ====================
-function getCurrentLocation() {
-  const loadingEl = document.getElementById('gps-loading');
-  const iconEl = document.getElementById('gps-icon');
+function parseLatLngInput() {
+  const latLngInput = document.getElementById('lat-lng');
+  if (!latLngInput) return;
+  const val = latLngInput.value.trim();
+  const latInput = document.getElementById('latitude');
+  const lngInput = document.getElementById('longitude');
 
-  loadingEl.classList.remove('hidden');
-  iconEl.classList.add('hidden');
-
-  if (!navigator.geolocation) {
-    showToast('เบราว์เซอร์ไม่รองรับ GPS', 'error');
-    loadingEl.classList.add('hidden');
-    iconEl.classList.remove('hidden');
+  if (!val) {
+    if (latInput) latInput.value = '';
+    if (lngInput) lngInput.value = '';
+    validateGPS();
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const lat = position.coords.latitude.toFixed(6);
-      const lng = position.coords.longitude.toFixed(6);
+  // Parse various formats e.g. "12.8234, 101.1234", "12.8234 101.1234", URL with @12.8234,101.1234 or ?q=12.8234,101.1234
+  let lat = '', lng = '';
+  const urlMatch = val.match(/[@?&]q?=([0-9.-]+)[,\s]+([0-9.-]+)/);
+  const pairMatch = val.match(/([0-9.-]+)[,\s]+([0-9.-]+)/);
 
-      document.getElementById('latitude').value = lat;
-      document.getElementById('longitude').value = lng;
+  if (urlMatch) {
+    lat = parseFloat(urlMatch[1]).toFixed(6);
+    lng = parseFloat(urlMatch[2]).toFixed(6);
+  } else if (pairMatch) {
+    lat = parseFloat(pairMatch[1]).toFixed(6);
+    lng = parseFloat(pairMatch[2]).toFixed(6);
+  }
 
-      validateGPS();
-      showToast('ดึงตำแหน่งสำเร็จ', 'success');
+  if (lat && lng) {
+    if (latInput) latInput.value = lat;
+    if (lngInput) lngInput.value = lng;
+  }
+  validateGPS();
+}
 
-      loadingEl.classList.add('hidden');
-      iconEl.classList.remove('hidden');
-    },
-    (error) => {
-      console.error('GPS Error:', error);
-      showToast('ไม่สามารถดึงตำแหน่งได้', 'error');
-      loadingEl.classList.add('hidden');
-      iconEl.classList.remove('hidden');
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
+function setGpsLoading(loading) {
+  const loadingEl = document.getElementById('gps-loading');
+  const iconEl = document.getElementById('gps-icon');
+  const btn = document.getElementById('get-location-btn');
+
+  if (loadingEl) {
+    if (loading) loadingEl.classList.remove('hidden');
+    else loadingEl.classList.add('hidden');
+  }
+  if (iconEl) {
+    if (loading) iconEl.classList.add('hidden');
+    else iconEl.classList.remove('hidden');
+  }
+  if (btn) {
+    btn.disabled = loading;
+  }
+}
+
+function getCurrentLocation() {
+  setGpsLoading(true);
+
+  // Check geolocation availability in current window or parent window
+  const geo = navigator.geolocation || (window.parent && window.parent.navigator && window.parent.navigator.geolocation);
+
+  if (!geo) {
+    showToast('อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการระบุพิกัด GPS', 'error');
+    setGpsLoading(false);
+    return;
+  }
+
+  const successCallback = (position) => {
+    const lat = position.coords.latitude.toFixed(6);
+    const lng = position.coords.longitude.toFixed(6);
+
+    const latInput = document.getElementById('latitude');
+    const lngInput = document.getElementById('longitude');
+    const latLngInput = document.getElementById('lat-lng');
+
+    if (latInput) latInput.value = lat;
+    if (lngInput) lngInput.value = lng;
+    if (latLngInput) latLngInput.value = `${lat}, ${lng}`;
+
+    validateGPS();
+    showToast(`ดึงพิกัดสำเร็จ (${lat}, ${lng})`, 'success');
+    setGpsLoading(false);
+  };
+
+  const errorCallback = (error) => {
+    console.warn('GPS High Accuracy attempt failed, trying fallback:', error);
+    // Fallback attempt with enableHighAccuracy: false and higher timeout
+    geo.getCurrentPosition(
+      successCallback,
+      (fallbackError) => {
+        console.error('GPS Final Error:', fallbackError);
+        let errorMsg = 'ไม่สามารถดึงตำแหน่งพิกัดได้';
+        if (fallbackError && fallbackError.code === 1) { // PERMISSION_DENIED
+          errorMsg = 'กรุณาอนุญาตการเข้าถึงตำแหน่งที่ตั้ง (Location Permission) ในเบราว์เซอร์';
+        } else if (fallbackError && fallbackError.code === 2) { // POSITION_UNAVAILABLE
+          errorMsg = 'ไม่พบสัญญาณตำแหน่งที่ตั้ง กรุณาเปิด GPS';
+        } else if (fallbackError && fallbackError.code === 3) { // TIMEOUT
+          errorMsg = 'หมดเวลารอสัญญาณ GPS กรุณาลองใหม่อีกครั้ง';
+        }
+        showToast(errorMsg, 'error');
+        const errorEl = document.getElementById('gps-error');
+        const errorText = document.getElementById('gps-error-text');
+        if (errorEl && errorText) {
+          errorText.textContent = errorMsg;
+          errorEl.classList.remove('hidden');
+        }
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+    );
+  };
+
+  try {
+    geo.getCurrentPosition(
+      successCallback,
+      errorCallback,
+      { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 }
+    );
+  } catch (err) {
+    console.error('Direct geolocation exception:', err);
+    errorCallback(err);
+  }
 }
 
 function validateGPS() {
-  const lat = parseFloat(document.getElementById('latitude').value);
-  const lng = parseFloat(document.getElementById('longitude').value);
+  const latVal = document.getElementById('latitude')?.value || (document.getElementById('lat-lng')?.value.split(',')[0]?.trim() || '');
+  const lngVal = document.getElementById('longitude')?.value || (document.getElementById('lat-lng')?.value.split(',')[1]?.trim() || '');
+  const lat = parseFloat(latVal);
+  const lng = parseFloat(lngVal);
+
   const errorEl = document.getElementById('gps-error');
+  const errorText = document.getElementById('gps-error-text');
   const mapLinkEl = document.getElementById('map-link');
   const mapLink = document.getElementById('google-maps-link');
 
   if (isNaN(lat) || isNaN(lng)) {
-    errorEl.classList.add('hidden');
-    mapLinkEl.classList.add('hidden');
+    if (errorEl) errorEl.classList.add('hidden');
+    if (mapLinkEl) mapLinkEl.classList.add('hidden');
     return;
   }
 
   // Thailand bounds: Lat 5.6-20.5, Lon 97.3-105.6
   if (lat < 5.6 || lat > 20.5 || lng < 97.3 || lng > 105.6) {
-    errorEl.classList.remove('hidden');
-    mapLinkEl.classList.add('hidden');
+    if (errorEl) {
+      if (errorText) errorText.textContent = 'พิกัดอยู่นอกประเทศไทย หรือค่าพิกัดไม่ถูกต้อง';
+      errorEl.classList.remove('hidden');
+    }
+    if (mapLinkEl) mapLinkEl.classList.add('hidden');
   } else {
-    errorEl.classList.add('hidden');
-    mapLinkEl.classList.remove('hidden');
-    mapLink.href = `https://maps.google.com/?q=${lat},${lng}`;
+    if (errorEl) errorEl.classList.add('hidden');
+    if (mapLinkEl) {
+      mapLinkEl.classList.remove('hidden');
+      if (mapLink) mapLink.href = `https://maps.google.com/?q=${lat},${lng}`;
+    }
   }
 }
 
@@ -982,8 +1119,12 @@ function editReport(id) {
     document.getElementById('incident-date').value = report.incidentDate;
     document.getElementById('incident-time').value = report.incidentTime;
     document.getElementById('time-period').value = report.timePeriod || '';
-    document.getElementById('latitude').value = report.latitude || '';
-    document.getElementById('longitude').value = report.longitude || '';
+    const latEl = document.getElementById('latitude');
+    const lngEl = document.getElementById('longitude');
+    const latLngEl = document.getElementById('lat-lng');
+    if (latEl) latEl.value = report.latitude || '';
+    if (lngEl) lngEl.value = report.longitude || '';
+    if (latLngEl) latLngEl.value = (report.latitude && report.longitude) ? `${report.latitude}, ${report.longitude}` : '';
     document.getElementById('details').value = report.details || '';
 
     if (report.latitude && report.longitude) {

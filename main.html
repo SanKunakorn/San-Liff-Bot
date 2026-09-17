@@ -649,8 +649,8 @@
                             <div>
                                 <select id="sel-vehicle-province"
                                     class="search-input-modern w-full px-3 py-3.5 rounded-xl font-bold text-sm text-slate-700">
-                                    <option value="">-- ทุกจังหวัด --</option>
-                                    <option value="ระยอง" selected>ระยอง</option>
+                                    <option value="" selected>-- ทุกจังหวัด --</option>
+                                    <option value="ระยอง">ระยอง</option>
                                     <option value="ชลบุรี">ชลบุรี</option>
                                     <option value="จันทบุรี">จันทบุรี</option>
                                     <option value="กรุงเทพมหานคร">กรุงเทพมหานคร</option>
@@ -694,8 +694,11 @@
                         </div>
                     </div>
 
-                    <!-- Key-Value Info Grid -->
-                    <div id="res-details-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <!-- Main Dynamic Result Card Container -->
+                    <div id="result-card-body" class="space-y-3"></div>
+
+                    <!-- Key-Value Info Grid (Legacy / Supplemental) -->
+                    <div id="res-details-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         <!-- Dynamic items will be injected here -->
                     </div>
 
@@ -1082,6 +1085,7 @@
                 <iframe id="investigation-frame" src="investigation.html"
                     class="w-full min-h-[85vh] border-0 rounded-3xl"
                     style="width:100%; min-height:85vh; border:none; display:block;"
+                    allow="geolocation; camera; clipboard-read; clipboard-write"
                     onload="adjustInvestigationFrameHeight(this)">
                 </iframe>
             </div>
@@ -1141,6 +1145,7 @@
             <div class="glass rounded-3xl overflow-hidden shadow-xl border border-white/60">
                 <iframe id="lostcar-frame" src="lostcar.html" class="w-full min-h-[85vh] border-0 rounded-3xl"
                     style="width:100%; min-height:85vh; border:none; display:block;"
+                    allow="geolocation; camera; clipboard-read; clipboard-write"
                     onload="adjustLostcarFrameHeight(this)">
                 </iframe>
             </div>

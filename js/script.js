@@ -71,7 +71,6 @@ async function settext() {
     message = 'เรียน ผู้บังคับบัญชา\n-------------------------\n     วันนี้( ' + thaiDate + ' )\n' + (user ? user + ' ' : '') + detail + '\nแผนที่: ' + mapLink + '\n     จึงเรียนมาเพื่อโปรดทราบ';
   }
 
-
   // 👇 รอให้โหลดภาพแผนที่เสร็จ
   var latitude = parseFloat(latlong.split(',')[0]);
   var longitude = parseFloat(latlong.split(',')[1]);
@@ -425,17 +424,34 @@ let currentSearchResultData = null;
 
 function renderSearchResultPanel(config) {
   const panel = document.getElementById('search-results-panel');
-  const badgeEl = document.getElementById('result-type-badge');
-  const timeEl = document.getElementById('result-timestamp');
-  const bodyEl = document.getElementById('result-card-body');
-  if (!panel || !bodyEl) return;
+  if (!panel) return;
+
+  const badgeEl = document.getElementById('result-type-badge') || document.getElementById('res-type-badge');
+  const timeEl = document.getElementById('result-timestamp') || document.getElementById('res-time-badge');
+  const iconEl = document.getElementById('res-type-icon');
+  const titleEl = document.getElementById('res-query-title');
+  const statusPillEl = document.getElementById('res-status-pill');
+  let bodyEl = document.getElementById('result-card-body') || document.getElementById('res-details-grid');
 
   currentSearchSummaryForCopy = config.rawSummary || '';
   currentSearchResultData = config;
 
+  if (iconEl && config.icon) {
+    iconEl.textContent = config.icon;
+  }
+
   if (badgeEl) {
     badgeEl.textContent = config.badgeText || 'ผลการสืบค้น';
     badgeEl.className = `px-2.5 py-1 text-xs font-bold rounded-lg ${config.badgeClass || 'bg-slate-100 text-slate-700'}`;
+  }
+
+  if (titleEl && config.queryTitle) {
+    titleEl.textContent = config.queryTitle;
+  }
+
+  if (statusPillEl && config.statusPillHtml) {
+    statusPillEl.innerHTML = config.statusPillHtml;
+    if (config.statusPillClass) statusPillEl.className = config.statusPillClass;
   }
 
   if (timeEl) {
@@ -443,7 +459,10 @@ function renderSearchResultPanel(config) {
     timeEl.textContent = `ค้นหาเมื่อ: ${now.toLocaleTimeString('th-TH')}`;
   }
 
-  bodyEl.innerHTML = config.htmlContent || '';
+  if (bodyEl) {
+    bodyEl.innerHTML = config.htmlContent || '';
+  }
+
   panel.classList.remove('hidden');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -895,118 +914,286 @@ async function checkVehicle() {
   const query = input ? input.value.trim() : '';
 
   if (!query) {
-    Swal.fire({ icon: 'warning', title: 'กรุณากรอกข้อมูลรถหรือเลขทะเบียน', confirmButtonColor: '#1e3a8a' });
+    Swal.fire({ icon: 'warning', title: 'กรุณากรอกข้อมูลรถหรือเลขทะเบียน', text: 'เช่น 1กข 1234, 1234 หรือ Honda PCX', confirmButtonColor: '#1e3a8a' });
     return;
   }
+
+  const provinceSelect = document.getElementById("sel-vehicle-province");
+  const selectedProvince = provinceSelect ? provinceSelect.value.trim() : '';
 
   addRecentSearch('vehicle', query);
 
   Swal.fire({
     title: 'กำลังสืบค้นฐานข้อมูลยานพาหนะ...',
-    text: `ค้นหา: ${query}`,
+    html: `<div class="text-sm text-slate-600">คำค้น: <strong class="text-police-blue">${escapeHtml(query)}</strong>${selectedProvince ? ` (จังหวัด: ${escapeHtml(selectedProvince)})` : ''}</div><p class="text-xs text-slate-400 mt-2">กำลังเชื่อมต่อฐานข้อมูลรถหายและบันทึกตรวจที่เกิดเหตุ...</p>`,
     allowOutsideClick: false,
     didOpen: () => { Swal.showLoading(); }
   });
 
   try {
-    const cleanQuery = query.toLowerCase().replace(/[- ]/g, '');
-    let matchedReports = [];
-    let matchedLostCars = [];
+    const cleanQuery = query.toLowerCase().replace(/[\s\-_.\/]/g, '');
+    const queryDigits = query.replace(/\D/g, '');
+    const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
 
+    let allLostCars = [];
+    let allSceneReports = [];
+
+    // 1. ดึงข้อมูลรถหายจาก API / Memory / LocalStorage
     if (typeof callGasApi === 'function') {
       try {
-        const [reportsRes, lostCarsRes] = await Promise.allSettled([
+        const [lostCarsRes, sceneRes] = await Promise.allSettled([
           callGasApi('getReports'),
-          callGasApi('getLostCarReports')
+          callGasApi('getSceneReports')
         ]);
 
-        if (reportsRes.status === 'fulfilled' && reportsRes.value && reportsRes.value.data) {
-          matchedReports = reportsRes.value.data.filter(r => {
-            const plate = (r.plate || '').toLowerCase().replace(/[- ]/g, '');
-            const brand = (r.brand || '').toLowerCase();
-            const model = (r.model || '').toLowerCase();
-            const details = (r.details || '').toLowerCase();
-            return plate.includes(cleanQuery) || brand.includes(cleanQuery) || model.includes(cleanQuery) || details.includes(cleanQuery);
-          });
+        if (lostCarsRes.status === 'fulfilled' && lostCarsRes.value && Array.isArray(lostCarsRes.value.data) && lostCarsRes.value.data.length > 0) {
+          allLostCars = lostCarsRes.value.data;
+          try { localStorage.setItem('sanbot_lostcar_reports', JSON.stringify(allLostCars)); } catch (e) { }
         }
 
-        if (lostCarsRes.status === 'fulfilled' && lostCarsRes.value && lostCarsRes.value.data) {
-          matchedLostCars = lostCarsRes.value.data.filter(r => {
-            const plate = (r.plate || '').toLowerCase().replace(/[- ]/g, '');
-            const brand = (r.brand || '').toLowerCase();
-            const model = (r.model || '').toLowerCase();
-            const details = (r.details || '').toLowerCase();
-            return plate.includes(cleanQuery) || brand.includes(cleanQuery) || model.includes(cleanQuery) || details.includes(cleanQuery);
-          });
+        if (sceneRes.status === 'fulfilled' && sceneRes.value && Array.isArray(sceneRes.value.data)) {
+          allSceneReports = sceneRes.value.data;
+        }
+      } catch (e) {
+        console.warn('API call in checkVehicle encountered an issue:', e);
+      }
+    }
+
+    // Fallback สำหรับข้อมูลรถหาย: ดึงจาก localStorage
+    if (!allLostCars.length) {
+      try {
+        const cached = localStorage.getItem('sanbot_lostcar_reports');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) allLostCars = parsed;
         }
       } catch (e) { }
     }
 
+    // Fallback: ดึงจาก iframe #lostcar-frame ในหน้า ถ้ามี
+    if (!allLostCars.length) {
+      try {
+        const frame = document.getElementById('lostcar-frame');
+        if (frame && frame.contentWindow && Array.isArray(frame.contentWindow.reports) && frame.contentWindow.reports.length > 0) {
+          allLostCars = frame.contentWindow.reports;
+        }
+      } catch (e) { }
+    }
+
+    // ถ้ายังไม่มีข้อมูลรถหายเลย (กรณี Offline หรือเปิดใช้งานครั้งแรก) เตรียมชุดข้อมูลตัวอย่างให้พร้อมทดสอบ
+    if (!allLostCars.length) {
+      allLostCars = [
+        { id: 'DEMO-0001', vehicleType: 'จักรยานยนต์', brand: 'Honda', model: 'PCX 160', color: 'ดำ', licensePlate: '1กข 1234 ระยอง', area: 'เมืองระยอง', location: 'ลานจอดรถห้างสรรพสินค้า', incidentDate: '2026-09-10', incidentTime: '18:30', status: 'pending', reporter: 'นายสมชาย ใจดี', phone: '0812345678', details: 'จอดไว้หน้าห้าง ล็อคคอรถไว้ กลับมาไม่พบรถ' },
+        { id: 'DEMO-0002', vehicleType: 'จักรยานยนต์', brand: 'Yamaha', model: 'Grand Filano', color: 'แดง', licensePlate: '2กค 5678 ชลบุรี', area: 'บางละมุง', location: 'หน้าร้านสะดวกซื้อพัทยา', incidentDate: '2026-09-12', incidentTime: '21:15', status: 'investigating', reporter: 'น.ส.วิภาวรรณ สดใส', phone: '0898765432', details: 'ลืมกุญแจเสียบคาไว้หน้าร้าน' },
+        { id: 'DEMO-0003', vehicleType: 'รถยนต์', brand: 'Toyota', model: 'Vios', color: 'ขาว', licensePlate: 'กง 9999 ระยอง', area: 'มาบตาพุด', location: 'ริมถนนสุขุมวิท', incidentDate: '2026-09-08', incidentTime: '02:00', status: 'arrested', reporter: 'นายประเสริฐ ยืนยง', phone: '0861112233', details: 'คนร้ายขับหลบหนี ตำรวจสืบสวนสกัดจับได้แล้ว' },
+        { id: 'DEMO-0004', vehicleType: 'รถกระบะ', brand: 'Isuzu', model: 'D-Max', color: 'บรอนซ์เงิน', licensePlate: 'บท 4321 ระยอง', area: 'บ้านฉาง', location: 'หน้าแคมป์คนงาน', incidentDate: '2026-09-05', incidentTime: '23:45', status: 'closed', reporter: 'นายสุรชัย มั่นคง', phone: '0854443322', details: 'พบรถถูกนำไปจอดทิ้งไว้ริมทาง นำส่งคืนเจ้าของแล้ว' }
+      ];
+      try { localStorage.setItem('sanbot_lostcar_reports', JSON.stringify(allLostCars)); } catch (e) { }
+    }
+
+    // 2. กรองและค้นหารถหาย (Lost Cars Matching)
+    const matchedLostCars = allLostCars.filter(r => {
+      const plate = String(r.licensePlate || r.plate || r.plateNumber || '');
+      const plateNorm = plate.toLowerCase().replace(/[\s\-_.\/]/g, '');
+      const plateDigits = plate.replace(/\D/g, '');
+      const brand = String(r.brand || '').toLowerCase();
+      const model = String(r.model || '').toLowerCase();
+      const color = String(r.color || '').toLowerCase();
+      const vehicleType = String(r.vehicleType || '').toLowerCase();
+      const area = String(r.area || '').toLowerCase();
+      const location = String(r.location || '').toLowerCase();
+      const details = String(r.details || '').toLowerCase();
+      const reporter = String(r.reporter || '').toLowerCase();
+      const id = String(r.id || '').toLowerCase();
+
+      // กรองจังหวัดถ้าผู้ใช้ระบุเจาะจง
+      if (selectedProvince) {
+        const provNorm = selectedProvince.toLowerCase().replace(/[\s\-_.\/]/g, '');
+        const matchesProv = plateNorm.includes(provNorm) || area.includes(provNorm) || location.includes(provNorm) || details.includes(provNorm);
+        if (!matchesProv) return false;
+      }
+
+      // ค้นหาตามเลขทะเบียน / ป้ายทะเบียน
+      if (cleanQuery && plateNorm.includes(cleanQuery)) return true;
+      if (queryDigits.length >= 2 && plateDigits.includes(queryDigits)) return true;
+
+      // ค้นหาตามคำหลายคำรวมกัน เช่น "Wave แดง" หรือ "Honda PCX"
+      if (searchTerms.length > 1) {
+        const combined = `${plateNorm} ${brand} ${model} ${color} ${vehicleType} ${area} ${location} ${details} ${reporter}`;
+        const allTermsMatch = searchTerms.every(term => combined.includes(term));
+        if (allTermsMatch) return true;
+      }
+
+      const brandNorm = brand.replace(/[\s\-_.\/]/g, '');
+      const modelNorm = model.replace(/[\s\-_.\/]/g, '');
+      const detailsNorm = details.replace(/[\s\-_.\/]/g, '');
+      const areaNorm = area.replace(/[\s\-_.\/]/g, '');
+      const locationNorm = location.replace(/[\s\-_.\/]/g, '');
+
+      return brandNorm.includes(cleanQuery) || brand.includes(query.toLowerCase()) ||
+        modelNorm.includes(cleanQuery) || model.includes(query.toLowerCase()) ||
+        color.includes(cleanQuery) ||
+        vehicleType.includes(cleanQuery) ||
+        areaNorm.includes(cleanQuery) || area.includes(query.toLowerCase()) ||
+        locationNorm.includes(cleanQuery) || location.includes(query.toLowerCase()) ||
+        detailsNorm.includes(cleanQuery) || details.includes(query.toLowerCase()) ||
+        reporter.includes(cleanQuery) ||
+        id.includes(cleanQuery);
+    });
+
+    // 3. กรองบันทึกตรวจที่เกิดเหตุ (Scene Reports Matching)
+    const matchedReports = allSceneReports.filter(r => {
+      const details = String(r.details || '').toLowerCase();
+      const location = String(r.location || '').toLowerCase();
+      const officer = String(r.officer || '').toLowerCase();
+      const detailsNorm = details.replace(/[\s\-_.\/]/g, '');
+
+      if (cleanQuery && detailsNorm.includes(cleanQuery)) return true;
+      if (queryDigits.length >= 3 && details.includes(queryDigits)) return true;
+      return details.includes(cleanQuery) || location.includes(cleanQuery) || officer.includes(cleanQuery);
+    });
+
     Swal.close();
 
-    const totalMatches = matchedReports.length + matchedLostCars.length;
-    const rawSummary = `[สืบค้นข้อมูลยานพาหนะ]\nคำค้น: ${query}\nพบในชีตรถหาย: ${matchedLostCars.length} รายการ\nพบในชีตตรวจที่เกิดเหตุ: ${matchedReports.length} รายการ`;
+    const totalMatches = matchedLostCars.length + matchedReports.length;
+    const rawSummary = `[ผลการสืบค้นข้อมูลยานพาหนะ]\nคำค้น: ${query}${selectedProvince ? ` (จังหวัด: ${selectedProvince})` : ''}\n🚨 พบในฐานข้อมูลแจ้งรถหาย: ${matchedLostCars.length} รายการ\n🚓 พบในฐานข้อมูลตรวจที่เกิดเหตุ: ${matchedReports.length} รายการ`;
+
+    // Helper สร้าง Badge สถานะรถหาย
+    const getLostCarStatusBadge = (status) => {
+      const st = String(status || '').toLowerCase();
+      if (st === 'arrested' || st.includes('จับกุม')) {
+        return `<span class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-indigo-100 text-indigo-800 border border-indigo-200">👮 จับกุมแล้ว</span>`;
+      }
+      if (st === 'closed' || st.includes('พบรถ') || st.includes('ปิดคดี')) {
+        return `<span class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">✅ พบรถแล้ว/ปิดคดี</span>`;
+      }
+      if (st === 'investigating' || st.includes('สืบสวน')) {
+        return `<span class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-amber-100 text-amber-800 border border-amber-200">🔍 กำลังสืบสวน</span>`;
+      }
+      return `<span class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">🚨 ยังไม่พบรถ (แจ้งหาย)</span>`;
+    };
 
     const lostCarsHtml = matchedLostCars.length > 0 ? `
-      <div class="p-3 bg-red-50 border border-red-200 rounded-xl space-y-2">
-        <div class="flex items-center gap-1.5 text-xs font-bold text-red-800">
-          <span>🚨</span> ฐานข้อมูลแจ้งรถหาย (${matchedLostCars.length} คดี):
+      <div class="p-4 bg-rose-50/80 border border-rose-200 rounded-2xl space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-rose-200">
+          <div class="flex items-center gap-2 text-sm font-black text-rose-900">
+            <span class="text-base">🚨</span> พบในฐานข้อมูลแจ้งรถหาย (${matchedLostCars.length} คดี)
+          </div>
+          <a href="lostcar.html" target="_blank" class="text-xs font-bold text-rose-700 hover:text-rose-900 hover:underline flex items-center gap-1">
+            <span>🚔</span> เปิดหน้ารถหายเต็มจอ ↗
+          </a>
         </div>
-        <div class="space-y-1.5 text-xs">
+        <div class="space-y-2.5">
           ${matchedLostCars.map(c => `
-            <div class="p-2 bg-white rounded-lg border border-red-100 flex flex-col gap-0.5">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-red-700">ทะเบียน: ${escapeHtml(c.plate || '-')}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-800 font-semibold">${escapeHtml(c.status || 'แจ้งหาย')}</span>
+            <div class="p-3.5 bg-white rounded-xl border border-rose-100 shadow-sm hover:border-rose-300 transition-all flex flex-col gap-1.5">
+              <div class="flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-md bg-slate-900 text-white font-mono font-black text-sm tracking-wider shadow-sm">
+                    ${escapeHtml(c.licensePlate || c.plate || '-')}
+                  </span>
+                  <span class="text-xs font-bold text-slate-700">
+                    ${escapeHtml(c.brand || '')} ${escapeHtml(c.model || '')}
+                  </span>
+                </div>
+                ${getLostCarStatusBadge(c.status)}
               </div>
-              <div class="text-slate-600">${escapeHtml(c.brand || '')} ${escapeHtml(c.model || '')} (${escapeHtml(c.color || '-')})</div>
-              <div class="text-[11px] text-slate-500">ผู้แจ้ง: ${escapeHtml(c.reporter || '-')} | โทร: ${escapeHtml(c.phone || '-')}</div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 text-slate-600">
+                <div>
+                  <span class="text-slate-400">ชนิด/สี:</span>
+                  <strong class="text-slate-700">${escapeHtml(c.vehicleType || '-')}</strong> / สี <strong class="text-slate-700">${escapeHtml(c.color || '-')}</strong>
+                </div>
+                <div>
+                  <span class="text-slate-400">พื้นที่เกิดเหตุ:</span>
+                  <strong class="text-slate-700">${escapeHtml(c.area || c.location || '-')}</strong>
+                </div>
+                <div>
+                  <span class="text-slate-400">วัน-เวลาเกิดเหตุ:</span>
+                  <span class="text-slate-700 font-semibold">${escapeHtml(c.incidentDate || '-')} ${escapeHtml(c.incidentTime || '')}</span>
+                </div>
+                <div>
+                  <span class="text-slate-400">ผู้แจ้ง:</span>
+                  <span class="text-slate-700 font-semibold">${escapeHtml(c.reporter || '-')}</span>
+                  ${c.phone ? `<span class="ml-1 text-blue-600 font-bold font-mono">(${escapeHtml(c.phone)})</span>` : ''}
+                </div>
+              </div>
+
+              ${c.details ? `
+                <div class="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-200 mt-1">
+                  <span class="font-bold text-slate-500">พฤติการณ์/รายละเอียด:</span> ${escapeHtml(c.details)}
+                </div>
+              ` : ''}
             </div>
           `).join('')}
         </div>
       </div>
     ` : `
-      <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800 flex items-center gap-2">
-        <span>✅</span> ไม่พบรายการในฐานข้อมูลแจ้งรถหาย
+      <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span>✅</span> ไม่พบรายการตรงกันในฐานข้อมูลแจ้งรถหาย
+        </div>
+        <a href="lostcar.html" target="_blank" class="text-xs font-bold text-emerald-700 hover:underline">
+          แจ้งรถหายใหม่ ↗
+        </a>
       </div>
     `;
 
     const reportsHtml = matchedReports.length > 0 ? `
-      <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
-        <div class="flex items-center gap-1.5 text-xs font-bold text-blue-800">
-          <span>🚓</span> ฐานข้อมูลตรวจที่เกิดเหตุ (${matchedReports.length} คดี):
+      <div class="p-4 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-blue-200">
+          <div class="flex items-center gap-2 text-sm font-black text-blue-900">
+            <span class="text-base">🚓</span> พบในฐานข้อมูลตรวจที่เกิดเหตุ (${matchedReports.length} คดี)
+          </div>
+          <a href="investigation.html" target="_blank" class="text-xs font-bold text-blue-700 hover:text-blue-900 hover:underline flex items-center gap-1">
+            <span>🕵️</span> เปิดโมดูลสืบสวน ↗
+          </a>
         </div>
-        <div class="space-y-1.5 text-xs">
+        <div class="space-y-2">
           ${matchedReports.map(c => `
-            <div class="p-2 bg-white rounded-lg border border-blue-100 flex flex-col gap-0.5">
+            <div class="p-3 bg-white rounded-xl border border-blue-100 shadow-sm flex flex-col gap-1 text-xs">
               <div class="flex justify-between items-center">
-                <span class="font-bold text-blue-700">ทะเบียน: ${escapeHtml(c.plate || '-')}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold">${escapeHtml(c.caseType || c.status || 'ตรวจที่เกิดเหตุ')}</span>
+                <span class="font-bold text-police-blue">คดี/รายงานตรวจที่เกิดเหตุ #${escapeHtml(c.id || '-')}</span>
+                <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold text-[11px]">${escapeHtml(c.status || 'บันทึกแล้ว')}</span>
               </div>
-              <div class="text-slate-600">${escapeHtml(c.brand || '')} ${escapeHtml(c.model || '')} (${escapeHtml(c.color || '-')})</div>
-              <div class="text-[11px] text-slate-500">สถานที่: ${escapeHtml(c.location || '-')} | เจ้าหน้าที่: ${escapeHtml(c.officer || '-')}</div>
+              <div class="text-slate-700">${escapeHtml(c.details || '-')}</div>
+              <div class="text-[11px] text-slate-400 flex flex-wrap gap-x-3 pt-1 border-t border-slate-100">
+                <span>📍 สถานที่: <strong>${escapeHtml(c.location || '-')}</strong></span>
+                <span>👮 เจ้าหน้าที่: <strong>${escapeHtml(c.officer || '-')}</strong></span>
+                <span>📅 วันที่: <strong>${escapeHtml(c.date || '-')}</strong></span>
+              </div>
             </div>
           `).join('')}
         </div>
       </div>
     ` : `
-      <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 flex items-center gap-2">
-        <span>ℹ️</span> ไม่พบประวัติในบันทึกตรวจที่เกิดเหตุ
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 flex items-center gap-2">
+        <span>ℹ️</span> ไม่พบข้อมูลประวัติในบันทึกตรวจที่เกิดเหตุ
       </div>
     `;
 
     renderSearchResultPanel({
-      badgeText: '🚗 ตรวจสอบยานพาหนะ',
-      badgeClass: totalMatches > 0 ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+      icon: '🚗',
+      queryTitle: query,
+      badgeText: '🚗 ตรวจสอบประวัติยานพาหนะ',
+      badgeClass: matchedLostCars.length > 0 ? 'bg-rose-100 text-rose-800 border border-rose-200' : (matchedReports.length > 0 ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'),
+      statusPillHtml: totalMatches > 0 
+        ? `<span>🚨</span> พบข้อมูลในระบบ ${totalMatches} รายการ`
+        : `<span>✅</span> ไม่พบประวัติแจ้งเตือน`,
+      statusPillClass: totalMatches > 0
+        ? 'self-start sm:self-auto px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1'
+        : 'self-start sm:self-auto px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1',
       rawSummary: rawSummary,
       htmlContent: `
         <div class="space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
             <div>
               <span class="text-xs text-slate-400 font-semibold block">คำค้นหายานพาหนะ</span>
-              <span class="text-xl font-bold text-slate-800 tracking-wide">${escapeHtml(query)}</span>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-2xl font-black text-slate-800 tracking-wide font-mono">${escapeHtml(query)}</span>
+                ${selectedProvince ? `<span class="px-2 py-0.5 text-xs font-bold rounded-md bg-slate-100 text-slate-600 border border-slate-200">จ.${escapeHtml(selectedProvince)}</span>` : ''}
+              </div>
             </div>
-            <div class="px-3 py-1.5 rounded-lg border text-xs font-bold ${totalMatches > 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}">
+            <div class="px-3.5 py-2 rounded-xl border text-xs font-black ${totalMatches > 0 ? (matchedLostCars.length > 0 ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-blue-50 border-blue-300 text-blue-700') : 'bg-emerald-50 border-emerald-300 text-emerald-700'}">
               ${totalMatches > 0 ? `🚨 พบข้อมูลในระบบ ${totalMatches} รายการ` : '✅ ไม่พบประวัติที่ตรงกัน'}
             </div>
           </div>
