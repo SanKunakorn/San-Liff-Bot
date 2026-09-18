@@ -22,313 +22,307 @@
     <title>ระบบงานสืบสวน - San BOT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="js/config.js"></script>
     <style>
-        /* Hide duplicated header when embedded in master LIFF app */
+        /* Hide inner header bar when running inside master LIFF frame */
         .in-frame #inv-header-bar {
             display: none !important;
         }
 
-        /* ========================================
-           INVESTIGATION MODULE STYLES
-        ======================================== */
+        /* Hide scrollbars for clean horizontal scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Sections */
         .inv-section { display: none; }
-        .inv-section.active { display: block; }
+        .inv-section.active { display: block; animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 
-        .inv-tab-btn {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(255, 255, 255, 0.9);
-            border: 1.5px solid #cbd5e1;
-            color: #1e3a8a;
-            font-weight: 700;
-            cursor: pointer;
-            border-radius: 14px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-        }
-        .inv-tab-btn.active {
-            background: linear-gradient(135deg, #1e3a8a, #2563eb);
-            color: #fff;
-            border-color: #1e3a8a;
-            box-shadow: 0 8px 20px -4px rgba(30, 58, 138, 0.35);
-            transform: translateY(-2px);
-        }
-        .inv-tab-btn:hover:not(.active) {
-            background: #ffffff;
-            border-color: #3b82f6;
-            color: #1d4ed8;
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-left: 2rem;
-            margin-bottom: 1rem;
-        }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 6px;
-            top: 20px;
-            bottom: -1rem;
-            width: 2px;
-            background: linear-gradient(to bottom, #3b82f6, transparent);
-        }
-        .timeline-item:last-child::before { display: none; }
-        .timeline-dot {
-            position: absolute;
-            left: 0;
-            top: 8px;
-            width: 14px;
-            height: 14px;
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            border-radius: 50%;
-            border: 3px solid #fff;
-            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
-        }
-
-        .template-card {
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid rgba(59, 130, 246, 0.15);
-        }
-        .template-card:hover {
-            border-color: #3b82f6;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
-        }
-
-        .qr-result-area {
-            min-height: 200px;
-            border: 2px dashed rgba(59,130,246,0.3);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-
-        .stat-card {
-            background: rgba(255,255,255,0.9);
-            border-radius: 16px;
-            padding: 1.25rem;
-            text-align: center;
-            border: 2px solid rgba(59,130,246,0.1);
-            box-shadow: 0 4px 12px -2px rgba(0,0,0,0.06);
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(12px); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .fade-in-up { animation: fadeInUp 0.3s ease-out; }
 
+        /* Navigation Pills */
+        .inv-tab-pill {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            color: #334155;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 9999px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .inv-tab-pill:active { transform: scale(0.96); }
+        .inv-tab-pill.active {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: #ffffff;
+            border-color: #1e3a8a;
+            box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.35);
+        }
+
+        /* Stat Mini Cards */
+        .stat-mini-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .stat-mini-card:active { transform: scale(0.97); }
+        .stat-mini-card:hover { border-color: #93c5fd; }
+
+        /* Card Container */
+        .tactical-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Form Inputs */
         textarea.inv-input, input.inv-input, select.inv-input {
             width: 100%;
-            padding: 0.85rem 1rem;
-            border: 2px solid #e0e7ff;
-            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
             font-family: 'Sarabun', sans-serif;
-            font-size: 0.95rem;
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
             outline: none;
-            background: white;
+            background: #ffffff;
+            color: #0f172a;
+            box-sizing: border-box;
         }
         textarea.inv-input:focus, input.inv-input:focus, select.inv-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-            background: #f0f7ff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+            background: #f8faff;
         }
 
         label.inv-label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
             color: #1e3a8a;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.3rem;
         }
 
-        .btn-primary {
+        /* Timeline Connector */
+        .timeline-card-item {
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        .timeline-card-item::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 18px;
+            bottom: -1rem;
+            width: 2px;
+            background: #cbd5e1;
+        }
+        .timeline-card-item:last-child::before { display: none; }
+        .timeline-card-dot {
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 16px;
+            height: 16px;
+            background: #2563eb;
+            border-radius: 50%;
+            border: 3px solid #eff6ff;
+            box-shadow: 0 0 0 2px #bfdbfe;
+        }
+
+        /* Buttons */
+        .btn-action-primary {
             background: linear-gradient(135deg, #1e3a8a, #2563eb);
-            color: white;
-            border: none;
-            padding: 0.85rem 1.75rem;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
             border-radius: 12px;
-            font-family: 'Sarabun', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 14px -2px rgba(30,58,138,0.35);
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -4px rgba(30,58,138,0.45);
-        }
-        .btn-secondary {
-            background: rgba(255,255,255,0.9);
-            color: #1e3a8a;
-            border: 2px solid rgba(59,130,246,0.3);
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-family: 'Sarabun', sans-serif;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-        .btn-secondary:hover {
-            border-color: #3b82f6;
-            background: #f0f7ff;
-        }
-        .btn-danger {
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-            color: white;
             border: none;
-            padding: 0.65rem 1.25rem;
-            border-radius: 10px;
-            font-family: 'Sarabun', sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
             cursor: pointer;
+            font-size: 0.88rem;
+            box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
         }
-        .btn-copy {
-            background: linear-gradient(135deg, #059669, #10b981);
-            color: white;
-            border: none;
-            padding: 0.65rem 1.25rem;
-            border-radius: 10px;
-            font-family: 'Sarabun', sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-copy:hover { transform: scale(1.05); }
+        .btn-action-primary:active { transform: scale(0.97); }
 
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.65rem;
+        .btn-action-secondary {
+            background: #f8fafc;
+            color: #334155;
+            font-weight: 700;
+            padding: 0.6rem 1rem;
+            border-radius: 12px;
+            border: 1.5px solid #cbd5e1;
+            cursor: pointer;
+            font-size: 0.88rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .btn-action-secondary:active { transform: scale(0.97); }
+
+        /* Role quick chip */
+        .role-chip {
+            padding: 5px 12px;
             border-radius: 999px;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 700;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
         }
-        .badge-blue { background: #dbeafe; color: #1e40af; }
-        .badge-red { background: #fee2e2; color: #dc2626; }
-        .badge-green { background: #dcfce7; color: #166534; }
-        .badge-yellow { background: #fef9c3; color: #854d0e; }
-
-        .glass-card {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(16px);
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.9);
-            box-shadow: 0 4px 20px -4px rgba(0,0,0,0.08);
+        .role-chip.selected {
+            background: #1e3a8a;
+            color: #ffffff;
+            border-color: #1e3a8a;
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.25);
         }
     </style>
 </head>
-<body style="background:transparent; font-family:'Sarabun',sans-serif; padding-top: max(0.5rem, env(safe-area-inset-top)); padding-bottom: max(1.5rem, env(safe-area-inset-bottom));">
+<body style="background:transparent; font-family:'Sarabun',sans-serif; padding-top: max(0.25rem, env(safe-area-inset-top)); padding-bottom: max(1rem, env(safe-area-inset-bottom));">
 
-<div class="fade-in-up">
+<div class="px-2 sm:px-4 max-w-5xl mx-auto">
 
-    <!-- ======== INVESTIGATION HEADER ======== -->
-    <div class="glass-card p-4 sm:p-6 mb-6">
-        <div id="inv-header-bar" class="flex items-center space-x-3 sm:space-x-4 mb-6 pb-5 border-b-2 border-blue-100">
-            <button type="button" onclick="goBackHome()" class="w-10 h-10 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl flex items-center justify-center transition border border-blue-200 flex-shrink-0" title="กลับหน้าหลัก">
-                ←
-            </button>
-            <div style="width:52px;height:52px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -4px rgba(30,58,138,0.4);" class="flex-shrink-0">
-                <span style="font-size:1.75rem;">🕵️</span>
+    <!-- ======== INNER HEADER BAR (When opened directly) ======== -->
+    <div id="inv-header-bar" class="tactical-card p-4 mb-3">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <button type="button" onclick="goBackHome()" class="w-9 h-9 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl flex items-center justify-center transition border border-blue-200 flex-shrink-0" title="กลับหน้าหลัก">
+                    ←
+                </button>
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-900 to-blue-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0 text-xl">
+                    🕵️
+                </div>
+                <div>
+                    <h2 class="text-base sm:text-lg font-black text-blue-950 leading-tight">งานสืบสวน & ที่เกิดเหตุ</h2>
+                    <p class="text-xs text-slate-500">San BOT Investigation Operations</p>
+                </div>
             </div>
-            <div>
-                <h2 style="font-size:1.4rem;font-weight:900;color:#1e3a8a;margin:0;" class="sm:text-2xl">งานสืบสวน & ตรวจที่เกิดเหตุ</h2>
-                <p style="color:#64748b;font-size:0.8rem;margin:0;">ระบบจัดการข้อมูลการสืบสวน, ที่เกิดเหตุ และแกะรอยเป้าหมาย - San BOT</p>
-            </div>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span style="font-size:0.8rem;color:#16a34a;font-weight:700;">พร้อมใช้งาน</span>
-            </div>
-        </div>
-
-        <!-- ======== STAT CARDS ======== -->
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;" class="sm:grid-cols-5">
-            <div class="stat-card" onclick="switchInvTab('scenes')" style="cursor:pointer;">
-                <div style="font-size:2rem;margin-bottom:4px;">📍</div>
-                <div id="stat-scenes" style="font-size:1.6rem;font-weight:900;color:#2563eb;">0</div>
-                <div style="font-size:0.78rem;color:#64748b;font-weight:600;">ตรวจที่เกิดเหตุ</div>
-            </div>
-            <div class="stat-card" onclick="switchInvTab('suspect')" style="cursor:pointer;">
-                <div style="font-size:2rem;margin-bottom:4px;">📋</div>
-                <div id="stat-suspects" style="font-size:1.6rem;font-weight:900;color:#1e3a8a;">0</div>
-                <div style="font-size:0.78rem;color:#64748b;font-weight:600;">บันทึกสายสืบ</div>
-            </div>
-            <div class="stat-card" onclick="switchInvTab('timeline')" style="cursor:pointer;">
-                <div style="font-size:2rem;margin-bottom:4px;">⏱️</div>
-                <div id="stat-timeline" style="font-size:1.6rem;font-weight:900;color:#7c3aed;">0</div>
-                <div style="font-size:0.78rem;color:#64748b;font-weight:600;">Timeline คดี</div>
-            </div>
-            <div class="stat-card" onclick="switchInvTab('tracking')" style="cursor:pointer;">
-                <div style="font-size:2rem;margin-bottom:4px;">🎯</div>
-                <div id="stat-tracking" style="font-size:1.6rem;font-weight:900;color:#059669;">BOT</div>
-                <div style="font-size:0.78rem;color:#64748b;font-weight:600;">แกะรอยเป้าหมาย</div>
-            </div>
-            <div class="stat-card" onclick="switchInvTab('templates')" style="cursor:pointer;">
-                <div style="font-size:2rem;margin-bottom:4px;">📝</div>
-                <div id="stat-templates" style="font-size:1.6rem;font-weight:900;color:#d97706;">5</div>
-                <div style="font-size:0.78rem;color:#64748b;font-weight:600;">เทมเพลตรายงาน</div>
+            <div class="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-bold text-emerald-700">พร้อมใช้งาน</span>
             </div>
         </div>
     </div>
 
-    <!-- ======== TAB NAVIGATION ======== -->
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-        <button class="inv-tab-btn active px-4 py-3 rounded-xl text-sm" onclick="switchInvTab('scenes')" id="inv-tab-scenes">
-            📍 ตรวจที่เกิดเหตุ (SceneReports)
+    <!-- ======== COMPACT 4-METRIC STRIP (Saves 80% Space) ======== -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+        <!-- Metric 1: Scenes -->
+        <div class="stat-mini-card" onclick="switchInvTab('scenes')">
+            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base flex-shrink-0">
+                📍
+            </div>
+            <div class="min-w-0 flex-1">
+                <div id="stat-scenes" class="text-lg font-black text-blue-950 leading-none">0</div>
+                <div class="text-xs font-semibold text-slate-500 truncate mt-0.5">ที่เกิดเหตุ</div>
+            </div>
+        </div>
+
+        <!-- Metric 2: Timeline -->
+        <div class="stat-mini-card" onclick="switchInvTab('timeline')">
+            <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-base flex-shrink-0">
+                ⏱️
+            </div>
+            <div class="min-w-0 flex-1">
+                <div id="stat-timeline" class="text-lg font-black text-purple-950 leading-none">0</div>
+                <div class="text-xs font-semibold text-slate-500 truncate mt-0.5">ไทม์ไลน์</div>
+            </div>
+        </div>
+
+        <!-- Metric 3: Suspects -->
+        <div class="stat-mini-card" onclick="switchInvTab('suspect')">
+            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base flex-shrink-0">
+                👥
+            </div>
+            <div class="min-w-0 flex-1">
+                <div id="stat-suspects" class="text-lg font-black text-indigo-950 leading-none">0</div>
+                <div class="text-xs font-semibold text-slate-500 truncate mt-0.5">บุคคล/สายสืบ</div>
+            </div>
+        </div>
+
+        <!-- Metric 4: GPS Tracker -->
+        <div class="stat-mini-card" onclick="switchInvTab('tracking')">
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base flex-shrink-0">
+                🎯
+            </div>
+            <div class="min-w-0 flex-1">
+                <div id="stat-tracking" class="text-lg font-black text-emerald-950 leading-none">BOT</div>
+                <div class="text-xs font-semibold text-slate-500 truncate mt-0.5">ดักพิกัด GPS</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======== HORIZONTAL SCROLLABLE TAB PILLS (4 TABS ONLY) ======== -->
+    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-3 scroll-smooth">
+        <button class="inv-tab-pill active" onclick="switchInvTab('scenes')" id="inv-tab-scenes">
+            <span>📍</span> <span>ตรวจที่เกิดเหตุ</span>
         </button>
-        <button class="inv-tab-btn px-4 py-3 rounded-xl text-sm" onclick="switchInvTab('suspect')" id="inv-tab-suspect">
-            📋 บันทึกสายสืบ & เป้าหมาย
+        <button class="inv-tab-pill" onclick="switchInvTab('timeline')" id="inv-tab-timeline">
+            <span>⏱️</span> <span>Timeline คดี</span>
         </button>
-        <button class="inv-tab-btn px-4 py-3 rounded-xl text-sm" onclick="switchInvTab('timeline')" id="inv-tab-timeline">
-            ⏱️ Timeline เหตุการณ์
+        <button class="inv-tab-pill" onclick="switchInvTab('suspect')" id="inv-tab-suspect">
+            <span>👥</span> <span>บุคคล / สายสืบ</span>
         </button>
-        <button class="inv-tab-btn px-4 py-3 rounded-xl text-sm" onclick="switchInvTab('tracking')" id="inv-tab-tracking">
-            🎯 แกะรอยเป้าหมาย (Telegram / Flex)
-        </button>
-        <button class="inv-tab-btn px-4 py-3 rounded-xl text-sm" onclick="switchInvTab('qrscan')" id="inv-tab-qrscan">
-            📷 สแกน QR / บัตร
-        </button>
-        <button class="inv-tab-btn px-4 py-3 rounded-xl text-sm" onclick="switchInvTab('templates')" id="inv-tab-templates">
-            📝 เทมเพลตรายงาน
+        <button class="inv-tab-pill" onclick="switchInvTab('tracking')" id="inv-tab-tracking">
+            <span>🎯</span> <span>ดักพิกัด GPS</span>
         </button>
     </div>
 
     <!-- ======================================================
-         TAB: SCENE REPORTS (ตรวจที่เกิดเหตุ - แยกชีต SceneReports)
+         TAB 1: SCENE REPORTS (ตรวจที่เกิดเหตุ)
     ====================================================== -->
-    <div id="inv-section-scenes" class="inv-section active glass-card p-6 mb-4">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div id="inv-section-scenes" class="inv-section active tactical-card p-3.5 sm:p-5 mb-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3 pb-2.5 border-b border-slate-100">
             <div>
-                <h3 style="font-size:1.15rem;font-weight:900;color:#1e3a8a;margin:0;">📍 รายงานตรวจที่เกิดเหตุ (Scene Reports)</h3>
-                <p style="color:#64748b;font-size:0.8rem;margin:2px 0 0;">เชื่อมโยงฐานข้อมูล SceneReports แยกเฉพาะ พร้อมนำเข้า Timeline สืบสวนทันที</p>
+                <h3 class="font-extrabold text-blue-950 text-base flex items-center gap-1.5">
+                    <span>📍</span> <span>รายการตรวจที่เกิดเหตุ</span>
+                </h3>
+                <p class="text-xs text-slate-500">ซิงค์ฐานข้อมูล SceneReports พร้อมดึงเข้าสู่ Timeline คดี</p>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-                <button class="btn-secondary" onclick="fetchSceneReports(true)" style="padding:0.45rem 0.9rem;font-size:0.82rem;display:flex;align-items:center;gap:4px;">
-                    <span>🔄</span> <span>ซิงค์ชีต</span>
+            <div class="flex items-center gap-2">
+                <button type="button" class="btn-action-secondary text-xs py-1.5 px-2.5" onclick="fetchSceneReports(true)">
+                    <span>🔄</span> <span>ซิงค์</span>
                 </button>
-                <button class="btn-primary" onclick="goToNewSceneReport()" style="padding:0.45rem 0.9rem;font-size:0.82rem;display:flex;align-items:center;gap:4px;">
+                <button type="button" class="btn-action-primary text-xs py-1.5 px-3" onclick="goToNewSceneReport()">
                     <span>➕</span> <span>บันทึกตรวจใหม่</span>
                 </button>
             </div>
         </div>
 
-        <!-- Filter & Search Bar -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="sm:grid-cols-2">
+        <!-- Search & Filter (Mobile Friendly) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
             <div>
-                <label class="inv-label">🔍 ค้นหา (สถานที่, รายละเอียด, เลขที่)</label>
-                <input type="text" id="scene-search-keyword" class="inv-input" placeholder="พิมพ์คำค้นหา..." oninput="filterSceneReports()">
+                <input type="text" id="scene-search-keyword" class="inv-input" placeholder="🔍 ค้นหา (สถานที่, รายละเอียด, เลขที่)..." oninput="filterSceneReports()">
             </div>
             <div>
-                <label class="inv-label">👮 กรองตามผู้ปฏิบัติงาน</label>
                 <select id="scene-filter-officer" class="inv-input" onchange="filterSceneReports()">
                     <option value="">-- ทั้งหมดทุกสายงาน --</option>
                     <option value="ชุดสืบสวน">ชุดสืบสวน</option>
@@ -340,178 +334,248 @@
             </div>
         </div>
 
-        <!-- Scene Reports Container -->
-        <div id="scene-report-list"></div>
+        <!-- Scene Reports List -->
+        <div id="scene-report-list" class="space-y-2.5"></div>
     </div>
 
     <!-- ======================================================
-         TAB 2: SUSPECT RECORD (บันทึกสายสืบ & บุคคลในคดี)
+         TAB 2: TIMELINE (ลำดับเหตุการณ์ & พิมพ์รายงาน PDF)
     ====================================================== -->
-    <div id="inv-section-suspect" class="inv-section glass-card p-6 mb-4">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-            <h3 style="font-size:1.1rem;font-weight:900;color:#1e3a8a;margin:0;">📋 บันทึกข้อมูลผู้ต้องสงสัย / สายสืบ</h3>
-            <button class="btn-secondary" onclick="fetchSuspects(true)" style="padding:0.4rem 0.8rem;font-size:0.8rem;display:flex;align-items:center;gap:4px;">
-                <span>🔄</span> <span>ซิงค์ชีต</span>
-            </button>
+    <div id="inv-section-timeline" class="inv-section tactical-card p-3.5 sm:p-5 mb-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3 pb-2.5 border-b border-slate-100">
+            <div>
+                <h3 class="font-extrabold text-blue-950 text-base flex items-center gap-1.5">
+                    <span>⏱️</span> <span>Timeline ลำดับเหตุการณ์คดี</span>
+                </h3>
+                <p class="text-xs text-slate-500">บันทึกพฤติการณ์ตามเวลา เพื่อสร้างรายงานสืบสวนคดี</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" class="btn-action-secondary text-xs py-1.5 px-2.5" onclick="fetchTimeline(true)">
+                    <span>🔄</span> <span>ซิงค์</span>
+                </button>
+                <button type="button" id="btn-toggle-timeline-form" class="btn-action-primary text-xs py-1.5 px-3" onclick="toggleTimelineForm()">
+                    <span>➕</span> <span>เพิ่มเหตุการณ์</span>
+                </button>
+            </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div>
-                <label class="inv-label">ชื่อ</label>
-                <input type="text" id="inv-fname" class="inv-input" placeholder="ชื่อ">
+        <!-- Collapsible Form for Adding Event -->
+        <div id="timeline-form-container" style="display:none;" class="bg-blue-50/70 border border-blue-200 rounded-2xl p-3.5 mb-4">
+            <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-bold text-blue-900">📝 ฟอร์มบันทึกเหตุการณ์ใหม่</span>
+                <button type="button" onclick="toggleTimelineForm(false)" class="text-slate-400 hover:text-slate-600 text-xs">✕ ปิดฟอร์ม</button>
             </div>
-            <div>
-                <label class="inv-label">นามสกุล</label>
-                <input type="text" id="inv-lname" class="inv-input" placeholder="นามสกุล">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="inv-label">📅 วันที่</label>
+                    <input type="date" id="tl-date" class="inv-input">
+                </div>
+                <div>
+                    <label class="inv-label">🕐 เวลา</label>
+                    <input type="time" id="tl-time" class="inv-input">
+                </div>
             </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div>
-                <label class="inv-label">อายุ (ปี)</label>
-                <input type="number" id="inv-age" class="inv-input" placeholder="อายุ" min="0" max="120">
+            <div class="mb-2">
+                <label class="inv-label">📍 สถานที่เกิดเหตุ</label>
+                <input type="text" id="tl-location" class="inv-input" placeholder="ระบุสถานที่เกิดเหตุ เช่น บริเวณหน้าร้าน...">
             </div>
-            <div>
-                <label class="inv-label">เพศ</label>
-                <select id="inv-gender" class="inv-input">
-                    <option value="">-- เลือก --</option>
-                    <option value="ชาย">ชาย</option>
-                    <option value="หญิง">หญิง</option>
-                    <option value="ไม่ระบุ">ไม่ระบุ</option>
-                </select>
+            <div class="mb-2">
+                <label class="inv-label">📝 รายละเอียดเหตุการณ์ / พฤติการณ์</label>
+                <textarea id="tl-event" class="inv-input" rows="3" placeholder="อธิบายรายละเอียดเหตุการณ์ที่เกิดขึ้นในช่วงเวลานี้..."></textarea>
             </div>
-            <div>
-                <label class="inv-label">สถานะในคดี</label>
-                <select id="inv-role" class="inv-input">
-                    <option value="">-- เลือก --</option>
-                    <option value="ผู้ต้องสงสัย">ผู้ต้องสงสัย</option>
-                    <option value="พยาน">พยาน</option>
-                    <option value="สายสืบ">สายสืบ</option>
-                    <option value="ผู้เสียหาย">ผู้เสียหาย</option>
-                    <option value="ผู้ถูกจับกุม">ผู้ถูกจับกุม</option>
-                </select>
+            <div class="mb-3">
+                <label class="inv-label">👤 บุคคลที่เกี่ยวข้อง</label>
+                <input type="text" id="tl-person" class="inv-input" placeholder="ชื่อบุคคลที่เกี่ยวข้อง (คั่นด้วยจุลภาค)">
             </div>
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="inv-label">📞 หมายเลขโทรศัพท์</label>
-            <input type="tel" id="inv-phone" class="inv-input" placeholder="0812345678">
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="inv-label">📍 ที่อยู่</label>
-            <input type="text" id="inv-address" class="inv-input" placeholder="บ้านเลขที่, หมู่, ถนน, ตำบล, อำเภอ, จังหวัด">
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="inv-label">👤 ลักษณะภายนอก</label>
-            <textarea id="inv-appearance" class="inv-input" rows="2" placeholder="ส่วนสูง, รูปร่าง, สีผิว, ลักษณะเด่น, รอยสัก ฯลฯ"></textarea>
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="inv-label">🔗 ความสัมพันธ์กับคดี / หมายเหตุ</label>
-            <textarea id="inv-note" class="inv-input" rows="3" placeholder="ระบุความสัมพันธ์ พฤติการณ์ หรือข้อมูลเพิ่มเติม..."></textarea>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn-primary" onclick="saveSuspect()">💾 บันทึกข้อมูล</button>
-            <button class="btn-secondary" onclick="clearSuspectForm()">🗑️ ล้างฟอร์ม</button>
+            <div class="flex gap-2">
+                <button type="button" class="btn-action-primary text-xs py-2 px-4 flex-1 justify-center" onclick="addTimelineEvent()">
+                    <span>➕</span> <span>บันทึกเหตุการณ์</span>
+                </button>
+                <button type="button" class="btn-action-secondary text-xs py-2 px-3" onclick="toggleTimelineForm(false)">
+                    ยกเลิก
+                </button>
+            </div>
         </div>
 
-        <!-- รายการที่บันทึก -->
-        <div id="suspect-list" style="margin-top:20px;"></div>
-    </div>
-
-    <!-- ======================================================
-         TAB 2: TIMELINE
-    ====================================================== -->
-    <div id="inv-section-timeline" class="inv-section glass-card p-6 mb-4">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-            <h3 style="font-size:1.1rem;font-weight:900;color:#1e3a8a;margin:0;">⏱️ บันทึก Timeline เหตุการณ์</h3>
-            <button class="btn-secondary" onclick="fetchTimeline(true)" style="padding:0.4rem 0.8rem;font-size:0.8rem;display:flex;align-items:center;gap:4px;">
-                <span>🔄</span> <span>ซิงค์ชีต</span>
-            </button>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div>
-                <label class="inv-label">📅 วันที่เกิดเหตุ</label>
-                <input type="date" id="tl-date" class="inv-input">
+        <!-- Action Bar: Print PDF & Copy -->
+        <div class="flex flex-wrap gap-2 mb-4 p-2.5 bg-slate-50 border border-slate-200 rounded-xl items-center justify-between">
+            <div class="text-xs text-slate-600 font-semibold flex items-center gap-1.5">
+                <span>📑</span> <span>สรุปรายงานคดี</span>
             </div>
-            <div>
-                <label class="inv-label">🕐 เวลา</label>
-                <input type="time" id="tl-time" class="inv-input">
+            <div class="flex gap-2">
+                <button type="button" onclick="printOfficialInvestigationReport()" class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow-sm flex items-center gap-1 hover:brightness-105 active:scale-95 transition">
+                    <span>📄</span> <span>พิมพ์รายงาน (PDF)</span>
+                </button>
+                <button type="button" onclick="exportTimeline()" class="bg-white border border-slate-300 text-slate-700 font-bold text-xs py-1.5 px-2.5 rounded-lg hover:bg-slate-50 active:scale-95 transition flex items-center gap-1">
+                    <span>📋</span> <span>คัดลอกข้อความ</span>
+                </button>
             </div>
         </div>
-        <div style="margin-bottom:12px;">
-            <label class="inv-label">📍 สถานที่</label>
-            <input type="text" id="tl-location" class="inv-input" placeholder="ระบุสถานที่เกิดเหตุ">
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="inv-label">📝 รายละเอียดเหตุการณ์</label>
-            <textarea id="tl-event" class="inv-input" rows="3" placeholder="อธิบายเหตุการณ์ที่เกิดขึ้นในช่วงเวลานั้น..."></textarea>
-        </div>
-        <div style="margin-bottom:16px;">
-            <label class="inv-label">👮 ผู้ที่เกี่ยวข้อง</label>
-            <input type="text" id="tl-person" class="inv-input" placeholder="ชื่อบุคคลที่เกี่ยวข้อง (คั่นด้วยจุลภาค)">
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn-primary" onclick="addTimelineEvent()">➕ เพิ่มเหตุการณ์</button>
-            <button class="btn-secondary" onclick="exportTimeline()">📤 คัดลอกข้อความ</button>
-            <button class="btn-primary" onclick="printOfficialInvestigationReport()" style="background:linear-gradient(135deg,#059669,#10b981);border:none;">📄 พิมพ์รายงานสืบสวน (PDF)</button>
-        </div>
 
-        <!-- Timeline Display -->
-        <div id="timeline-display" style="margin-top:20px;">
-            <div style="text-align:center;padding:2rem;color:#94a3b8;">
-                <div style="font-size:3rem;margin-bottom:8px;">⏱️</div>
-                <p style="font-weight:600;">ยังไม่มีเหตุการณ์ใน Timeline</p>
-                <p style="font-size:0.85rem;">เพิ่มเหตุการณ์แรกด้านบน</p>
+        <!-- Timeline Display Container -->
+        <div id="timeline-display">
+            <div class="text-center py-8 text-slate-400">
+                <div class="text-3xl mb-1">⏱️</div>
+                <p class="font-semibold text-sm">ยังไม่มีเหตุการณ์ใน Timeline</p>
+                <p class="text-xs text-slate-400">แตะปุ่ม "เพิ่มเหตุการณ์" ด้านบนเพื่อเริ่มบันทึก</p>
             </div>
         </div>
     </div>
 
     <!-- ======================================================
-         TAB: TRACKING & TELEMETRY (แกะรอยเป้าหมาย Telegram & Flex)
+         TAB 3: SUSPECTS & PERSONS (บุคคล / สายสืบ)
     ====================================================== -->
-    <div id="inv-section-tracking" class="inv-section glass-card p-6 mb-4">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div id="inv-section-suspect" class="inv-section tactical-card p-3.5 sm:p-5 mb-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3 pb-2.5 border-b border-slate-100">
             <div>
-                <h3 style="font-size:1.15rem;font-weight:900;color:#1e3a8a;margin:0;">🎯 ศูนย์แกะรอย & ล่อเป้าหมาย (Telegram / Flex Tracker)</h3>
-                <p style="color:#64748b;font-size:0.8rem;margin:2px 0 0;">สร้างลิงก์ดักพิกัดดาวเทียม (GPS) ข้อมูลอุปกรณ์ และภาพถ่ายจากกล้อง (Silent Camera)</p>
+                <h3 class="font-extrabold text-blue-950 text-base flex items-center gap-1.5">
+                    <span>👥</span> <span>บุคคลที่เกี่ยวข้อง / สายสืบ</span>
+                </h3>
+                <p class="text-xs text-slate-500">บันทึกประวัติผู้ต้องสงสัย พยาน และสายสืบ พร้อมสร้างลิงก์ดักพิกัด</p>
             </div>
-            <button class="btn-secondary" onclick="testTelegramBotPing()" style="padding:0.45rem 0.9rem;font-size:0.82rem;display:flex;align-items:center;gap:4px;">
-                <span>🤖</span> <span>ทดสอบส่งข้อความ Telegram</span>
+            <div class="flex items-center gap-2">
+                <button type="button" class="btn-action-secondary text-xs py-1.5 px-2.5" onclick="fetchSuspects(true)">
+                    <span>🔄</span> <span>ซิงค์</span>
+                </button>
+                <button type="button" id="btn-toggle-suspect-form" class="btn-action-primary text-xs py-1.5 px-3" onclick="toggleSuspectForm()">
+                    <span>➕</span> <span>เพิ่มบุคคล</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Collapsible Form for Adding Suspect -->
+        <div id="suspect-form-container" style="display:none;" class="bg-indigo-50/70 border border-indigo-200 rounded-2xl p-3.5 mb-4">
+            <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-bold text-indigo-950">📋 ฟอร์มบันทึกข้อมูลบุคคล</span>
+                <button type="button" onclick="toggleSuspectForm(false)" class="text-slate-400 hover:text-slate-600 text-xs">✕ ปิดฟอร์ม</button>
+            </div>
+
+            <!-- Role Selector Chips -->
+            <div class="mb-3">
+                <label class="inv-label">🏷️ สถานะ / บทบาทในคดี</label>
+                <div class="flex flex-wrap gap-1.5" id="role-chips-group">
+                    <span class="role-chip selected" onclick="selectRoleChip('ผู้ต้องสงสัย')">ผู้ต้องสงสัย</span>
+                    <span class="role-chip" onclick="selectRoleChip('พยาน')">พยาน</span>
+                    <span class="role-chip" onclick="selectRoleChip('สายสืบ')">สายสืบ</span>
+                    <span class="role-chip" onclick="selectRoleChip('ผู้เสียหาย')">ผู้เสียหาย</span>
+                    <span class="role-chip" onclick="selectRoleChip('ผู้ถูกจับกุม')">ผู้ถูกจับกุม</span>
+                </div>
+                <input type="hidden" id="inv-role" value="ผู้ต้องสงสัย">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="inv-label">ชื่อ</label>
+                    <input type="text" id="inv-fname" class="inv-input" placeholder="ชื่อจริง / ฉายา">
+                </div>
+                <div>
+                    <label class="inv-label">นามสกุล</label>
+                    <input type="text" id="inv-lname" class="inv-input" placeholder="นามสกุล">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="inv-label">อายุ (ปี)</label>
+                    <input type="number" id="inv-age" class="inv-input" placeholder="อายุ" min="0" max="120">
+                </div>
+                <div>
+                    <label class="inv-label">เพศ</label>
+                    <select id="inv-gender" class="inv-input">
+                        <option value="">-- ระบุเพศ --</option>
+                        <option value="ชาย">ชาย</option>
+                        <option value="หญิง">หญิง</option>
+                        <option value="ไม่ระบุ">ไม่ระบุ</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <label class="inv-label">📞 หมายเลขโทรศัพท์</label>
+                <input type="tel" id="inv-phone" class="inv-input" placeholder="08xxxxxxxx">
+            </div>
+
+            <div class="mb-2">
+                <label class="inv-label">📍 ที่อยู่ / แหล่งกบดาน</label>
+                <input type="text" id="inv-address" class="inv-input" placeholder="บ้านเลขที่, ชุมชน, อำเภอ, จังหวัด">
+            </div>
+
+            <div class="mb-2">
+                <label class="inv-label">👤 ตำหนิรูปพรรณ</label>
+                <input type="text" id="inv-appearance" class="inv-input" placeholder="ส่วนสูง, รูปร่าง, สีผิว, รอยสัก, จุดเด่น">
+            </div>
+
+            <div class="mb-3">
+                <label class="inv-label">📝 หมายเหตุ / พฤติการณ์คดี</label>
+                <textarea id="inv-note" class="inv-input" rows="2" placeholder="ข้อมูลเพิ่มเติม พฤติการณ์ หรือความเชื่อมโยงกับคดี..."></textarea>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" class="btn-action-primary text-xs py-2 px-4 flex-1 justify-center" onclick="saveSuspect()">
+                    <span>💾</span> <span>บันทึกข้อมูล</span>
+                </button>
+                <button type="button" class="btn-action-secondary text-xs py-2 px-3" onclick="clearSuspectForm()">
+                    ล้างฟอร์ม
+                </button>
+            </div>
+        </div>
+
+        <!-- Suspect List Container -->
+        <div id="suspect-list" class="space-y-2.5"></div>
+    </div>
+
+    <!-- ======================================================
+         TAB 4: TRACKING & TELEMETRY (ดักพิกัด GPS & TELEGRAM)
+    ====================================================== -->
+    <div id="inv-section-tracking" class="inv-section tactical-card p-3.5 sm:p-5 mb-4">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3 pb-2.5 border-b border-slate-100">
+            <div>
+                <h3 class="font-extrabold text-blue-950 text-base flex items-center gap-1.5">
+                    <span>🎯</span> <span>ศูนย์ดักพิกัด GPS & แกะรอยเป้าหมาย</span>
+                </h3>
+                <p class="text-xs text-slate-500">สร้างลิงก์ดักพิกัดดาวเทียม ลายนิ้วมือเครื่อง และกล้องเงียบ (Silent Cam)</p>
+            </div>
+            <button type="button" class="btn-action-secondary text-xs py-1.5 px-2.5" onclick="testTelegramBotPing()">
+                <span>🤖</span> <span>ทดสอบส่ง Telegram</span>
             </button>
         </div>
 
         <!-- Bot Status Box -->
-        <div class="card-gradient" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #bfdbfe;border-radius:16px;padding:16px;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:40px;height:40px;background:#2563eb;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;">
-                        🤖
-                    </div>
-                    <div>
-                        <div style="font-weight:800;color:#1e3a8a;font-size:0.95rem;">Telegram Telemetry Bot</div>
-                        <div style="font-size:0.8rem;color:#475569;" id="bot-status-text">พร้อมรับพิกัดและภาพถ่ายเป้าหมายอัตโนมัติ</div>
-                    </div>
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 mb-3 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                    🤖
                 </div>
-                <span class="badge badge-green">ระบบออนไลน์</span>
+                <div>
+                    <div class="text-xs font-black text-blue-950">Telegram Telemetry Bot</div>
+                    <div id="bot-status-text" class="text-xs text-slate-500">พร้อมรับพิกัดเป้าหมายแบบเรียลไทม์</div>
+                </div>
             </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                🟢 บอทออนไลน์
+            </span>
         </div>
 
-        <!-- Custom Tracking Link Generator -->
-        <div style="background:white;border:2px solid #e0e7ff;border-radius:16px;padding:16px;margin-bottom:16px;">
-            <h4 style="font-weight:800;color:#1e3a8a;margin-bottom:12px;font-size:1rem;">🔗 สร้างลิงก์ดักพิกัดเป้าหมาย (Custom Campaign Generator)</h4>
-            
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;" class="sm:grid-cols-2">
+        <!-- Campaign Generator Form -->
+        <div class="bg-white border border-slate-200 rounded-xl p-3.5 mb-3">
+            <h4 class="font-black text-blue-950 text-xs uppercase tracking-wider mb-2.5">
+                🔗 สร้างลิงก์ดักพิกัดเฉพาะเป้าหมาย
+            </h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                 <div>
                     <label class="inv-label">👤 ชื่อหรือรหัสเป้าหมาย</label>
                     <input type="text" id="track-target-name" class="inv-input" placeholder="เช่น นายสมชาย หรือ INV-01">
                 </div>
                 <div>
-                    <label class="inv-label">📞 เบอร์โทรศัพท์เป้าหมาย</label>
+                    <label class="inv-label">📞 เบอร์โทรเป้าหมาย</label>
                     <input type="tel" id="track-target-phone" class="inv-input" placeholder="08xxxxxxxx">
                 </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" class="sm:grid-cols-2">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 <div>
-                    <label class="inv-label">🎭 ธีมหน้าล่อเป้า (Disguise Template)</label>
+                    <label class="inv-label">🎭 ธีมหน้าปกปิด (Disguise Template)</label>
                     <select id="track-target-theme" class="inv-input">
                         <option value="flash">📦 พัสดุ Flash Express (ตรวจสอบสถานะ)</option>
                         <option value="kerry">🚚 Kerry Express (จัดส่งไม่สำเร็จ)</option>
@@ -526,142 +590,51 @@
                 </div>
             </div>
 
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button class="btn-primary" onclick="generateCustomTrackingLink()" style="background:linear-gradient(135deg,#059669,#10b981);">
+            <div class="flex flex-wrap gap-2">
+                <button type="button" class="btn-action-primary text-xs py-2 px-4 flex-1 justify-center" onclick="generateCustomTrackingLink()">
                     <span>🔗</span> <span>สร้างลิงก์ดักพิกัด</span>
                 </button>
-                <button class="btn-secondary" onclick="openFlexStudioDirect()" style="display:flex;align-items:center;gap:6px;">
-                    <span>⚡</span> <span>เปิด Flex Studio (สร้าง Flex Card ส่งใน LINE)</span>
+                <button type="button" class="btn-action-secondary text-xs py-2 px-3" onclick="openFlexStudioDirect()">
+                    <span>⚡</span> <span>สร้าง Flex Card ใน LINE</span>
                 </button>
             </div>
 
             <!-- Result Box -->
-            <div id="track-link-result-box" style="display:none;margin-top:16px;background:#f8fafc;padding:14px;border-radius:12px;border:2px dashed #3b82f6;">
-                <div style="font-weight:bold;color:#1e3a8a;font-size:0.9rem;margin-bottom:6px;">🔗 ลิงก์ที่สร้างเสร็จแล้ว (ส่งให้เป้าหมาย):</div>
-                <div style="display:flex;gap:8px;">
-                    <input type="text" id="track-generated-url" readonly class="inv-input" style="background:#fff;font-family:monospace;font-size:0.85rem;">
-                    <button class="btn-copy" onclick="copyGeneratedTrackUrl()" style="white-space:nowrap;">📋 คัดลอก</button>
+            <div id="track-link-result-box" style="display:none;" class="mt-3 bg-blue-50 border border-blue-300 rounded-xl p-3">
+                <div class="text-xs font-bold text-blue-950 mb-1">🔗 ลิงก์ที่สร้างเสร็จแล้ว (ส่งให้เป้าหมาย):</div>
+                <div class="flex gap-1.5">
+                    <input type="text" id="track-generated-url" readonly class="inv-input text-xs font-mono bg-white flex-1">
+                    <button type="button" class="btn-action-primary text-xs py-1.5 px-3 whitespace-nowrap" onclick="copyGeneratedTrackUrl()">
+                        📋 คัดลอก
+                    </button>
                 </div>
-                <div style="margin-top:8px;font-size:0.8rem;color:#64748b;">
-                    💡 เมื่อเป้าหมายกดเปิดลิงก์นี้ ระบบจะบันทึกพิกัดและภาพส่งเข้า <b>Telegram Bot</b> ทันที
-                </div>
+                <p class="text-xs text-slate-500 mt-1.5">
+                    💡 เมื่อเป้าหมายเปิดลิงก์ พิกัด GPS และรูปถ่ายจะถูกส่งเข้า Telegram Bot ทันที
+                </p>
             </div>
         </div>
 
-        <!-- Capability Cards -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
-            <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;">
-                <div style="font-size:1.5rem;margin-bottom:4px;">📍</div>
-                <div style="font-weight:700;color:#1e3a8a;font-size:0.85rem;">GPS & พิกัดดาวเทียม</div>
-                <div style="font-size:0.75rem;color:#64748b;">พิกัดละติจูด-ลองจิจูด พร้อมลิงก์ Google Maps</div>
+        <!-- Capability Cards Strip -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white border border-slate-200 rounded-xl p-2.5">
+                <div class="text-lg">📍</div>
+                <div class="text-xs font-bold text-blue-950 mt-0.5">GPS พิกัดดาวเทียม</div>
+                <div class="text-[11px] text-slate-500">ละติจูด-ลองจิจูด แม่นยำ</div>
             </div>
-            <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;">
-                <div style="font-size:1.5rem;margin-bottom:4px;">📸</div>
-                <div style="font-weight:700;color:#1e3a8a;font-size:0.85rem;">กล้องอัตโนมัติ (Silent)</div>
-                <div style="font-size:0.75rem;color:#64748b;">จับภาพใบหน้าเป้าหมายขณะเปิดอ่านข้อมูล</div>
+            <div class="bg-white border border-slate-200 rounded-xl p-2.5">
+                <div class="text-lg">📸</div>
+                <div class="text-xs font-bold text-blue-950 mt-0.5">กล้องเงียบ (Silent)</div>
+                <div class="text-[11px] text-slate-500">จับภาพหน้าเป้าหมาย</div>
             </div>
-            <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;">
-                <div style="font-size:1.5rem;margin-bottom:4px;">📱</div>
-                <div style="font-weight:700;color:#1e3a8a;font-size:0.85rem;">ลายนิ้วมือเครื่อง (Device)</div>
-                <div style="font-size:0.75rem;color:#64748b;">IP Address, ISP, รุ่นมือถือ, แบตเตอรี่, จอภาพ</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ======================================================
-         TAB: QR SCANNER
-    ====================================================== -->
-    <div id="inv-section-qrscan" class="inv-section glass-card p-6 mb-4">
-        <h3 style="font-size:1.1rem;font-weight:900;color:#1e3a8a;margin-bottom:4px;">📷 สแกน QR Code / Barcode</h3>
-        <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">ใช้กล้องโทรศัพท์สแกน QR Code หรือบาร์โค้ด</p>
-
-        <div style="margin-bottom:16px;">
-            <label class="inv-label">🎯 ประเภทการสแกน</label>
-            <select id="qr-type" class="inv-input" style="margin-bottom:12px;">
-                <option value="any">ทุกประเภท</option>
-                <option value="idcard">บัตรประชาชน (13 หลัก)</option>
-                <option value="vehicle">ทะเบียนรถ</option>
-                <option value="url">URL / ลิงก์</option>
-            </select>
-        </div>
-
-        <div id="qr-video-container" style="display:none;margin-bottom:16px;">
-            <video id="qr-video" style="width:100%;border-radius:12px;border:3px solid #3b82f6;max-height:300px;object-fit:cover;" autoplay muted playsinline></video>
-            <div style="text-align:center;margin-top:8px;">
-                <div style="display:inline-block;width:12px;height:12px;background:#22c55e;border-radius:50%;animation:pulse-green 1s infinite;margin-right:6px;"></div>
-                <span style="font-size:0.85rem;color:#16a34a;font-weight:700;">กล้องทำงานอยู่ — เล็งกล้องไปที่ QR Code</span>
-            </div>
-        </div>
-
-        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-            <button class="btn-primary" id="qr-start-btn" onclick="startQRScanner()">📷 เปิดกล้องสแกน</button>
-            <button class="btn-secondary" id="qr-stop-btn" onclick="stopQRScanner()" style="display:none;">⏹️ หยุดกล้อง</button>
-            <button class="btn-secondary" onclick="manualInputQR()">⌨️ พิมพ์ด้วยมือ</button>
-        </div>
-
-        <div class="qr-result-area" id="qr-result-area">
-            <span style="font-size:2.5rem;margin-bottom:8px;">📷</span>
-            <p style="color:#94a3b8;font-weight:600;margin:0;">ยังไม่มีผลการสแกน</p>
-            <p style="color:#94a3b8;font-size:0.8rem;margin-top:4px;">เปิดกล้องเพื่อเริ่มสแกน</p>
-        </div>
-
-        <!-- QR Scanner Canvas -->
-        <canvas id="qr-canvas" style="display:none;"></canvas>
-    </div>
-
-    <!-- ======================================================
-         TAB 4: REPORT TEMPLATES (เทมเพลตรายงาน)
-    ====================================================== -->
-    <div id="inv-section-templates" class="inv-section glass-card p-6 mb-4">
-        <h3 style="font-size:1.1rem;font-weight:900;color:#1e3a8a;margin-bottom:4px;">📝 เทมเพลตรายงานสำเร็จรูป</h3>
-        <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">เลือกเทมเพลต กรอกข้อมูล คัดลอกได้ทันที</p>
-
-        <!-- Template selection cards -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-            <div class="template-card glass-card p-4" onclick="loadTemplate('arrest')">
-                <div style="font-size:2rem;margin-bottom:6px;">🚔</div>
-                <div style="font-weight:800;color:#1e3a8a;font-size:0.9rem;">บันทึกจับกุม</div>
-                <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">การจับกุมผู้ต้องหา</div>
-            </div>
-            <div class="template-card glass-card p-4" onclick="loadTemplate('interrogate')">
-                <div style="font-size:2rem;margin-bottom:6px;">🗣️</div>
-                <div style="font-weight:800;color:#1e3a8a;font-size:0.9rem;">บันทึกสอบปากคำ</div>
-                <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">การสอบปากคำพยาน/ผู้ต้องหา</div>
-            </div>
-            <div class="template-card glass-card p-4" onclick="loadTemplate('complaint')">
-                <div style="font-size:2rem;margin-bottom:6px;">📜</div>
-                <div style="font-weight:800;color:#1e3a8a;font-size:0.9rem;">บันทึกร้องทุกข์</div>
-                <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">การรับแจ้งความร้องทุกข์</div>
-            </div>
-            <div class="template-card glass-card p-4" onclick="loadTemplate('patrol')">
-                <div style="font-size:2rem;margin-bottom:6px;">🚓</div>
-                <div style="font-weight:800;color:#1e3a8a;font-size:0.9rem;">บันทึกตรวจสถานที่</div>
-                <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">การตรวจที่เกิดเหตุ</div>
-            </div>
-            <div class="template-card glass-card p-4" onclick="loadTemplate('surv')">
-                <div style="font-size:2rem;margin-bottom:6px;">🔭</div>
-                <div style="font-weight:800;color:#1e3a8a;font-size:0.9rem;">รายงานสืบสวน</div>
-                <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">ผลการสืบสวนและข้อเสนอแนะ</div>
-            </div>
-        </div>
-
-        <!-- Template editor -->
-        <div id="template-editor" style="display:none;">
-            <h4 id="template-editor-title" style="font-size:1rem;font-weight:800;color:#1e3a8a;margin-bottom:12px;"></h4>
-            <div id="template-fields" style="margin-bottom:12px;"></div>
-            <div style="margin-bottom:12px;">
-                <label class="inv-label">📄 ผลลัพธ์รายงาน</label>
-                <textarea id="template-output" class="inv-input" rows="10" readonly style="background:#f8faff;font-size:0.85rem;line-height:1.6;"></textarea>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn-copy" onclick="generateTemplate()">🔄 สร้างรายงาน</button>
-                <button class="btn-copy" onclick="copyTemplate()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">📋 คัดลอก</button>
-                <button class="btn-secondary" onclick="closeTemplateEditor()">✖️ ปิด</button>
+            <div class="bg-white border border-slate-200 rounded-xl p-2.5">
+                <div class="text-lg">📱</div>
+                <div class="text-xs font-bold text-blue-950 mt-0.5">ลายนิ้วมือเครื่อง</div>
+                <div class="text-[11px] text-slate-500">IP, ISP, รุ่นมือถือ</div>
             </div>
         </div>
     </div>
 
-</div><!-- end fade-in-up -->
+</div><!-- end max-w-5xl -->
 
 <script src="js/investigation.js"></script>
 </body>

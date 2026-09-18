@@ -100,7 +100,7 @@
     ======================================== -->
     <div class="sticky-top-bar sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-md border-b border-slate-200">
         <!-- HEADER SECTION (LIFF Optimized - Light Theme) -->
-        <header class="liff-header border-b border-slate-100">
+        <header class="liff-header">
             <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5">
                 <div class="flex items-center justify-between">
                     <!-- Logo Section -->
@@ -115,34 +115,53 @@
                             </div>
                         </div>
                         <div>
-                            <h1 class="text-base sm:text-2xl font-black text-police-blue tracking-tight">
-                                San BOT</h1>
+                            <div class="flex items-center gap-2">
+                                <h1 class="text-base sm:text-2xl font-black text-police-blue tracking-tight">
+                                    San BOT</h1>
+                                <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-police-blue border border-blue-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> v2.5 PRO
+                                </span>
+                            </div>
                             <p class="text-slate-500 text-[10px] sm:text-xs font-semibold opacity-90 hidden xs:block">
                                 ระบบสนับสนุนงานตำรวจ</p>
                         </div>
+                    </div>
+
+                    <!-- Tactical Live Clock (Center/Left for Desktop & Tablet) -->
+                    <div class="hidden md:flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-slate-50 to-blue-50/60 rounded-xl border border-blue-100/90 text-xs font-mono text-slate-700 shadow-xs">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="font-bold text-police-blue">⏰</span>
+                        <span id="tactical-clock" class="font-bold text-police-blue tracking-wider">--:--:--</span>
                     </div>
 
                     <!-- User Profile & Action Section -->
                     <div class="flex items-center space-x-2 sm:space-x-4">
                         <!-- Compact Profile for Mobile & Desktop -->
                         <div
-                            class="flex items-center space-x-2 bg-slate-50 rounded-xl sm:rounded-2xl px-2.5 py-1 sm:px-3.5 sm:py-1.5 border border-slate-200 shadow-sm">
-                            <div
-                                class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-police-gold to-yellow-500 rounded-full overflow-hidden border-2 border-police-blue shadow ring-1 ring-blue-100 flex-shrink-0">
-                                <img id="pictureUrl" class="w-full h-full object-cover" alt="Profile"
-                                    referrerpolicy="no-referrer"
-                                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231e3a8a'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E">
+                            class="flex items-center space-x-2 bg-slate-50 rounded-xl sm:rounded-2xl px-2.5 py-1 sm:px-3.5 sm:py-1.5 border border-slate-200 shadow-sm hover:border-blue-300 transition">
+                            <div class="relative flex-shrink-0">
+                                <div
+                                    class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-police-gold to-yellow-500 rounded-full overflow-hidden border-2 border-police-blue shadow ring-1 ring-blue-100">
+                                    <img id="pictureUrl" class="w-full h-full object-cover" alt="Profile"
+                                        referrerpolicy="no-referrer"
+                                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231e3a8a'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E">
+                                </div>
+                                <span id="liff-status-dot"
+                                    class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 border-2 border-white rounded-full shadow-xs"
+                                    title="เชื่อมต่อระบบแล้ว"></span>
                             </div>
-                            <div class="max-w-[110px] sm:max-w-[200px] truncate">
+                            <div class="max-w-[105px] sm:max-w-[190px] truncate">
                                 <p id="displayName" class="font-bold text-slate-800 text-xs sm:text-sm truncate">
                                     Loading...</p>
+                                <p id="profile-subtext" class="text-[10px] text-emerald-600 font-semibold truncate hidden sm:block">
+                                    ● พร้อมปฏิบัติการ</p>
                             </div>
                         </div>
 
                         <!-- Auth / Close Buttons -->
                         <div class="flex space-x-1.5 sm:space-x-2">
                             <button id="btnLogOut" onclick="logOut()"
-                                class="bg-gradient-to-r from-red-500 to-red-600 text-white font-bold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 text-xs sm:text-sm shadow-md active:scale-95 flex items-center gap-1">
+                                class="bg-gradient-to-r from-red-500 to-red-600 text-white font-bold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 text-xs sm:text-sm shadow-md active:scale-95 flex items-center gap-1.5">
                                 <span>🚪</span> <span class="hidden sm:inline">ปิดหน้าต่าง</span>
                             </button>
                         </div>
@@ -150,34 +169,6 @@
                 </div>
             </div>
         </header>
-
-        <!-- NAVIGATION SECTION -->
-        <nav class="main-nav">
-            <div class="max-w-7xl mx-auto px-3 sm:px-6">
-                <div class="flex space-x-2 overflow-x-auto py-2.5 sm:py-3 scrollbar-hide">
-                    <button onclick="showPage('report')"
-                        class="nav-btn active whitespace-nowrap px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base min-w-max touch-manipulation">
-                        <span class="text-xl mr-2">📍</span> <span class="hidden sm:inline">ตรวจที่เกิดเหตุ</span> <span
-                            class="sm:hidden">ตรวจ</span> </button>
-                    <button onclick="showPage('search')"
-                        class="nav-btn whitespace-nowrap px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base min-w-max touch-manipulation">
-                        <span class="text-xl mr-2">🔍</span> <span class="hidden sm:inline">ค้นหาข้อมูล</span> <span
-                            class="sm:hidden">ค้นหา</span> </button>
-                    <button onclick="showPage('investigation')"
-                        class="nav-btn whitespace-nowrap px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base min-w-max touch-manipulation">
-                        <span class="text-xl mr-2">🕵️</span> <span class="hidden sm:inline">งานสืบสวน</span> <span
-                            class="sm:hidden">สืบสวน</span> </button>
-                    <button onclick="showPage('timecal')"
-                        class="nav-btn whitespace-nowrap px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base min-w-max touch-manipulation">
-                        <span class="text-xl mr-2">⏰</span> <span class="hidden sm:inline">คำนวณเวลา</span> <span
-                            class="sm:hidden">เวลา</span> </button>
-                    <button onclick="showPage('sanapp')"
-                        class="nav-btn whitespace-nowrap px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base min-w-max touch-manipulation">
-                        <span class="text-xl mr-2">📱</span> <span class="hidden sm:inline">San APP</span> <span
-                            class="sm:hidden">APP</span> </button>
-                </div>
-            </div>
-        </nav>
     </div>
 
     <!-- ========================MAIN CONTENT SECTION============================== -->
@@ -198,30 +189,51 @@
 
 
 
+                <!-- Quick Action Section (Modern Police Glass Cards) -->
                 <div class="mb-8">
-                    <div class="glass rounded-2xl border border-blue-100 p-5">
-                        <h3 class="text-lg font-black text-police-blue flex items-center mb-4"><span
-                                class="mr-2">⚡</span> ทางลัดด่วน (Quick Action)</h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="glass rounded-2xl border border-blue-100/90 p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-3.5">
+                            <h3 class="text-sm sm:text-base font-black text-police-blue flex items-center">
+                                <span class="mr-2 text-lg">⚡</span> ทางลัดด่วน (Quick Action)
+                            </h3>
+                            <span class="text-[11px] font-bold text-slate-400">เข้าถึงโมดูลหลักได้ทันที</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                             <button onclick="showPage('search')"
-                                class="w-full text-left p-3.5 rounded-xl bg-purple-50 border border-purple-100 hover:bg-purple-100 hover:shadow-md transition-all">
-                                <p class="font-bold text-purple-700">🔍 ค้นหาข้อมูล</p>
-                                <p class="text-xs text-gray-500 mt-0.5">เบอร์โทร / IP / บัตร</p>
+                                class="quick-action-card w-full text-left p-3.5 rounded-2xl bg-gradient-to-br from-purple-50 to-indigo-50/40 border border-purple-100 hover:border-purple-300 transition-all cursor-pointer group">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl group-hover:scale-110 transition-transform">🔍</span>
+                                    <span class="text-[10px] font-extrabold text-purple-600 bg-purple-100/80 px-1.5 py-0.5 rounded-md">ค้นหา</span>
+                                </div>
+                                <p class="font-black text-purple-900 text-xs sm:text-sm">ค้นหาข้อมูล</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5 truncate">เบอร์โทร / IP / บัตร / รถ</p>
                             </button>
                             <a href="lostcar.html"
-                                class="w-full text-left p-3.5 rounded-xl bg-rose-50 border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all block">
-                                <p class="font-bold text-rose-700">🚨 ระบบรถหาย</p>
-                                <p class="text-xs text-gray-500 mt-0.5">รายงาน & วิเคราะห์จุดเสี่ยง</p>
+                                class="quick-action-card w-full text-left p-3.5 rounded-2xl bg-gradient-to-br from-rose-50 to-amber-50/40 border border-rose-100 hover:border-rose-300 transition-all block cursor-pointer group">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl group-hover:scale-110 transition-transform">🚨</span>
+                                    <span class="text-[10px] font-extrabold text-rose-600 bg-rose-100/80 px-1.5 py-0.5 rounded-md">รถหาย</span>
+                                </div>
+                                <p class="font-black text-rose-900 text-xs sm:text-sm">ระบบรถหาย</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5 truncate">รายงาน & แผนที่เสี่ยง</p>
                             </a>
                             <button onclick="showPage('timecal')"
-                                class="w-full text-left p-3.5 rounded-xl bg-blue-50 border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all">
-                                <p class="font-bold text-blue-700">⏱️ คำนวณเวลา</p>
-                                <p class="text-xs text-gray-500 mt-0.5">CCTV offset & เวลา</p>
+                                class="quick-action-card w-full text-left p-3.5 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50/40 border border-blue-100 hover:border-blue-300 transition-all cursor-pointer group">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl group-hover:scale-110 transition-transform">⏱️</span>
+                                    <span class="text-[10px] font-extrabold text-blue-600 bg-blue-100/80 px-1.5 py-0.5 rounded-md">CCTV</span>
+                                </div>
+                                <p class="font-black text-blue-900 text-xs sm:text-sm">คำนวณเวลา</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5 truncate">เทียบ Offset กล้องวงจรปิด</p>
                             </button>
                             <button onclick="showPage('sendflex')"
-                                class="w-full text-left p-3.5 rounded-xl bg-amber-50 border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all">
-                                <p class="font-bold text-amber-700">⚡ สร้าง Flex</p>
-                                <p class="text-xs text-gray-500 mt-0.5">ดักจับพิกัดสืบสวน</p>
+                                class="quick-action-card w-full text-left p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50/40 border border-amber-100 hover:border-amber-300 transition-all cursor-pointer group">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl group-hover:scale-110 transition-transform">⚡</span>
+                                    <span class="text-[10px] font-extrabold text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded-md">Flex</span>
+                                </div>
+                                <p class="font-black text-amber-900 text-xs sm:text-sm">สร้างการ์ด Flex</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5 truncate">ดักจับพิกัดสืบสวน</p>
                             </button>
                         </div>
                     </div>
@@ -246,7 +258,7 @@
                                 </span>
                             </div>
                             <div class="relative">
-                                <input list="userlist" id="user"
+                                <input list="userlist" id="user" oninput="syncOfficerChips(this.value)"
                                     placeholder="เลือกจากรายการ หรือพิมพ์ชื่อ/ตำแหน่งเอง..." autocomplete="off"
                                     class="w-full px-5 py-4 pr-12 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue focus:ring-opacity-20 focus:border-police-blue transition-all duration-300 input-glow font-medium bg-white">
                                 <button type="button" onclick="toggleOfficerDropdown()"
@@ -334,24 +346,22 @@
                             </label>
                             <div class="flex items-center gap-1.5">
                                 <button type="button" onclick="insertCurrentTime()" title="แทรกเวลาปัจจุบัน"
-                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition flex items-center gap-1">
+                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition flex items-center gap-1 active:scale-95">
                                     <span>🕒</span><span class="hidden sm:inline">แทรกเวลา</span>
                                 </button>
                                 <button type="button" onclick="pasteToDetail()" title="วางจากคลิปบอร์ด"
-                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition flex items-center gap-1">
+                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition flex items-center gap-1 active:scale-95">
                                     <span>📋</span><span class="hidden sm:inline">วางข้อความ</span>
                                 </button>
                                 <button type="button" onclick="clearDetail()" title="ล้างข้อความ"
-                                    class="px-2 py-1 text-slate-400 hover:text-red-500 text-xs rounded-lg transition"
+                                    class="px-2 py-1 text-slate-400 hover:text-red-500 text-xs rounded-lg transition active:scale-95"
                                     aria-label="ล้างข้อความ">
                                     <span>🧹</span>
                                 </button>
                             </div>
                         </div>
 
-
-
-                        <!-- Quick Template Chips Bar (โหลดจากชีต ReportTemplates เท่านั้น หากโหลดไม่ได้จะไม่แสดง) -->
+                        <!-- Quick Template Chips Bar -->
                         <div id="template-chips-container"
                             class="hidden mb-3 flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin"></div>
 
@@ -361,20 +371,39 @@
                                 class="w-full px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue focus:ring-opacity-20 focus:border-police-blue transition-all duration-300 input-glow font-medium resize-none leading-relaxed text-sm text-slate-800"
                                 placeholder="ระบุรายละเอียดการตรวจสอบ หรือเลือกแม่แบบด่วนด้านบน..."></textarea>
                         </div>
-
-
                     </div>
-                    <div class="group"><label class="block text-sm font-bold text-police-blue mb-3 flex items-center">
-                            <span class="mr-2">📍</span> พิกัดแผนที่ </label>
-                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3"><input type="text"
-                                id="latlong" placeholder="12.8371109,101.1992687"
-                                class="flex-1 px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue focus:ring-opacity-20 focus:border-police-blue transition-all duration-300 input-glow font-medium">
-                            <button type="button" onclick="getCurrentLocation()"
-                                class="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold px-6 py-4 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-xl transform hover:scale-105 whitespace-nowrap">
-                                📍 ตำแหน่งปัจจุบัน </button>
+
+                    <!-- GPS Coordinates Section -->
+                    <div class="group">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-sm font-bold text-police-blue flex items-center">
+                                <span class="mr-2">📍</span> พิกัดแผนที่ (GPS)
+                            </label>
+                            <span id="gps-status-badge"
+                                class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1 transition-all">
+                                <span>⚪</span> <span>ยังไม่ได้ระบุพิกัด</span>
+                            </span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                            <input type="text" id="latlong" placeholder="12.8371109,101.1992687"
+                                oninput="updateGpsStatusBadge()"
+                                class="flex-1 px-5 py-4 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue focus:ring-opacity-20 focus:border-police-blue transition-all duration-300 input-glow font-medium font-mono text-sm text-slate-800">
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="btn-get-gps" onclick="getCurrentLocation()"
+                                    class="flex-1 sm:flex-none bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold px-6 py-4 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-300 shadow-md transform hover:scale-102 active:scale-95 whitespace-nowrap flex items-center justify-center gap-2">
+                                    <span id="gps-btn-icon">📍</span> <span id="gps-btn-text">ตำแหน่งปัจจุบัน</span>
+                                </button>
+                                <button type="button" id="btn-quick-map" onclick="openCurrentGpsExternal()"
+                                    class="hidden px-4 py-4 bg-blue-50 hover:bg-blue-100 text-police-blue font-bold rounded-xl border border-blue-200 transition shadow-sm active:scale-95 text-sm"
+                                    title="เปิดดูตำแหน่งใน Google Maps">
+                                    🗺️
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </form><!-- Result Display -->
+                </form>
+
+                <!-- Result Display -->
                 <div id="showResultmap" class="hidden mt-8 p-6 glass rounded-2xl border-2 border-blue-200">
                     <h3 class="text-xl font-black text-police-blue mb-6 flex items-center"><span class="mr-2">✅</span>
                         ผลลัพธ์</h3>
@@ -398,15 +427,22 @@
                                 <span class="mr-2">🔗</span> เปิดใน Google Maps </a>
                         </div>
                     </div>
-                </div><!-- Action Buttons -->
-                <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t-2 border-blue-100"><button id="btnsettext"
-                        onclick="showResult()"
-                        class="flex-1 sm:flex-none bg-gradient-to-r from-police-blue to-blue-700 text-white font-bold px-8 py-4 rounded-xl hover:from-blue-700 hover:to-police-blue transition-all duration-300 shadow-xl transform hover:scale-105 hover:shadow-2xl">
-                        <span class="mr-2">🖊️</span> แสดงข้อมูล </button> <button id="btnsendrp" onclick="sendReport()"
-                        class="flex-1 sm:flex-none bg-gradient-to-r from-green-500 to-green-600 text-white font-bold px-8 py-4 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-xl transform hover:scale-105 hover:shadow-2xl">
-                        <span class="mr-2">📤</span> ส่งรายงาน </button> <button id="btnShare" onclick="shareReport()"
-                        class="flex-1 sm:flex-none bg-gradient-to-r from-police-gold to-yellow-500 text-white font-bold px-8 py-4 rounded-xl hover:from-yellow-500 hover:to-police-gold transition-all duration-300 shadow-xl transform hover:scale-105 hover:shadow-2xl">
-                        <span class="mr-2">🔗</span> แชร์ </button>
+                </div>
+
+                <!-- Action Buttons (Tactical Polish) -->
+                <div class="flex flex-wrap gap-3 sm:gap-4 mt-8 pt-6 border-t-2 border-blue-100">
+                    <button id="btnsettext" onclick="showResult()"
+                        class="flex-1 sm:flex-none bg-gradient-to-r from-police-blue to-blue-700 text-white font-bold px-7 py-3.5 sm:py-4 rounded-xl hover:from-blue-800 hover:to-police-blue transition-all duration-300 shadow-lg transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2">
+                        <span>🖊️</span> <span>แสดงข้อมูล</span>
+                    </button>
+                    <button id="btnsendrp" onclick="sendReport()"
+                        class="flex-1 sm:flex-none bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold px-7 py-3.5 sm:py-4 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-300 shadow-lg transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2">
+                        <span>📤</span> <span>ส่งรายงาน</span>
+                    </button>
+                    <button id="btnShare" onclick="shareReport()"
+                        class="flex-1 sm:flex-none bg-gradient-to-r from-police-gold to-yellow-500 text-white font-bold px-7 py-3.5 sm:py-4 rounded-xl hover:from-yellow-600 hover:to-police-gold transition-all duration-300 shadow-lg transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2">
+                        <span>🔗</span> <span>แชร์</span>
+                    </button>
                 </div>
             </div>
         </div><!-- ========================================
@@ -845,206 +881,279 @@
 
         <!-- ======================SAN APP PAGE========== -->
         <div id="page-sanapp" class="page-content hidden">
-            <div class="glass rounded-3xl shadow-2xl p-6 sm:p-8 card-hover border border-white">
+            <div class="glass rounded-3xl shadow-2xl p-5 sm:p-8 card-hover border border-white space-y-6">
                 <!-- Header -->
-                <div class="flex items-center space-x-4 mb-8 pb-6 border-b-2 border-indigo-100">
+                <div class="flex items-center space-x-4 pb-6 border-b-2 border-indigo-100">
                     <div
-                        class="w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-xl floating">
-                        <span class="text-4xl">📱</span>
+                        class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-xl floating text-3xl sm:text-4xl text-white">
+                        📱
                     </div>
                     <div>
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 text-indigo-900 text-[11px] font-extrabold uppercase tracking-wide border border-indigo-200 mb-1">
+                            <span>🚀</span> CENTRAL APPLICATION HUB
+                        </div>
                         <h2 class="text-2xl sm:text-3xl font-black text-police-blue">San APP Center</h2>
-                        <p class="text-gray-600 font-medium">เชื่อมโยงแอพพลิเคชันที่ใช้งาน</p>
+                        <p class="text-xs sm:text-sm text-gray-600 font-medium">ศูนย์รวมเครื่องมือและระบบสนับสนุนงานตำรวจและสืบสวน</p>
                     </div>
                 </div>
 
+                <!-- Live Search & Category Filter Bar -->
+                <div class="bg-gradient-to-r from-slate-50 to-indigo-50/50 rounded-2xl p-4 sm:p-5 border border-indigo-100 shadow-xs space-y-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-base">
+                            🔍
+                        </div>
+                        <input type="text" id="sanapp-search-input" oninput="filterSanApps()"
+                            placeholder="พิมพ์ค้นหาแอป... (เช่น รถหาย, CCTV, บัตรประชาชน, ทะเบียน, ที่ดิน, แผนที่)"
+                            class="w-full pl-10 pr-10 py-3 bg-white border-2 border-indigo-100 rounded-xl text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:border-police-blue focus:ring-4 focus:ring-blue-100 transition shadow-inner">
+                        <button type="button" onclick="clearSanAppSearch()"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 text-sm font-bold transition"
+                            title="ล้างข้อความค้นหา">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs font-bold">
+                        <span class="text-slate-400 text-[11px] mr-1 flex-shrink-0">หมวดหมู่:</span>
+                        <button type="button" onclick="setSanAppFilter('all', this)"
+                            class="sanapp-filter-pill active px-3 py-1.5 rounded-full bg-police-blue text-white shadow-xs transition">
+                            ทั้งหมด (12)
+                        </button>
+                        <button type="button" onclick="setSanAppFilter('police', this)"
+                            class="sanapp-filter-pill px-3 py-1.5 rounded-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+                            🚓 ระบบตำรวจ/สืบสวน
+                        </button>
+                        <button type="button" onclick="setSanAppFilter('gov', this)"
+                            class="sanapp-filter-pill px-3 py-1.5 rounded-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+                            🏛️ หน่วยงานรัฐ
+                        </button>
+                        <button type="button" onclick="setSanAppFilter('tools', this)"
+                            class="sanapp-filter-pill px-3 py-1.5 rounded-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition">
+                            🔧 เครื่องมือช่วย
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty state for search -->
+                <div id="sanapp-empty-state" class="hidden text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                    <span class="text-4xl block mb-2">🔍</span>
+                    <p class="font-black text-slate-700 text-sm sm:text-base">ไม่พบแอปพลิเคชันที่ตรงกับคำค้นหา</p>
+                    <p class="text-xs text-slate-500 mt-1">ลองเปลี่ยนคำค้นหา หรือกดเลือกหมวดหมู่ "ทั้งหมด"</p>
+                    <button type="button" onclick="clearSanAppSearch()" class="mt-3 px-4 py-1.5 bg-blue-50 text-police-blue rounded-xl text-xs font-bold border border-blue-200 hover:bg-blue-100 transition">
+                        ล้างคำค้นหา
+                    </button>
+                </div>
+
                 <!-- App Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <!-- Police & San BOT System Apps -->
-                    <div class="col-span-2 md:col-span-3 lg:col-span-4 mb-2">
-                        <h3 class="text-lg font-black text-police-blue flex items-center"><span class="mr-2">🚓</span>
-                            ระบบตำรวจและสืบสวน</h3>
-                    </div>
-
-                    <button type="button" onclick="showPage('lostcar')"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-amber-200 shadow-md text-left w-full cursor-pointer">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🚔</span>
+                <div id="sanapp-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
+                    
+                    <!-- App 1: Lostcar -->
+                    <button type="button" onclick="showPage('lostcar')" data-app-cat="police" data-app-keywords="รถหาย ทะเบียน ลักทรัพย์ สถิติ แผนที่ lostcar"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-amber-200/80 shadow-xs text-left w-full cursor-pointer relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🚔</span>
+                            <span class="text-[10px] font-extrabold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-200/60">โมดูลในระบบ</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-amber-700">
-                            ระบบรถหาย</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">สถิติ & แผนที่ Heatmap</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-amber-700 transition">
+                                ระบบรถหาย
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">สถิติ & แผนที่ Heatmap</p>
+                        </div>
                     </button>
 
-                    <button type="button" onclick="showPage('investigation')"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-200 shadow-md text-left w-full cursor-pointer">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🕵️</span>
+                    <!-- App 2: Investigation -->
+                    <button type="button" onclick="showPage('investigation')" data-app-cat="police" data-app-keywords="สืบสวน บุคคล ยานพาหนะ ประวัติ คดี timeline investigation"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-blue-200/80 shadow-xs text-left w-full cursor-pointer relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🕵️</span>
+                            <span class="text-[10px] font-extrabold text-blue-800 bg-blue-100/90 px-2 py-0.5 rounded-md border border-blue-200/60">โมดูลในระบบ</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-blue-700">
-                            ระบบสืบสวน</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">บุคคล & ยานพาหนะ</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-blue-700 transition">
+                                ระบบสืบสวน
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">บุคคล & ยานพาหนะ</p>
+                        </div>
                     </button>
 
-                    <button type="button" onclick="showPage('timecal')"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-indigo-200 shadow-md text-left w-full cursor-pointer">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">⏱️</span>
+                    <!-- App 3: Timecal -->
+                    <button type="button" onclick="showPage('timecal')" data-app-cat="police" data-app-keywords="คำนวณเวลา cctv กล้องวงจรปิด offset เวลา timecal"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-indigo-200/80 shadow-xs text-left w-full cursor-pointer relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">⏱️</span>
+                            <span class="text-[10px] font-extrabold text-indigo-800 bg-indigo-100/90 px-2 py-0.5 rounded-md border border-indigo-200/60">โมดูลในระบบ</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-indigo-700">
-                            คำนวณเวลา CCTV</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">เทียบ Offset เวลา</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-indigo-700 transition">
+                                คำนวณเวลา CCTV
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">เทียบ Offset เวลา</p>
+                        </div>
                     </button>
 
-                    <!--ระบบความรู้ -->
-                    <button type="button" onclick="showPage('knowledge')"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-purple-200 shadow-md text-left w-full cursor-pointer">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">📚</span>
+                    <!-- App 4: Knowledge -->
+                    <button type="button" onclick="showPage('knowledge')" data-app-cat="police" data-app-keywords="คลังความรู้ กฎหมาย ระเบียบ แนวทาง ตำรวจ knowledge"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-purple-200/80 shadow-xs text-left w-full cursor-pointer relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">📚</span>
+                            <span class="text-[10px] font-extrabold text-purple-800 bg-purple-100/90 px-2 py-0.5 rounded-md border border-purple-200/60">โมดูลในระบบ</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-purple-700">
-                            คลังความรู้ตำรวจ</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ระเบียบและกฎหมาย</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-purple-700 transition">
+                                คลังความรู้ตำรวจ
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ระเบียบและข้อกฎหมาย</p>
+                        </div>
                     </button>
 
-                    <button type="button" onclick="showPage('sendflex')"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-emerald-200 shadow-md text-left w-full cursor-pointer">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">⚡</span>
+                    <!-- App 5: Sendflex -->
+                    <button type="button" onclick="showPage('sendflex')" data-app-cat="police" data-app-keywords="สร้าง flex การ์ด flex ดักจับ พิกัด ไลน์ sendflex tracking"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-emerald-200/80 shadow-xs text-left w-full cursor-pointer relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">⚡</span>
+                            <span class="text-[10px] font-extrabold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200/60">โมดูลในระบบ</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-emerald-700">
-                            สร้างการ์ด Flex</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ดักจับพิกัดสืบสวน (Flex Studio)</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-emerald-700 transition">
+                                สร้างการ์ด Flex
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ดักจับพิกัดสืบสวน (Flex Studio)</p>
+                        </div>
                     </button>
 
-                    <a href="https://polis.police.go.th" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-cyan-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">📊</span>
+                    <!-- App 6: Polis -->
+                    <a href="https://polis.police.go.th" target="_blank" rel="noopener noreferrer" data-app-cat="police" data-app-keywords="polis ระบบสารสนเทศ ตร ตำรวจ"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-cyan-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">📊</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-cyan-700">
-                            POLIS</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ระบบสารสนเทศ ตร.</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-cyan-700 transition">
+                                POLIS
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ระบบสารสนเทศ ตร.</p>
+                        </div>
                     </a>
 
-                    <a href="https://policeone.go.th" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🏛️</span>
+                    <!-- App 7: Police One -->
+                    <a href="https://policeone.go.th" target="_blank" rel="noopener noreferrer" data-app-cat="police" data-app-keywords="policeone รวมศูนย์ ตร ตำรวจ"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-blue-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🏛️</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-indigo-700">
-                            Police One</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ระบบรวมศูนย์ ตร.</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-indigo-700 transition">
+                                Police One
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ระบบรวมศูนย์ ตร.</p>
+                        </div>
                     </a>
 
-                    <!-- Government Apps Section -->
-                    <div class="col-span-2 md:col-span-3 lg:col-span-4 mt-6 mb-2">
-                        <h3 class="text-lg font-black text-police-blue flex items-center"><span class="mr-2">🏛️</span>
-                            ตรวจสอบข้อมูลหน่วยงานราชการ</h3>
-                    </div>
-
-                    <a href="https://www.dopa.go.th" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-green-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🏛️</span>
+                    <!-- App 8: กรมการปกครอง -->
+                    <a href="https://www.dopa.go.th" target="_blank" rel="noopener noreferrer" data-app-cat="gov" data-app-keywords="กรมการปกครอง dopa ทะเบียนราษฎร บัตรประชาชน"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-green-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🏛️</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-green-700">
-                            กรมการปกครอง</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ทะเบียนราษฎร</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-green-700 transition">
+                                กรมการปกครอง
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ทะเบียนราษฎร (DOPA)</p>
+                        </div>
                     </a>
 
-                    <a href="https://www.dlt.go.th" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-orange-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🚗</span>
+                    <!-- App 9: กรมขนส่งทางบก -->
+                    <a href="https://www.dlt.go.th" target="_blank" rel="noopener noreferrer" data-app-cat="gov" data-app-keywords="กรมขนส่งทางบก dlt ทะเบียนรถ ใบขับขี่ รถยนต์"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-orange-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🚗</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-orange-700">
-                            กรมขนส่งทางบก</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ทะเบียนรถ / ใบขับขี่</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-orange-700 transition">
+                                กรมขนส่งทางบก
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ทะเบียนรถ / ใบขับขี่ (DLT)</p>
+                        </div>
                     </a>
 
-                    <a href="https://www.dol.go.th" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-amber-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">📜</span>
+                    <!-- App 10: กรมที่ดิน -->
+                    <a href="https://www.dol.go.th" target="_blank" rel="noopener noreferrer" data-app-cat="gov" data-app-keywords="กรมที่ดิน dol โฉนด แปลงที่ดิน ระวางที่ดิน"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-amber-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">📜</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-amber-700">
-                            กรมที่ดิน</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ค้นหาแปลงที่ดิน</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-amber-700 transition">
+                                กรมที่ดิน
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ค้นหาแปลงที่ดิน (DOL)</p>
+                        </div>
                     </a>
 
-                    <a href="https://www.coj.go.th" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-purple-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">⚖️</span>
+                    <!-- App 11: ศาลยุติธรรม -->
+                    <a href="https://www.coj.go.th" target="_blank" rel="noopener noreferrer" data-app-cat="gov" data-app-keywords="ศาลยุติธรรม coj ข้อมูลคดี ศาล หมายจับ"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-purple-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">⚖️</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-purple-700">
-                            ศาลยุติธรรม</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">ข้อมูลคดีศาล</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-purple-700 transition">
+                                ศาลยุติธรรม
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">ข้อมูลคดีศาล (COJ)</p>
+                        </div>
                     </a>
 
-                    <!-- Utility Apps Section -->
-                    <div class="col-span-2 md:col-span-3 lg:col-span-4 mt-6 mb-2">
-                        <h3 class="text-lg font-black text-police-blue flex items-center"><span class="mr-2">🔧</span>
-                            เครื่องมือช่วยเหลือ</h3>
-                    </div>
-
-                    <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🗺️</span>
+                    <!-- App 12: Google Maps -->
+                    <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" data-app-cat="tools" data-app-keywords="google maps แผนที่ พิกัด ค้นหาทาง นำทาง"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-blue-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🗺️</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-blue-700">
-                            Google Maps</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">แผนที่และพิกัด</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-blue-700 transition">
+                                Google Maps
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">แผนที่และค้นหาพิกัด</p>
+                        </div>
                     </a>
 
-                    <a href="https://translate.google.com" target="_blank" rel="noopener noreferrer"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-pink-100 shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🌐</span>
+                    <!-- App 13: Google Translate -->
+                    <a href="https://translate.google.com" target="_blank" rel="noopener noreferrer" data-app-cat="tools" data-app-keywords="แปลภาษา google translate ภาษาอังกฤษ ภาษาต่างประเทศ"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-pink-100 shadow-xs text-left block relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🌐</span>
+                            <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">ภายนอก ↗</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-pink-700">
-                            แปลภาษา</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">Google Translate</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-pink-700 transition">
+                                แปลภาษา
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">Google Translate</p>
+                        </div>
                     </a>
 
-                    <button onclick="openCalculator()"
-                        class="app-card group glass rounded-2xl p-5 sm:p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-teal-100 text-left shadow-md">
-                        <div
-                            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform mx-auto">
-                            <span class="text-3xl">🔢</span>
+                    <!-- App 14: Calculator -->
+                    <button onclick="openCalculator()" data-app-cat="tools" data-app-keywords="เครื่องคิดเลข คำนวณ บวกเลข calculator"
+                        class="app-card group glass rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 border border-teal-100 shadow-xs text-left w-full cursor-pointer relative flex flex-col justify-between">
+                        <div class="flex items-center justify-between w-full mb-3">
+                            <span class="text-2xl sm:text-3xl">🔢</span>
+                            <span class="text-[10px] font-extrabold text-teal-800 bg-teal-100/90 px-2 py-0.5 rounded-md border border-teal-200/60">เครื่องมือ</span>
                         </div>
-                        <h4
-                            class="font-extrabold text-police-blue text-center mb-1 text-sm sm:text-base group-hover:text-teal-700">
-                            เครื่องคิดเลข</h4>
-                        <p class="text-xs text-gray-500 text-center font-medium">คำนวณรวดเร็ว</p>
+                        <div>
+                            <h4 class="font-black text-police-blue text-xs sm:text-base group-hover:text-teal-700 transition">
+                                เครื่องคิดเลข
+                            </h4>
+                            <p class="text-[11px] text-gray-500 font-medium mt-0.5 line-clamp-1">คำนวณรวดเร็ว</p>
+                        </div>
                     </button>
 
                 </div>
@@ -1241,56 +1350,69 @@
         </div>
 
     </main>
-    <!-- ========================================
-         FOOTER SECTION
-    ======================================== -->
-    <footer
-        class="bg-gradient-to-r from-police-blue via-blue-800 to-police-blue text-white py-4 mt-4 shadow-2xl border-t-4 border-police-gold">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center space-x-3 mb-4">
-                <div class="w-8 h-8 bg-police-gold rounded-xl flex items-center justify-center shadow-lg"><span
-                        class="text-police-blue font-black text-sm">SB</span>
-                </div>
-                <p class="text-xl font-bold">San BOT</p>
-            </div>
-            <p class="text-sm opacity-90 font-medium">พัฒนาโดย San Kunakorn | ฝ่ายสืบสวน สภ.นิคมพัฒนา ภ.จว.ระยอง</p>
-            <p class="text-xs opacity-75 mt-2">© 2024 All Rights Reserved</p>
-        </div>
-    </footer>
 
     <!-- ========================================
-         MOBILE BOTTOM NAVIGATION BAR
+         MODERN MASTER NAVIGATION DOCK (Unified System)
     ======================================== -->
-    <nav
-        class="bottom-nav sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-blue-100 shadow-2xl safe-area-inset-bottom">
-        <div class="flex justify-around items-center py-2 px-1">
+    <nav id="master-bottom-nav"
+        class="bottom-nav fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl sm:px-4 pointer-events-none">
+        <div
+            class="pointer-events-auto bottom-nav-container px-2 py-1.5 sm:py-2 flex justify-around sm:justify-between items-center gap-1 safe-area-inset-bottom">
             <button onclick="showPage('report')" id="bottom-btn-report"
-                class="bottom-nav-btn flex flex-col items-center px-2 py-1 rounded-xl transition-all duration-200 text-blue-400 hover:text-police-blue active-bottom">
-                <span class="text-2xl">📍</span>
-                <span class="text-xs font-bold mt-0.5">ตรวจ</span>
+                class="bottom-nav-btn group active-bottom" aria-label="ตรวจที่เกิดเหตุ">
+                <div class="nav-icon-wrapper">
+                    <span class="nav-icon">📍</span>
+                </div>
+                <span class="nav-label">ตรวจ</span>
+                <span class="nav-indicator"></span>
             </button>
             <button onclick="showPage('search')" id="bottom-btn-search"
-                class="bottom-nav-btn flex flex-col items-center px-2 py-1 rounded-xl transition-all duration-200 text-blue-300 hover:text-police-blue">
-                <span class="text-2xl">🔍</span>
-                <span class="text-xs font-bold mt-0.5">ค้นหา</span>
+                class="bottom-nav-btn group" aria-label="ค้นหาข้อมูล">
+                <div class="nav-icon-wrapper">
+                    <span class="nav-icon">🔍</span>
+                </div>
+                <span class="nav-label">ค้นหา</span>
+                <span class="nav-indicator"></span>
             </button>
             <button onclick="showPage('investigation')" id="bottom-btn-investigation"
-                class="bottom-nav-btn flex flex-col items-center px-2 py-1 rounded-xl transition-all duration-200 text-blue-300 hover:text-police-blue">
-                <span class="text-2xl">🕵️</span>
-                <span class="text-xs font-bold mt-0.5">สืบสวน</span>
+                class="bottom-nav-btn group" aria-label="งานสืบสวน">
+                <div class="nav-icon-wrapper">
+                    <span class="nav-icon">🕵️</span>
+                </div>
+                <span class="nav-label">สืบสวน</span>
+                <span class="nav-indicator"></span>
             </button>
             <button onclick="showPage('timecal')" id="bottom-btn-timecal"
-                class="bottom-nav-btn flex flex-col items-center px-2 py-1 rounded-xl transition-all duration-200 text-blue-300 hover:text-police-blue">
-                <span class="text-2xl">⏰</span>
-                <span class="text-xs font-bold mt-0.5">เวลา</span>
+                class="bottom-nav-btn group" aria-label="คำนวณเวลา">
+                <div class="nav-icon-wrapper">
+                    <span class="nav-icon">⏰</span>
+                </div>
+                <span class="nav-label">เวลา</span>
+                <span class="nav-indicator"></span>
             </button>
             <button onclick="showPage('sanapp')" id="bottom-btn-sanapp"
-                class="bottom-nav-btn flex flex-col items-center px-2 py-1 rounded-xl transition-all duration-200 text-blue-300 hover:text-police-blue">
-                <span class="text-2xl">📱</span>
-                <span class="text-xs font-bold mt-0.5">APP</span>
+                class="bottom-nav-btn group" aria-label="San APP Center">
+                <div class="nav-icon-wrapper">
+                    <span class="nav-icon">📱</span>
+                </div>
+                <span class="nav-label">APP</span>
+                <span class="nav-indicator"></span>
             </button>
         </div>
     </nav>
+
+    <!-- Floating Scroll-to-Top Button -->
+    <button id="scroll-to-top-btn" onclick="scrollToTopSmooth()"
+        class="fixed right-4 bottom-24 sm:bottom-20 z-40 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/95 text-police-blue border-2 border-blue-200/80 shadow-lg flex items-center justify-center opacity-0 pointer-events-none transform translate-y-4 hover:bg-police-blue hover:text-white hover:border-police-blue active:scale-95"
+        title="เลื่อนขึ้นด้านบน" aria-label="เลื่อนขึ้นบนสุด">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+    </button>
+
+    <!-- Modern Toast Notification Container -->
+    <div id="san-toast-container" aria-live="polite"></div>
+
     <!--========================== SCRIPTS SECTION ================== -->
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>

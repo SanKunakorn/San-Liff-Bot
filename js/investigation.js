@@ -8,22 +8,67 @@ const invData = {
     timeline: JSON.parse(localStorage.getItem('inv_timeline') || '[]'),
     sceneReports: JSON.parse(localStorage.getItem('inv_scene_reports') || '[]'),
 };
-
-let qrVideoStream = null;
-let qrAnimFrame = null;
-
-// ---- สลับ Tab ----
+// ---- สลับ Tab 4 หมวดหลัก ----
 function switchInvTab(tab) {
     document.querySelectorAll('.inv-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.inv-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.inv-tab-pill').forEach(b => b.classList.remove('active'));
     const section = document.getElementById('inv-section-' + tab);
     const tabBtn = document.getElementById('inv-tab-' + tab);
     if (section) section.classList.add('active');
-    if (tabBtn) tabBtn.classList.add('active');
-
-    // หยุดกล้องเมื่อเปลี่ยน tab
-    if (tab !== 'qrscan') stopQRScanner();
+    if (tabBtn) {
+        tabBtn.classList.add('active');
+        try {
+            tabBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } catch(e) {}
+    }
+    try { sessionStorage.setItem('inv_active_tab', tab); } catch(e) {}
 }
+
+// ---- ตัวควบคุมการเปิด-ปิดฟอร์มแบบพับเก็บได้ (Collapsible Forms) ----
+function toggleTimelineForm(forceState) {
+    const form = document.getElementById('timeline-form-container');
+    const btn = document.getElementById('btn-toggle-timeline-form');
+    if (!form) return;
+    const isOpening = (typeof forceState === 'boolean') ? forceState : (form.style.display === 'none');
+    form.style.display = isOpening ? 'block' : 'none';
+    if (btn) btn.innerHTML = isOpening ? '<span>✕</span> <span>ปิดฟอร์ม</span>' : '<span>➕</span> <span>เพิ่มเหตุการณ์</span>';
+    if (isOpening) {
+        const dInput = document.getElementById('tl-date');
+        if (dInput && !dInput.value) dInput.value = new Date().toISOString().split('T')[0];
+        const tInput = document.getElementById('tl-time');
+        if (tInput && !tInput.value) {
+            const now = new Date();
+            tInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+        try { form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch(e) {}
+    }
+}
+
+function toggleSuspectForm(forceState) {
+    const form = document.getElementById('suspect-form-container');
+    const btn = document.getElementById('btn-toggle-suspect-form');
+    if (!form) return;
+    const isOpening = (typeof forceState === 'boolean') ? forceState : (form.style.display === 'none');
+    form.style.display = isOpening ? 'block' : 'none';
+    if (btn) btn.innerHTML = isOpening ? '<span>✕</span> <span>ปิดฟอร์ม</span>' : '<span>➕</span> <span>เพิ่มบุคคล</span>';
+    if (isOpening) {
+        try { form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch(e) {}
+    }
+}
+
+function selectRoleChip(roleName) {
+    const hiddenInput = document.getElementById('inv-role');
+    if (hiddenInput) hiddenInput.value = roleName;
+    const chips = document.querySelectorAll('#role-chips-group .role-chip');
+    chips.forEach(c => {
+        if (c.textContent.trim() === roleName) {
+            c.classList.add('selected');
+        } else {
+            c.classList.remove('selected');
+        }
+    });
+}
+
 
 // ==========================================
 // SCENE REPORTS INTEGRATION (ตรวจที่เกิดเหตุ - แยกชีต SceneReports)
@@ -526,39 +571,100 @@ function renderSuspectList() {
     const container = document.getElementById('suspect-list');
     if (!container) return;
     if (!invData.suspects.length) {
-        container.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#94a3b8;"><div style="font-size:2rem;">📋</div><p style="font-weight:600;">ยังไม่มีบันทึก</p></div>';
+        container.innerHTML = `
+            <div class="text-center py-8 text-slate-400">
+                <div class="text-3xl mb-1">👥</div>
+                <p class="font-semibold text-sm">ยังไม่มีบันทึกข้อมูลบุคคล</p>
+                <p class="text-xs text-slate-400">แตะปุ่ม "➕ เพิ่มบุคคล" เพื่อบันทึกผู้ต้องสงสัยหรือพยาน</p>
+            </div>
+        `;
         return;
     }
-    container.innerHTML = `<h4 style="font-weight:800;color:#1e3a8a;margin-bottom:10px;">📋 บันทึกที่บันทึกไว้ (${invData.suspects.length} รายการ)</h4>` +
-    invData.suspects.map(s => {
-        const titleName = (s.fname || s.officerName || s.title || '') + ' ' + (s.lname || '');
-        const roleText = s.role || s.noteType || s.officerRank || 'ข้อมูลสืบสวน';
+
+    container.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-700">👥 รายชื่อบุคคลที่เกี่ยวข้อง (${invData.suspects.length} ราย)</span>
+            <span class="text-[11px] text-slate-400">บันทึกล่าสุด</span>
+        </div>
+    ` + invData.suspects.map(s => {
+        const titleName = ((s.fname || s.officerName || s.title || '') + ' ' + (s.lname || '')).trim();
+        const roleText = s.role || s.noteType || 'ผู้ต้องสงสัย';
         const detailText = s.note || s.content || s.details || '';
-        const badgeColor = roleText.includes('ผู้ต้องสงสัย') ? 'badge-red' : (roleText.includes('พยาน') ? 'badge-blue' : 'badge-amber');
+
+        let roleBadgeClass = 'bg-red-50 text-red-700 border-red-200';
+        if (roleText.includes('พยาน')) roleBadgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+        else if (roleText.includes('สายสืบ')) roleBadgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
+        else if (roleText.includes('ผู้เสียหาย')) roleBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+        else if (roleText.includes('ผู้ถูกจับกุม')) roleBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
 
         return `
-        <div class="card-gradient" style="background:rgba(255,255,255,0.95);border:2px solid #e0e7ff;border-radius:14px;padding:14px;margin-bottom:10px;">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
+            <div class="flex items-start justify-between gap-2">
                 <div>
-                    <span class="badge ${badgeColor}">${roleText}</span>
-                    <span style="font-weight:800;color:#1e3a8a;font-size:1rem;margin-left:6px;">${titleName || 'ไม่ระบุชื่อ'}</span>
-                    ${s.age ? `<span style="font-size:0.8rem;color:#64748b;">(${s.age} ปี / ${s.gender||'-'})</span>` : ''}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${roleBadgeClass}">
+                        ${roleText}
+                    </span>
+                    <span class="font-extrabold text-blue-950 text-sm ml-1.5">${titleName || 'ไม่ระบุชื่อ'}</span>
+                    ${s.age ? `<span class="text-xs text-slate-500 ml-1">(${s.age} ปี / ${s.gender || '-'})</span>` : ''}
                 </div>
-                <button class="btn-danger" onclick="deleteSuspect('${s.id}')" style="padding:4px 10px;font-size:0.8rem;">🗑️ ลบ</button>
-            </div>
-            ${s.phone ? `<div style="margin-top:6px;font-size:0.85rem;color:#334155;">📞 <b>เบอร์:</b> <a href="tel:${s.phone}" style="color:#2563eb;">${s.phone}</a></div>` : ''}
-            ${s.appearance ? `<div style="margin-top:4px;font-size:0.85rem;color:#334155;">👁️ <b>รูปพรรณ:</b> ${s.appearance}</div>` : ''}
-            ${s.address ? `<div style="margin-top:4px;font-size:0.85rem;color:#334155;">📍 <b>ที่อยู่/สถานที่:</b> ${s.address}</div>` : ''}
-            ${detailText ? `<div style="margin-top:6px;font-size:0.85rem;color:#d97706;background:#fffbeb;padding:8px 10px;border-radius:8px;border:1px solid #fef3c7;">📝 ${detailText}</div>` : ''}
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9;flex-wrap:wrap;gap:8px;">
-                <button class="btn-copy" onclick="generateSuspectTrackingLink('${s.id}')" style="background:linear-gradient(135deg,#4f46e5,#6366f1);font-size:0.8rem;padding:5px 12px;border-radius:8px;display:flex;align-items:center;gap:4px;">
-                    <span>🎯</span> <span>สร้างลิงก์แกะรอย (Flex/Telegram)</span>
+                <button type="button" class="text-red-500 hover:text-red-700 p-1 text-xs rounded transition flex-shrink-0" onclick="deleteSuspect('${s.id}')" title="ลบข้อมูล">
+                    🗑️
                 </button>
-                <div style="font-size:0.75rem;color:#94a3b8;">บันทึก: ${s.savedAt || s.createdAt || '-'}</div>
+            </div>
+
+            ${s.phone ? `
+                <div class="mt-1.5 text-xs text-slate-600 flex items-center gap-1">
+                    <span>📞</span> <b>เบอร์โทร:</b> 
+                    <a href="tel:${s.phone}" class="text-blue-600 font-bold hover:underline">${s.phone}</a>
+                </div>
+            ` : ''}
+
+            ${s.appearance ? `
+                <div class="mt-1 text-xs text-slate-600">
+                    👁️ <b>รูปพรรณ:</b> ${s.appearance}
+                </div>
+            ` : ''}
+
+            ${s.address ? `
+                <div class="mt-1 text-xs text-slate-600">
+                    📍 <b>ที่อยู่:</b> ${s.address}
+                </div>
+            ` : ''}
+
+            ${detailText ? `
+                <div class="mt-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-2 leading-relaxed">
+                    📝 ${detailText}
+                </div>
+            ` : ''}
+
+            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                <button type="button" onclick="prepareTrackingForSuspect('${s.id}')" class="bg-gradient-to-r from-blue-700 to-indigo-700 text-white text-xs font-bold py-1 px-2.5 rounded-lg shadow-xs flex items-center gap-1 hover:brightness-105 active:scale-95 transition">
+                    <span>🎯</span> <span>ดักพิกัดบุคคลนี้</span>
+                </button>
+                <div class="text-[11px] text-slate-400">
+                    บันทึก: ${s.savedAt || s.createdAt || '-'}
+                </div>
             </div>
         </div>
         `;
     }).join('');
+}
+
+function prepareTrackingForSuspect(suspectId) {
+    const suspect = (invData.suspects || []).find(s => String(s.id) === String(suspectId));
+    if (!suspect) return;
+    const name = ((suspect.fname || '') + ' ' + (suspect.lname || '')).trim();
+    const phone = suspect.phone || '';
+    
+    // เติมข้อมูลลงในฟอร์มดักพิกัด
+    const nameInput = document.getElementById('track-target-name');
+    const phoneInput = document.getElementById('track-target-phone');
+    if (nameInput) nameInput.value = name;
+    if (phoneInput) phoneInput.value = phone;
+    
+    // สลับไปยังแท็บดักพิกัด
+    switchInvTab('tracking');
+    showInvAlert('success', `ส่งข้อมูล "${name || 'เป้าหมาย'}" ไปยังศูนย์ดักพิกัดแล้ว`);
 }
 
 async function deleteSuspect(id) {
@@ -603,10 +709,9 @@ function clearSuspectForm() {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-    ['inv-gender','inv-role'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.selectedIndex = 0;
-    });
+    const genderEl = document.getElementById('inv-gender');
+    if (genderEl) genderEl.selectedIndex = 0;
+    selectRoleChip('ผู้ต้องสงสัย');
 }
 
 // ==========================================
@@ -672,6 +777,7 @@ async function addTimelineEvent() {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
+    toggleTimelineForm(false);
 
     if (typeof Swal !== 'undefined') {
         Swal.fire({
@@ -704,11 +810,22 @@ function renderTimeline() {
     const container = document.getElementById('timeline-display');
     if (!container) return;
     if (!invData.timeline.length) {
-        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;"><div style="font-size:3rem;">⏱️</div><p style="font-weight:600;">ยังไม่มีเหตุการณ์</p></div>';
+        container.innerHTML = `
+            <div class="text-center py-8 text-slate-400">
+                <div class="text-3xl mb-1">⏱️</div>
+                <p class="font-semibold text-sm">ยังไม่มีเหตุการณ์ใน Timeline</p>
+                <p class="text-xs text-slate-400">แตะปุ่ม "➕ เพิ่มเหตุการณ์" ด้านบนเพื่อเริ่มบันทึก</p>
+            </div>
+        `;
         return;
     }
-    container.innerHTML = `<h4 style="font-weight:800;color:#1e3a8a;margin-bottom:12px;">📅 Timeline เหตุการณ์ (${invData.timeline.length} รายการ)</h4>` +
-    invData.timeline.map((item, i) => {
+
+    container.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-700">⏱️ รายการเหตุการณ์ทั้งหมด (${invData.timeline.length} รายการ)</span>
+            <span class="text-[11px] text-slate-400">เรียงตามวัน-เวลา</span>
+        </div>
+    ` + invData.timeline.map((item, i) => {
         let dVal = item.date;
         let tVal = item.time || '';
         if (!dVal || dVal.startsWith('RPT-') || dVal.startsWith('CASE-')) {
@@ -727,18 +844,26 @@ function renderTimeline() {
         const eventText = item.event || item.detail || item.title || '-';
 
         return `
-        <div class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div style="background:rgba(255,255,255,0.9);border:2px solid #e0e7ff;border-radius:14px;padding:12px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-                    <div>
-                        <span class="badge badge-blue">${badgeDate} ${badgeTime}</span>
-                        ${item.location ? `<span style="font-size:0.82rem;color:#64748b;margin-left:6px;">📍 ${item.location}</span>` : ''}
+        <div class="timeline-card-item">
+            <div class="timeline-card-dot"></div>
+            <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                            ${badgeDate} ${badgeTime}
+                        </span>
+                        ${item.location ? `<span class="text-xs text-slate-600 font-medium">📍 ${item.location}</span>` : ''}
                     </div>
-                    <button class="btn-danger" onclick="deleteTimeline('${item.id}')" style="padding:3px 8px;font-size:0.75rem;">🗑️</button>
+                    <button type="button" class="text-red-500 hover:text-red-700 p-1 text-xs rounded transition flex-shrink-0" onclick="deleteTimeline('${item.id}')" title="ลบเหตุการณ์">
+                        🗑️
+                    </button>
                 </div>
-                <p style="margin:8px 0 0;color:#1e293b;font-size:0.9rem;line-height:1.5;">${eventText}</p>
-                ${item.person ? `<div style="margin-top:6px;font-size:0.82rem;color:#7c3aed;">👤 ${item.person}</div>` : ''}
+                <p class="text-xs sm:text-sm text-slate-800 font-normal leading-relaxed mt-2">${eventText}</p>
+                ${item.person ? `
+                    <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center gap-1 text-xs font-semibold text-indigo-700">
+                        <span>👤</span> <span>ผู้เกี่ยวข้อง: ${item.person}</span>
+                    </div>
+                ` : ''}
             </div>
         </div>
         `;
@@ -859,113 +984,242 @@ function printOfficialInvestigationReport() {
         }).join('');
     }
 
-    // สร้าง In-Page Modal สำหรับดูตัวอย่างและพิมพ์บนมือถือ/PC
-    let modalEl = document.getElementById('report-print-modal');
-    if (!modalEl) {
-        modalEl = document.createElement('div');
-        modalEl.id = 'report-print-modal';
-        modalEl.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(4px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;';
-        document.body.appendChild(modalEl);
+    // เลือกว่าจะ mount modal ไว้ที่ window.parent.document (หากรันอยู่ใน iframe ของ index.html) หรือ document ปกติ
+    let targetDoc = document;
+    let isParentFrame = false;
+    try {
+        if (window.parent && window.parent !== window && window.parent.document && window.parent.document.body) {
+            targetDoc = window.parent.document;
+            isParentFrame = true;
+        }
+    } catch(e) {
+        targetDoc = document;
+        isParentFrame = false;
     }
 
+    // ลบ Modal เก่าถ้ามีค้างอยู่ใน DOM
+    const oldLocal = document.getElementById('report-print-modal');
+    if (oldLocal) oldLocal.remove();
+    if (isParentFrame) {
+        try {
+            const oldParent = targetDoc.getElementById('report-print-modal');
+            if (oldParent) oldParent.remove();
+        } catch(e) {}
+    }
+
+    // สร้าง Modal Overlay หลักพร้อมคุณสมบัติการจัดกึ่งกลางหน้าจอมือถือ (iOS / Android / Desktop)
+    const modalEl = targetDoc.createElement('div');
+    modalEl.id = 'report-print-modal';
+    modalEl.style.cssText = `
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        background: rgba(15, 23, 42, 0.82) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)) !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    `;
+
     const reportContentHtml = `
-        <div id="print-area" style="background:#fff;color:#000;padding:24px;border-radius:16px;max-width:850px;width:100%;max-height:82vh;overflow-y:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);font-family:'Sarabun',sans-serif;font-size:14px;line-height:1.6;">
-            <!-- Modal Header Actions -->
-            <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:18px;position:sticky;top:0;background:#fff;z-index:10;">
-                <div style="font-weight:800;color:#1e3a8a;font-size:16px;display:flex;align-items:center;gap:6px;">
-                    <span>📄</span> <span>ตัวอย่างรายงานการสืบสวน</span>
+        <div id="print-area" style="background:#ffffff;color:#0f172a;border-radius:20px;width:100%;max-width:min(860px, calc(100vw - 20px));max-height:calc(100dvh - 24px);max-height:calc(100vh - 24px);display:flex;flex-direction:column;box-shadow:0 25px 60px -15px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.2);font-family:'Sarabun',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13.5px;line-height:1.6;margin:auto;box-sizing:border-box;overflow:hidden;">
+            <!-- Modal Header Actions (Sticky / Pinned Top) -->
+            <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:2px solid #e2e8f0;background:#ffffff;flex-shrink:0;z-index:10;box-sizing:border-box;">
+                <div style="font-weight:800;color:#1e3a8a;font-size:clamp(13.5px, 3.8vw, 16px);display:flex;align-items:center;gap:6px;min-width:0;">
+                    <span style="font-size:18px;">📄</span>
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ตัวอย่างรายงานการสืบสวน</span>
                 </div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button onclick="triggerDirectPrint()" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-weight:700;padding:8px 14px;border-radius:10px;border:none;cursor:pointer;font-size:13px;box-shadow:0 4px 10px rgba(37,99,235,0.3);">
-                        🖨️ พิมพ์ / บันทึก PDF
+                <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+                    <button id="btn-print-report" type="button" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#ffffff;font-weight:700;padding:7px 11px;border-radius:10px;border:none;cursor:pointer;font-size:12px;box-shadow:0 3px 8px rgba(37,99,235,0.3);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">
+                        <span>🖨️</span> <span>พิมพ์ / PDF</span>
                     </button>
-                    <button onclick="copyFullReportText()" style="background:#f1f5f9;color:#334155;font-weight:700;padding:8px 12px;border-radius:10px;border:1px solid #cbd5e1;cursor:pointer;font-size:13px;">
-                        📋 คัดลอก
+                    <button id="btn-copy-report" type="button" style="background:#f1f5f9;color:#334155;font-weight:700;padding:7px 10px;border-radius:10px;border:1px solid #cbd5e1;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">
+                        <span>📋</span> <span>คัดลอก</span>
                     </button>
-                    <button onclick="closePrintModal()" style="background:#fee2e2;color:#dc2626;font-weight:700;padding:8px 12px;border-radius:10px;border:none;cursor:pointer;font-size:13px;">
-                        ✖️ ปิด
+                    <button id="btn-close-report" type="button" style="background:#fee2e2;color:#dc2626;font-weight:700;padding:7px 10px;border-radius:10px;border:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">
+                        <span>✖️</span> <span>ปิด</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Report Document Body -->
-            <div style="text-align:center;font-weight:800;font-size:20px;color:#0f172a;margin-bottom:16px;text-decoration:underline;">
-                บันทึกรายงานการสืบสวนคดี
-            </div>
-
-            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;line-height:1.7;">
-                <div><b>วันที่จัดทำรายงาน:</b> ${reportDate}</div>
-                <div><b>หน่วยงาน:</b> ชุดปฏิบัติการสืบสวนพิเศษ (San BOT System)</div>
-                <div><b>ผู้จัดทำรายงาน:</b> ${officerName}</div>
-            </div>
-
-            ${invData.suspects.length > 0 ? `
-                <div style="font-weight:800;font-size:15px;color:#1e3a8a;margin-top:16px;margin-bottom:8px;border-bottom:2px solid #94a3b8;padding-bottom:4px;">
-                    ๑. บัญชีรายชื่อบุคคลที่เกี่ยวข้อง / ผู้ต้องสงสัย (${invData.suspects.length} ราย)
+            <!-- Report Document Body (Smooth Scrollable Container) -->
+            <div id="report-scroll-body" style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 20px;box-sizing:border-box;">
+                <div style="text-align:center;font-weight:800;font-size:19px;color:#0f172a;margin-bottom:14px;text-decoration:underline;">
+                    บันทึกรายงานการสืบสวนคดี
                 </div>
-                <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px;">
-                    <thead>
-                        <tr style="background:#f1f5f9;">
-                            <th style="border:1px solid #cbd5e1;padding:8px 6px;text-align:center;width:7%;">ลำดับ</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:23%;">ชื่อ - นามสกุล</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:16%;">สถานะ/บทบาท</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:18%;">เบอร์โทรศัพท์</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:36%;">ตำหนิรูปพรรณ / ที่อยู่ / หมายเหตุ</th>
-                        </tr>
-                    </thead>
-                    <tbody>${suspectsTableRows}</tbody>
-                </table>
-            ` : ''}
 
-            ${invData.timeline.length > 0 ? `
-                <div style="font-weight:800;font-size:15px;color:#1e3a8a;margin-top:16px;margin-bottom:8px;border-bottom:2px solid #94a3b8;padding-bottom:4px;">
-                    ๒. ลำดับเหตุการณ์และพฤติการณ์แห่งคดี (Timeline) (${invData.timeline.length} เหตุการณ์)
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.75;">
+                    <div><b>วันที่จัดทำรายงาน:</b> ${reportDate}</div>
+                    <div><b>หน่วยงาน:</b> ชุดปฏิบัติการสืบสวนพิเศษ (San BOT System)</div>
+                    <div><b>ผู้จัดทำรายงาน:</b> ${officerName}</div>
                 </div>
-                <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px;">
-                    <thead>
-                        <tr style="background:#f1f5f9;">
-                            <th style="border:1px solid #cbd5e1;padding:8px 6px;text-align:center;width:7%;">ลำดับ</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:22%;">วัน เวลาเกิดเหตุ</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:24%;">สถานที่เกิดเหตุ</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:32%;">รายละเอียดพฤติการณ์เหตุการณ์</th>
-                            <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:15%;">ผู้เกี่ยวข้อง</th>
-                        </tr>
-                    </thead>
-                    <tbody>${timelineTableRows}</tbody>
-                </table>
-            ` : ''}
 
-            <div style="margin-top:40px;text-align:right;padding-right:20px;page-break-inside:avoid;">
-                <div style="display:inline-block;text-align:center;width:260px;font-size:13px;">
-                    <br><br>
-                    ลงชื่อ ..............................................................<br>
-                    ( ${officerName} )<br>
-                    เจ้าหน้าที่ผู้สืบสวนและรวบรวมรายงาน
+                ${invData.suspects.length > 0 ? `
+                    <div style="font-weight:800;font-size:14.5px;color:#1e3a8a;margin-top:16px;margin-bottom:8px;border-bottom:2px solid #94a3b8;padding-bottom:4px;">
+                        ๑. บัญชีรายชื่อบุคคลที่เกี่ยวข้อง / ผู้ต้องสงสัย (${invData.suspects.length} ราย)
+                    </div>
+                    <div class="table-responsive" style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:18px;border:1px solid #cbd5e1;border-radius:8px;">
+                        <table style="min-width:540px;width:100%;border-collapse:collapse;font-size:12px;background:#ffffff;">
+                            <thead>
+                                <tr style="background:#f1f5f9;">
+                                    <th style="border:1px solid #cbd5e1;padding:8px 6px;text-align:center;width:7%;">ลำดับ</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:23%;">ชื่อ - นามสกุล</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:16%;">สถานะ/บทบาท</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:18%;">เบอร์โทรศัพท์</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:36%;">ตำหนิรูปพรรณ / ที่อยู่ / หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody>${suspectsTableRows}</tbody>
+                        </table>
+                    </div>
+                ` : ''}
+
+                ${invData.timeline.length > 0 ? `
+                    <div style="font-weight:800;font-size:14.5px;color:#1e3a8a;margin-top:16px;margin-bottom:8px;border-bottom:2px solid #94a3b8;padding-bottom:4px;">
+                        ๒. ลำดับเหตุการณ์และพฤติการณ์แห่งคดี (Timeline) (${invData.timeline.length} เหตุการณ์)
+                    </div>
+                    <div class="table-responsive" style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:18px;border:1px solid #cbd5e1;border-radius:8px;">
+                        <table style="min-width:540px;width:100%;border-collapse:collapse;font-size:12px;background:#ffffff;">
+                            <thead>
+                                <tr style="background:#f1f5f9;">
+                                    <th style="border:1px solid #cbd5e1;padding:8px 6px;text-align:center;width:7%;">ลำดับ</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:22%;">วัน เวลาเกิดเหตุ</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:24%;">สถานที่เกิดเหตุ</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:32%;">รายละเอียดพฤติการณ์เหตุการณ์</th>
+                                    <th style="border:1px solid #cbd5e1;padding:8px;text-align:left;width:15%;">ผู้เกี่ยวข้อง</th>
+                                </tr>
+                            </thead>
+                            <tbody>${timelineTableRows}</tbody>
+                        </table>
+                    </div>
+                ` : ''}
+
+                <div style="margin-top:32px;margin-bottom:12px;text-align:right;padding-right:16px;page-break-inside:avoid;">
+                    <div style="display:inline-block;text-align:center;width:260px;font-size:13px;line-height:1.7;">
+                        <br><br>
+                        ลงชื่อ ..............................................................<br>
+                        ( ${officerName} )<br>
+                        เจ้าหน้าที่ผู้สืบสวนและรวบรวมรายงาน
+                    </div>
                 </div>
             </div>
         </div>
     `;
 
     modalEl.innerHTML = reportContentHtml;
-    modalEl.style.display = 'flex';
+    targetDoc.body.appendChild(modalEl);
+
+    // ป้องกันหน้าพื้นหลังเลื่อนขณะเปิดดูรายงาน
+    try { targetDoc.body.style.overflow = 'hidden'; } catch(e) {}
+    try { document.body.style.overflow = 'hidden'; } catch(e) {}
+
+    // ผูก Event Listeners ปลอดภัยสำหรับปุ่มด้านใน
+    const btnPrint = modalEl.querySelector('#btn-print-report');
+    const btnCopy = modalEl.querySelector('#btn-copy-report');
+    const btnClose = modalEl.querySelector('#btn-close-report');
+
+    if (btnPrint) {
+        btnPrint.onclick = (e) => {
+            e.stopPropagation();
+            triggerDirectPrint();
+        };
+    }
+
+    if (btnCopy) {
+        btnCopy.onclick = (e) => {
+            e.stopPropagation();
+            copyFullReportText();
+            const originalContent = btnCopy.innerHTML;
+            btnCopy.innerHTML = '<span>✅</span> <span>คัดลอกแล้ว</span>';
+            btnCopy.style.background = '#dcfce7';
+            btnCopy.style.color = '#15803d';
+            btnCopy.style.borderColor = '#86efac';
+            setTimeout(() => {
+                if (btnCopy) {
+                    btnCopy.innerHTML = originalContent;
+                    btnCopy.style.background = '#f1f5f9';
+                    btnCopy.style.color = '#334155';
+                    btnCopy.style.borderColor = '#cbd5e1';
+                }
+            }, 2000);
+        };
+    }
+
+    if (btnClose) {
+        btnClose.onclick = (e) => {
+            e.stopPropagation();
+            closePrintModal();
+        };
+    }
+
+    // แตะพื้นที่มืดภายนอกกรอบเพื่อปิด Modal
+    modalEl.onclick = (e) => {
+        if (e.target === modalEl) {
+            closePrintModal();
+        }
+    };
+
+    // กดปุ่ม Escape บนคีย์บอร์ดเพื่อปิด Modal
+    const handleEsc = (e) => {
+        if (e.key === 'Escape') {
+            closePrintModal();
+            try { targetDoc.removeEventListener('keydown', handleEsc); } catch(err) {}
+            try { document.removeEventListener('keydown', handleEsc); } catch(err) {}
+        }
+    };
+    try { targetDoc.addEventListener('keydown', handleEsc); } catch(e) {}
+    try { document.addEventListener('keydown', handleEsc); } catch(e) {}
 }
 
 function closePrintModal() {
-    const modalEl = document.getElementById('report-print-modal');
-    if (modalEl) modalEl.style.display = 'none';
+    // ลบออกจาก document ท้องถิ่น
+    const localEl = document.getElementById('report-print-modal');
+    if (localEl) localEl.remove();
+
+    // ลบออกจาก parent document (หากรันใน iframe)
+    try {
+        if (window.parent && window.parent.document) {
+            const parentEl = window.parent.document.getElementById('report-print-modal');
+            if (parentEl) parentEl.remove();
+            window.parent.document.body.style.overflow = '';
+        }
+    } catch(e) {}
+
+    try { document.body.style.overflow = ''; } catch(e) {}
 }
 
 function triggerDirectPrint() {
-    const printArea = document.getElementById('print-area');
+    let printArea = null;
+    try {
+        if (window.parent && window.parent.document) {
+            printArea = window.parent.document.getElementById('print-area');
+        }
+    } catch(e) {}
+    if (!printArea) {
+        printArea = document.getElementById('print-area');
+    }
+
     if (!printArea) {
         window.print();
         return;
     }
 
-    // สร้าง Print Frame เฉพาะส่วนรายงาน
-    const iframe = document.createElement('iframe');
+    // เลือกว่าจะสร้าง iframe สำหรับสั่งพิมพ์ใน document ใด
+    const targetDoc = (window.parent && window.parent.document) ? window.parent.document : document;
+    const iframe = targetDoc.createElement('iframe');
     iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:100%;height:100%;border:none;';
-    document.body.appendChild(iframe);
+    targetDoc.body.appendChild(iframe);
 
     const doc = iframe.contentWindow.document;
     doc.open();
@@ -979,7 +1233,8 @@ function triggerDirectPrint() {
                 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
                 body { font-family: 'Sarabun', sans-serif; font-size: 13pt; line-height: 1.6; color: #000; padding: 2cm 1.5cm; margin: 0; background: #fff; }
                 .no-print { display: none !important; }
-                table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 20px; }
+                .table-responsive { overflow: visible !important; border: none !important; margin: 0 0 20px 0 !important; }
+                table { width: 100% !important; min-width: 100% !important; border-collapse: collapse; margin-top: 12px; margin-bottom: 20px; }
                 th, td { border: 1px solid #333; padding: 6px 8px; font-size: 11pt; vertical-align: top; }
                 th { background-color: #f3f4f6; font-weight: bold; text-align: center; }
                 @page { size: A4; margin: 1.5cm 1cm; }
@@ -999,7 +1254,7 @@ function triggerDirectPrint() {
         } catch(e) {
             window.print();
         }
-        setTimeout(() => iframe.remove(), 2000);
+        setTimeout(() => iframe.remove(), 2500);
     }, 500);
 }
 
@@ -1035,299 +1290,29 @@ function copyFullReportText() {
     showInvAlert('success', 'คัดลอกข้อความรายงานทั้งหมดเรียบร้อยแล้ว');
 }
 
-// ==========================================
-// TAB 3: QR SCANNER
-// ==========================================
-function startQRScanner() {
-    const videoEl = document.getElementById('qr-video');
-    const container = document.getElementById('qr-video-container');
-    const startBtn = document.getElementById('qr-start-btn');
-    const stopBtn = document.getElementById('qr-stop-btn');
-    const resultArea = document.getElementById('qr-result-area');
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showInvAlert('error', 'เบราว์เซอร์นี้ไม่รองรับการใช้กล้อง กรุณาเปิดในแอป LINE หรือ Chrome');
-        return;
+// ผูกฟังก์ชันสำหรับการเรียกใช้งานข้าม Frame หรือ Event Handler
+window.printOfficialInvestigationReport = printOfficialInvestigationReport;
+window.closePrintModal = closePrintModal;
+window.triggerDirectPrint = triggerDirectPrint;
+window.copyFullReportText = copyFullReportText;
+try {
+    if (window.parent && window.parent !== window) {
+        window.parent.closePrintModal = closePrintModal;
+        window.parent.triggerDirectPrint = triggerDirectPrint;
+        window.parent.copyFullReportText = copyFullReportText;
     }
-
-    resultArea.innerHTML = '<div style="text-align:center;"><div class="skeleton" style="width:80px;height:80px;border-radius:50%;margin:0 auto 12px;"></div><p style="color:#64748b;font-weight:600;">กำลังเปิดกล้อง...</p></div>';
-
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(stream => {
-            qrVideoStream = stream;
-            videoEl.srcObject = stream;
-            container.style.display = 'block';
-            startBtn.style.display = 'none';
-            stopBtn.style.display = 'inline-block';
-            resultArea.innerHTML = '<div style="text-align:center;"><div style="width:12px;height:12px;background:#22c55e;border-radius:50%;animation:pulse-green 1s infinite;margin:0 auto 8px;"></div><p style="color:#16a34a;font-weight:700;">เล็งกล้องไปที่ QR Code</p></div>';
-            scanQRFrame();
-        })
-        .catch(err => {
-            const msg = err && err.message ? err.message : 'กรุณาอนุญาตการใช้งานกล้อง';
-            resultArea.innerHTML = '<div style="text-align:center;"><span style="font-size:2rem;">❌</span><p style="color:#dc2626;font-weight:700;margin-top:8px;">ไม่สามารถเปิดกล้องได้</p><p style="font-size:0.82rem;color:#64748b;">' + msg + '</p></div>';
-            showInvAlert('error', 'ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้อง');
-        });
-}
-
-function scanQRFrame() {
-    const videoEl = document.getElementById('qr-video');
-    const canvas = document.getElementById('qr-canvas');
-    const ctx = canvas ? canvas.getContext('2d') : null;
-
-    function tick() {
-        if (videoEl && videoEl.readyState === videoEl.HAVE_ENOUGH_DATA && ctx && canvas) {
-            canvas.width = videoEl.videoWidth;
-            canvas.height = videoEl.videoHeight;
-            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-            if (typeof jsQR !== 'undefined') {
-                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-                if (code) {
-                    stopQRScanner();
-                    handleQRResult(code.data);
-                    return;
-                }
-            }
-        }
-        qrAnimFrame = requestAnimationFrame(tick);
-    }
-    qrAnimFrame = requestAnimationFrame(tick);
-}
-
-function stopQRScanner() {
-    if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
-    if (qrVideoStream) {
-        qrVideoStream.getTracks().forEach(t => t.stop());
-        qrVideoStream = null;
-    }
-    const container = document.getElementById('qr-video-container');
-    const startBtn = document.getElementById('qr-start-btn');
-    const stopBtn = document.getElementById('qr-stop-btn');
-    if (container) container.style.display = 'none';
-    if (startBtn) startBtn.style.display = 'inline-block';
-    if (stopBtn) stopBtn.style.display = 'none';
-}
-
-let lastScannedData = '';
-function handleQRResult(data) {
-    const resultArea = document.getElementById('qr-result-area');
-    let badge = '<span class="badge badge-green">สแกนสำเร็จ</span>';
-    let extra = '';
-
-    if (/^\d{13}$/.test(data)) {
-        badge = '<span class="badge badge-blue">เลขบัตรประชาชน</span>';
-        extra = `<div style="margin-top:8px;"><button class="btn-copy" style="font-size:0.8rem;" onclick="copyToClipboard('${data}');showInvAlert('success','คัดลอกเลขบัตรแล้ว');">🔍 คัดลอกเลขบัตร</button></div>`;
-    } else if (/^https?:\/\//.test(data)) {
-        badge = '<span class="badge badge-yellow">URL</span>';
-        extra = `<div style="margin-top:8px;"><a href="${data}" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="font-size:0.82rem;">🔗 เปิดลิงก์</a></div>`;
-    } else if (/^[\d-\u0E00-\u0E7F]+$/.test(data) && data.length < 20) {
-        badge = '<span class="badge badge-yellow">ทะเบียน/รหัส</span>';
-    }
-
-    lastScannedData = data;
-    resultArea.innerHTML = `
-        <div style="width:100%;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">${badge}<span style="font-weight:700;color:#1e3a8a;">สแกนสำเร็จ!</span></div>
-            <div id="qr-result-text" style="background:#f0f9ff;border:2px solid #bae6fd;border-radius:10px;padding:12px;word-break:break-all;font-family:monospace;font-size:0.9rem;color:#0369a1;"></div>
-            ${extra}
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-                <button class="btn-copy" onclick="copyLastScannedQR()">📋 คัดลอก</button>
-                <button class="btn-secondary" onclick="startQRScanner()">🔄 สแกนใหม่</button>
-            </div>
-        </div>
-    `;
-    const txtBox = document.getElementById('qr-result-text');
-    if (txtBox) txtBox.textContent = data;
-}
-
-function copyLastScannedQR() {
-    if (lastScannedData) {
-        copyToClipboard(lastScannedData);
-        showInvAlert('success', 'คัดลอกข้อมูลแล้ว');
-    }
-}
-
-function manualInputQR() {
-    const val = prompt('กรอกข้อมูลที่ต้องการ (เลขบัตร, ทะเบียนรถ, หรือ URL):');
-    if (val && val.trim()) handleQRResult(val.trim());
-}
-
-// ==========================================
-// TAB 4: TEMPLATES
-// ==========================================
-const templates = {
-    arrest: {
-        title: '🚔 บันทึกการจับกุม',
-        fields: [
-            { id: 'arr-officer', label: 'เจ้าหน้าที่ผู้จับกุม', type: 'text', placeholder: 'ยศ ชื่อ-นามสกุล' },
-            { id: 'arr-date', label: 'วันที่จับกุม', type: 'date' },
-            { id: 'arr-time', label: 'เวลา', type: 'time' },
-            { id: 'arr-location', label: 'สถานที่จับกุม', type: 'text', placeholder: 'สถานที่เกิดเหตุ' },
-            { id: 'arr-name', label: 'ชื่อ-นามสกุลผู้ถูกจับ', type: 'text', placeholder: 'ชื่อ-นามสกุล' },
-            { id: 'arr-charge', label: 'ข้อหา', type: 'text', placeholder: 'ข้อหาความผิด' },
-            { id: 'arr-evidence', label: 'หลักฐาน / ของกลาง', type: 'textarea', placeholder: 'ระบุหลักฐาน/ของกลาง' },
-        ],
-        generate: (f) => `บันทึกการจับกุม
-━━━━━━━━━━━━━━━━━━━━━━━
-วันที่: ${formatThaiDate(f['arr-date'])} เวลา ${f['arr-time']} น.
-เจ้าหน้าที่: ${f['arr-officer']}
-สถานที่: ${f['arr-location']}
-
-ผู้ถูกจับกุม: ${f['arr-name']}
-ข้อหา: ${f['arr-charge']}
-
-หลักฐาน/ของกลาง:
-${f['arr-evidence']}
-━━━━━━━━━━━━━━━━━━━━━━━
-ลงชื่อ: ................................................
-ผู้บันทึก: ${f['arr-officer']}`
-    },
-    interrogate: {
-        title: '🗣️ บันทึกสอบปากคำ',
-        fields: [
-            { id: 'int-date', label: 'วันที่', type: 'date' },
-            { id: 'int-time', label: 'เวลา', type: 'time' },
-            { id: 'int-officer', label: 'ผู้ทำการสอบ', type: 'text', placeholder: 'ยศ ชื่อ-นามสกุล' },
-            { id: 'int-name', label: 'ชื่อ-นามสกุลผู้ถูกสอบ', type: 'text', placeholder: 'ชื่อ-นามสกุล' },
-            { id: 'int-role', label: 'ฐานะ', type: 'text', placeholder: 'พยาน / ผู้ต้องหา / ผู้เสียหาย' },
-            { id: 'int-content', label: 'สาระสำคัญจากการสอบ', type: 'textarea', placeholder: 'บันทึกคำให้การ...' },
-        ],
-        generate: (f) => `บันทึกสอบปากคำ
-━━━━━━━━━━━━━━━━━━━━━━━
-วันที่: ${formatThaiDate(f['int-date'])} เวลา ${f['int-time']} น.
-ผู้ทำการสอบ: ${f['int-officer']}
-
-ผู้ถูกสอบ: ${f['int-name']} (${f['int-role']})
-
-สาระสำคัญ:
-${f['int-content']}
-━━━━━━━━━━━━━━━━━━━━━━━
-ลงชื่อผู้ให้การ: ................................................
-ลงชื่อผู้สอบ: ................................................`
-    },
-    complaint: {
-        title: '📜 บันทึกร้องทุกข์',
-        fields: [
-            { id: 'com-date', label: 'วันที่', type: 'date' },
-            { id: 'com-officer', label: 'พนักงานสอบสวนผู้รับเรื่อง', type: 'text', placeholder: 'ยศ ชื่อ-นามสกุล' },
-            { id: 'com-name', label: 'ผู้ร้องทุกข์', type: 'text', placeholder: 'ชื่อ-นามสกุล ผู้ร้องทุกข์' },
-            { id: 'com-against', label: 'ร้องทุกข์กล่าวหา', type: 'text', placeholder: 'ชื่อผู้ถูกกล่าวหา หรือ "ผู้กระทำผิดที่ไม่ทราบชื่อ"' },
-            { id: 'com-offense', label: 'ข้อหา/ฐานความผิด', type: 'text', placeholder: 'ฐานความผิด' },
-            { id: 'com-detail', label: 'เหตุการณ์โดยย่อ', type: 'textarea', placeholder: 'บรรยายเหตุการณ์...' },
-        ],
-        generate: (f) => `บันทึกร้องทุกข์
-━━━━━━━━━━━━━━━━━━━━━━━
-วันที่รับเรื่อง: ${formatThaiDate(f['com-date'])}
-พนักงานสอบสวน: ${f['com-officer']}
-ผู้ร้องทุกข์: ${f['com-name']}
-ร้องทุกข์กล่าวหา: ${f['com-against']}
-ข้อหา: ${f['com-offense']}
-รายละเอียด: ${f['com-detail']}
-━━━━━━━━━━━━━━━━━━━━━━━
-ลงชื่อผู้ร้องทุกข์: ................................................
-ลงชื่อพนักงานสอบสวน: ................................................`
-    },
-    patrol: {
-        title: '🚓 บันทึกตรวจสถานที่',
-        fields: [
-            { id: 'pat-date', label: 'วันที่', type: 'date' },
-            { id: 'pat-time', label: 'เวลา', type: 'time' },
-            { id: 'pat-officer', label: 'ผู้ปฏิบัติงาน', type: 'text', placeholder: 'ยศ ชื่อ-นามสกุล / ชุดปฏิบัติงาน' },
-            { id: 'pat-location', label: 'สถานที่ตรวจ', type: 'text', placeholder: 'ที่อยู่/สถานที่' },
-            { id: 'pat-finding', label: 'สิ่งที่ตรวจพบ', type: 'textarea', placeholder: 'ระบุสิ่งที่พบในที่เกิดเหตุ...' },
-            { id: 'pat-result', label: 'ผลการปฏิบัติงาน', type: 'textarea', placeholder: 'สรุปผลการตรวจ/ปฏิบัติงาน...' },
-        ],
-        generate: (f) => `บันทึกการตรวจสถานที่
-━━━━━━━━━━━━━━━━━━━━━━━
-วันที่: ${formatThaiDate(f['pat-date'])} เวลา ${f['pat-time']} น.
-ผู้ปฏิบัติงาน: ${f['pat-officer']}
-สถานที่: ${f['pat-location']}
-สิ่งที่ตรวจพบ: ${f['pat-finding']}
-ผลการปฏิบัติงาน: ${f['pat-result']}
-━━━━━━━━━━━━━━━━━━━━━━━
-ลงชื่อ: ................................................
-(${f['pat-officer']})`
-    },
-    surv: {
-        title: '🔭 รายงานสืบสวน',
-        fields: [
-            { id: 'surv-date', label: 'วันที่รายงาน', type: 'date' },
-            { id: 'surv-case', label: 'คดี/เรื่อง', type: 'text', placeholder: 'ชื่อคดีหรือเรื่องที่สืบสวน' },
-            { id: 'surv-officer', label: 'ผู้รายงาน', type: 'text', placeholder: 'ยศ ชื่อ-นามสกุล' },
-            { id: 'surv-period', label: 'ระยะเวลาสืบสวน', type: 'text', placeholder: 'เช่น 1-15 ส.ค. 2567' },
-            { id: 'surv-method', label: 'วิธีการสืบสวน', type: 'textarea', placeholder: 'ระบุวิธีการที่ใช้...' },
-            { id: 'surv-result', label: 'ผลการสืบสวน', type: 'textarea', placeholder: 'สรุปผลที่ได้จากการสืบสวน...' },
-            { id: 'surv-suggest', label: 'ข้อเสนอแนะ', type: 'textarea', placeholder: 'ข้อเสนอแนะในการดำเนินการต่อ...' },
-        ],
-        generate: (f) => `รายงานการสืบสวน
-━━━━━━━━━━━━━━━━━━━━━━━
-วันที่รายงาน: ${formatThaiDate(f['surv-date'])}
-คดี: ${f['surv-case']}
-ผู้รายงาน: ${f['surv-officer']}
-ระยะเวลาสืบสวน: ${f['surv-period']}
-วิธีการสืบสวน: ${f['surv-method']}
-ผลการสืบสวน: ${f['surv-result']}
-ข้อเสนอแนะ: ${f['surv-suggest']}
-━━━━━━━━━━━━━━━━━━━━━━━
-ลงชื่อ: ................................................
-(${f['surv-officer']})`
-    }
-};
-
-let currentTemplate = null;
-
-function loadTemplate(key) {
-    currentTemplate = key;
-    const t = templates[key];
-    document.getElementById('template-editor-title').textContent = t.title;
-    const fieldsDiv = document.getElementById('template-fields');
-    fieldsDiv.innerHTML = t.fields.map(f => `
-        <div style="margin-bottom:10px;">
-            <label class="inv-label">${f.label}</label>
-            ${f.type === 'textarea' 
-                ? `<textarea id="${f.id}" class="inv-input" rows="3" placeholder="${f.placeholder || ''}"></textarea>`
-                : `<input type="${f.type}" id="${f.id}" class="inv-input" placeholder="${f.placeholder || ''}">`
-            }
-        </div>
-    `).join('');
-    document.getElementById('template-editor').style.display = 'block';
-    document.getElementById('template-output').value = '';
-    document.getElementById('template-editor').scrollIntoView({ behavior: 'smooth' });
-}
-
-function generateTemplate() {
-    const t = templates[currentTemplate];
-    const fieldValues = {};
-    t.fields.forEach(f => {
-        const el = document.getElementById(f.id);
-        fieldValues[f.id] = el ? el.value.trim() : '';
-    });
-    document.getElementById('template-output').value = t.generate(fieldValues);
-}
-
-function copyTemplate() {
-    const val = document.getElementById('template-output').value;
-    if (!val) { showInvAlert('warning', 'กรุณากด "สร้างรายงาน" ก่อน'); return; }
-    copyToClipboard(val);
-    showInvAlert('success', 'คัดลอกรายงานเรียบร้อยแล้ว');
-}
-
-function closeTemplateEditor() {
-    document.getElementById('template-editor').style.display = 'none';
-    currentTemplate = null;
-}
+} catch(e) {}
 
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================
 function updateStats() {
-    const s1 = document.getElementById('stat-suspects');
+    const s1 = document.getElementById('stat-scenes');
     const s2 = document.getElementById('stat-timeline');
-    const s3 = document.getElementById('stat-scenes');
-    if (s1) s1.textContent = (invData.suspects || []).length;
+    const s3 = document.getElementById('stat-suspects');
+    if (s1) s1.textContent = (invData.sceneReports || []).length;
     if (s2) s2.textContent = (invData.timeline || []).length;
-    if (s3) s3.textContent = (invData.sceneReports || []).length;
+    if (s3) s3.textContent = (invData.suspects || []).length;
 }
 
 function parseDateSafe(dateVal) {
@@ -1415,6 +1400,14 @@ function showInvAlert(type, title) {
         const el = document.getElementById(id);
         if (el) el.value = today;
     });
+
+    // คืนค่าแท็บล่าสุดที่เคยเปิดไว้
+    try {
+        const savedTab = sessionStorage.getItem('inv_active_tab');
+        if (savedTab && ['scenes', 'timeline', 'suspect', 'tracking'].includes(savedTab)) {
+            switchInvTab(savedTab);
+        }
+    } catch(e) {}
 
     // ดึงข้อมูลออนไลน์จาก Google Sheets
     fetchSceneReports();

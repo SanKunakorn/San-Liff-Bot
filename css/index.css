@@ -229,45 +229,126 @@ nav.main-nav {
         }
 
         /* ========================================
-           BOTTOM NAVIGATION BAR (Mobile Light Glass)
+           MODERN UNIFIED NAVIGATION DOCK (Glass Dock Bar)
         ======================================== */
         .bottom-nav {
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            background: rgba(255, 255, 255, 0.95);
-            border-top: 1.5px solid #e2e8f0 !important;
-            box-shadow: 0 -4px 20px rgba(30, 58, 138, 0.08);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .bottom-nav-container {
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            background: rgba(255, 255, 255, 0.92);
+            border-top: 1px solid rgba(203, 213, 225, 0.8);
+            box-shadow: 0 -4px 25px rgba(30, 58, 138, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (min-width: 640px) {
+            .bottom-nav-container {
+                border: 1px solid rgba(203, 213, 225, 0.85);
+                border-radius: 1.25rem;
+                box-shadow: 0 12px 35px -5px rgba(30, 58, 138, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+            }
         }
 
         .bottom-nav-btn {
             position: relative;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 0.5rem;
             min-width: 56px;
-            font-weight: 700;
+            border-radius: 0.875rem;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #64748b;
+            background: transparent;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .bottom-nav-btn:hover {
             color: #1e3a8a;
+            background: rgba(241, 245, 249, 0.7);
         }
 
-        .bottom-nav-btn.active-bottom,
-        .bottom-nav-btn:focus {
+        .bottom-nav-btn:active {
+            transform: scale(0.92);
+        }
+
+        .bottom-nav-btn .nav-icon-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 28px;
+            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .bottom-nav-btn .nav-icon {
+            font-size: 1.35rem;
+            line-height: 1;
+            display: inline-block;
+            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.22s ease;
+        }
+
+        .bottom-nav-btn .nav-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-top: 1px;
+            line-height: 1.1;
+            transition: color 0.2s ease, font-weight 0.2s ease;
+            letter-spacing: -0.01em;
+        }
+
+        .bottom-nav-btn .nav-indicator {
+            width: 0;
+            height: 3px;
+            border-radius: 9999px;
+            background: #1e3a8a;
+            margin-top: 2px;
+            opacity: 0;
+            transform: scaleX(0);
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 1px 4px rgba(30, 58, 138, 0.4);
+        }
+
+        /* Active Tab - Modern Pill & Royal Police Lighting */
+        .bottom-nav-btn.active-bottom {
             color: #1e3a8a !important;
+            background: linear-gradient(180deg, rgba(239, 246, 255, 0.95) 0%, rgba(219, 234, 254, 0.8) 100%);
+            box-shadow: 0 2px 8px -1px rgba(30, 58, 138, 0.12), 0 0 0 1px rgba(191, 219, 254, 0.8) inset;
             transform: translateY(-2px);
         }
 
-        .bottom-nav-btn.active-bottom span:first-child {
-            filter: drop-shadow(0 2px 8px rgba(30, 58, 138, 0.3));
+        .bottom-nav-btn.active-bottom .nav-icon {
+            transform: scale(1.15) translateY(-1px);
+            filter: drop-shadow(0 3px 6px rgba(30, 58, 138, 0.25));
         }
 
-        /* ปรับ margin bottom แนว main content บน mobile เพื่อไม่ถูก bottom nav ทับ */
-        @media (max-width: 639px) {
+        .bottom-nav-btn.active-bottom .nav-label {
+            font-weight: 900;
+            color: #1e3a8a;
+        }
+
+        .bottom-nav-btn.active-bottom .nav-indicator {
+            width: 14px;
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        /* ปรับ padding-bottom แนว main content เพื่อไม่ถูก bottom nav ทับ */
+        main {
+            padding-bottom: 7rem !important;
+        }
+
+        @media (min-width: 640px) {
             main {
-                padding-bottom: 5.5rem;
-            }
-            footer {
-                margin-bottom: 4.5rem;
+                padding-bottom: 7.5rem !important;
             }
         }
 
@@ -419,5 +500,120 @@ nav.main-nav {
         #timecal-container #timecal-back-btn,
         #sendflex-container #tracking-back-btn {
             display: none !important;
+        }
+
+        /* ========================================
+           SCROLL-TO-TOP FLOATING ACTION BUTTON
+        ======================================== */
+        #scroll-to-top-btn {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        #scroll-to-top-btn.visible {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: translateY(0) scale(1) !important;
+        }
+        #scroll-to-top-btn:hover {
+            box-shadow: 0 10px 25px -4px rgba(30, 58, 138, 0.35);
+        }
+
+        /* ========================================
+           SAN MODERN TOAST NOTIFICATIONS
+        ======================================== */
+        #san-toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+            max-width: 90vw;
+            width: 360px;
+        }
+
+        .san-toast {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.15rem;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 1rem;
+            box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(226, 232, 240, 0.9);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e293b;
+            animation: sanToastSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transition: all 0.25s ease;
+        }
+
+        .san-toast.hiding {
+            opacity: 0;
+            transform: translateX(30px) scale(0.95);
+        }
+
+        .san-toast-success {
+            border-left: 4px solid #10b981;
+        }
+        .san-toast-info {
+            border-left: 4px solid #2563eb;
+        }
+        .san-toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+        .san-toast-error {
+            border-left: 4px solid #ef4444;
+        }
+
+        @keyframes sanToastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(40px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        /* ========================================
+           SAN APP CENTER FILTER PILLS
+        ======================================== */
+        .sanapp-filter-pill {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .sanapp-filter-pill.active {
+            background-color: #1e3a8a !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px -2px rgba(30, 58, 138, 0.35);
+            border-color: #1e3a8a !important;
+        }
+
+        /* Quick Action Micro-Hover */
+        .quick-action-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .quick-action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -4px rgba(30, 58, 138, 0.12);
+        }
+        .quick-action-card:active {
+            transform: scale(0.97);
+        }
+
+        /* Officer Active Chip */
+        .officer-chip.active-chip {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+            color: #ffffff !important;
+            border-color: #1e3a8a !important;
+            box-shadow: 0 4px 12px -2px rgba(30, 58, 138, 0.35);
         }
 

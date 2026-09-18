@@ -474,18 +474,31 @@ function closeSearchResultPanel() {
 
 function copySearchResultText() {
   if (!currentSearchSummaryForCopy) {
-    Swal.fire({ icon: 'info', title: 'ไม่มีข้อความที่จะคัดลอก' });
+    if (typeof showSanToast === 'function') {
+      showSanToast('ไม่มีข้อความที่จะคัดลอก', 'warning');
+    } else {
+      Swal.fire({ icon: 'info', title: 'ไม่มีข้อความที่จะคัดลอก' });
+    }
     return;
   }
   navigator.clipboard.writeText(currentSearchSummaryForCopy).then(() => {
-    Swal.fire({
-      icon: 'success',
-      title: 'คัดลอกผลการสืบค้นเรียบร้อยแล้ว',
-      timer: 1500,
-      showConfirmButton: false
-    });
+    if (typeof triggerHaptic === 'function') triggerHaptic('success');
+    if (typeof showSanToast === 'function') {
+      showSanToast('คัดลอกผลการสืบค้นเรียบร้อยแล้ว', 'success');
+    } else {
+      Swal.fire({
+        icon: 'success',
+        title: 'คัดลอกผลการสืบค้นเรียบร้อยแล้ว',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
   }).catch(() => {
-    Swal.fire({ icon: 'error', title: 'คัดลอกไม่สำเร็จ' });
+    if (typeof showSanToast === 'function') {
+      showSanToast('ไม่สามารถคัดลอกได้', 'error');
+    } else {
+      Swal.fire({ icon: 'error', title: 'คัดลอกไม่สำเร็จ' });
+    }
   });
 }
 
@@ -2247,9 +2260,23 @@ async function verifyPoliceAuthentication(uid, displayName, pictureUrl) {
     }
 
     // แสดงยศและสถานะในหน้าจอ (ถ้ามี)
+    const profileSub = document.getElementById("profile-subtext");
+    const liffDot = document.getElementById("liff-status-dot");
+    if (liffDot) {
+      liffDot.className = "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 border-2 border-white rounded-full shadow-xs";
+      liffDot.title = "เชื่อมต่อระบบ LIFF สำเร็จ";
+    }
+
     if (result && result.user && result.user.role) {
       if (nameHeader) {
         nameHeader.innerHTML = `${displayName} <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 ml-1 font-normal">${result.user.role}</span>`;
+      }
+      if (profileSub) {
+        profileSub.textContent = `● ${result.user.role}`;
+      }
+    } else {
+      if (profileSub) {
+        profileSub.textContent = "● พร้อมปฏิบัติการ";
       }
     }
 
@@ -2285,6 +2312,11 @@ function showAccessDeniedScreen(uid) {
 function showPage(pageName) {
   if (!pageName) return;
 
+  // 📳 Haptic touch feedback
+  if (typeof triggerHaptic === 'function') {
+    triggerHaptic('light');
+  }
+
   // ✅ ปัด animation ก่อน
   document.querySelectorAll('.page-content').forEach(page => {
     page.classList.add('hidden');
@@ -2297,6 +2329,11 @@ function showPage(pageName) {
     targetPage.style.animation = '';
     void targetPage.offsetWidth; // reflow trick
     targetPage.style.animation = 'pageSlideIn 0.25s ease-out';
+  }
+
+  // เลื่อนกลับขึ้นด้านบนเล็กน้อยเพื่อโฟกัสเนื้อหาใหม่
+  if (window.scrollY > 240) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // 🔄 ซิงค์ URL ใน LIFF เดียวกัน โดยไม่ต้องรีโหลดหน้าเว็บ (Single LIFF Architecture)
@@ -2334,12 +2371,18 @@ function showPage(pageName) {
     topNavBtn.classList.add('active');
   }
 
-  // ✅ อัปเดต bottom nav bar บน mobile
+  // ✅ อัปเดต modern master bottom nav bar
   document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
     btn.classList.remove('active-bottom');
     btn.style.color = '';
   });
-  const activeBottomBtn = document.getElementById('bottom-btn-' + pageName);
+  
+  let targetNavId = 'bottom-btn-' + pageName;
+  if (['lostcar', 'knowledge', 'sendflex'].includes(pageName)) {
+    targetNavId = 'bottom-btn-sanapp';
+  }
+  
+  const activeBottomBtn = document.getElementById(targetNavId);
   if (activeBottomBtn) {
     activeBottomBtn.classList.add('active-bottom');
   }
@@ -2497,25 +2540,66 @@ function handleLocationError(error) {
 
 
 function getCurrentLocation() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function (position) {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      document.getElementById('latlong').value = lat + ',' + lng;
-      Swal.fire({
-        icon: 'success',
-        title: 'สำเร็จ!',
-        text: 'ได้ตำแหน่ง GPS แล้ว',
-        confirmButtonColor: '#1e3a8a'
-      });
+  const btnText = document.getElementById('gps-btn-text');
+  const btnIcon = document.getElementById('gps-btn-icon');
+  if (btnText) btnText.textContent = 'กำลังดึงพิกัด...';
+  if (btnIcon) btnIcon.classList.add('animate-spin');
+
+  if (typeof triggerHaptic === 'function') triggerHaptic('light');
+
+  const geo = navigator.geolocation || (window.parent && window.parent.navigator && window.parent.navigator.geolocation);
+
+  if (geo) {
+    geo.getCurrentPosition(function (position) {
+      const lat = position.coords.latitude.toFixed(7);
+      const lng = position.coords.longitude.toFixed(7);
+      const latlongInput = document.getElementById('latlong');
+      if (latlongInput) {
+        latlongInput.value = lat + ',' + lng;
+        latlongInput.dispatchEvent(new Event('input', { bubbles: true }));
+        latlongInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (typeof updateGpsStatusBadge === 'function') updateGpsStatusBadge();
+      if (typeof triggerHaptic === 'function') triggerHaptic('success');
+
+      if (typeof showSanToast === 'function') {
+        showSanToast('ดึงพิกัด GPS ตำแหน่งปัจจุบันสำเร็จแล้ว', 'success');
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: 'สำเร็จ!',
+          text: 'ได้ตำแหน่ง GPS แล้ว',
+          confirmButtonColor: '#1e3a8a'
+        });
+      }
+
+      if (btnText) btnText.textContent = 'ตำแหน่งปัจจุบัน';
+      if (btnIcon) btnIcon.classList.remove('animate-spin');
     }, function (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'เกิดข้อผิดพลาด',
-        text: 'ไม่สามารถเข้าถึง GPS ได้',
-        confirmButtonColor: '#dc2626'
-      });
+      console.warn("GPS Error:", error);
+      if (typeof showSanToast === 'function') {
+        showSanToast('ไม่สามารถดึงพิกัด GPS ได้ กรุณาเปิด Location Service', 'error');
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถเข้าถึง GPS ได้',
+          confirmButtonColor: '#dc2626'
+        });
+      }
+      if (btnText) btnText.textContent = 'ตำแหน่งปัจจุบัน';
+      if (btnIcon) btnIcon.classList.remove('animate-spin');
+    }, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
     });
+  } else {
+    if (typeof showSanToast === 'function') {
+      showSanToast('อุปกรณ์ไม่รองรับการดึงพิกัด GPS', 'error');
+    }
+    if (btnText) btnText.textContent = 'ตำแหน่งปัจจุบัน';
+    if (btnIcon) btnIcon.classList.remove('animate-spin');
   }
 }
 
@@ -2914,7 +2998,19 @@ function toggleOfficerDropdown() {
   }
 }
 
+function syncOfficerChips(val) {
+  const cleanVal = (val || '').trim();
+  document.querySelectorAll('.officer-chip').forEach(btn => {
+    if (cleanVal && btn.textContent.includes(cleanVal)) {
+      btn.classList.add('active-chip');
+    } else {
+      btn.classList.remove('active-chip');
+    }
+  });
+}
+
 function selectOfficer(val) {
+  if (typeof triggerHaptic === 'function') triggerHaptic('light');
   const userInput = document.getElementById('user');
   if (userInput) {
     userInput.value = val;
@@ -2924,19 +3020,11 @@ function selectOfficer(val) {
   const menu = document.getElementById('officer-dropdown-menu');
   if (menu) menu.classList.add('hidden');
 
-  // Highlight active chip
-  document.querySelectorAll('.officer-chip').forEach(btn => {
-    if (btn.textContent.includes(val)) {
-      btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-      btn.classList.remove('bg-blue-50', 'text-police-blue', 'border-blue-200');
-    } else {
-      btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-      btn.classList.add('bg-blue-50', 'text-police-blue', 'border-blue-200');
-    }
-  });
+  syncOfficerChips(val);
 }
 
 function focusOfficerCustom() {
+  if (typeof triggerHaptic === 'function') triggerHaptic('light');
   const userInput = document.getElementById('user');
   if (userInput) {
     userInput.focus();
@@ -3253,6 +3341,190 @@ function openTemplateSelectorModal() {
     width: '32rem'
   });
 }
+
+// ================================================================
+// MODERN UX/UI ENHANCEMENTS (San BOT System-Wide Tactile Polish)
+// ================================================================
+
+// 1. Tactile Haptic Vibration Feedback
+function triggerHaptic(type = 'light') {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      if (type === 'light') navigator.vibrate(12);
+      else if (type === 'medium') navigator.vibrate([18, 30, 18]);
+      else if (type === 'success') navigator.vibrate([15, 35, 25]);
+      else if (type === 'error') navigator.vibrate([30, 40, 30, 40]);
+    }
+  } catch (e) { }
+}
+
+// 2. Modern San Toast Notification System
+function showSanToast(message, type = 'info', duration = 3200) {
+  const container = document.getElementById('san-toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `san-toast san-toast-${type}`;
+
+  const iconMap = {
+    success: '✅',
+    info: 'ℹ️',
+    warning: '⚠️',
+    error: '❌'
+  };
+  const icon = iconMap[type] || 'ℹ️';
+
+  const safeMsg = (typeof escapeHtml === 'function') ? escapeHtml(message) : message;
+  toast.innerHTML = `
+    <span class="text-base flex-shrink-0">${icon}</span>
+    <span class="flex-1 text-slate-800 leading-snug text-xs sm:text-sm font-semibold">${safeMsg}</span>
+    <button type="button" class="text-slate-400 hover:text-slate-700 text-xs ml-2 font-bold transition p-1" onclick="this.parentElement.remove()">✕</button>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 260);
+  }, duration);
+}
+
+// 3. Tactical Live Operating Clock
+function initTacticalClock() {
+  const clockEl = document.getElementById('tactical-clock');
+  if (!clockEl) return;
+  function update() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    clockEl.textContent = `${h}:${m}:${s} น.`;
+  }
+  update();
+  setInterval(update, 1000);
+}
+
+// 4. Scroll-To-Top Floating Action Button (FAB)
+function initScrollToTop() {
+  const btn = document.getElementById('scroll-to-top-btn');
+  if (!btn) return;
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 280) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }, { passive: true });
+}
+
+function scrollToTopSmooth() {
+  triggerHaptic('light');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 5. GPS Status Badge & Interactive Quick-Map
+function updateGpsStatusBadge() {
+  const input = document.getElementById('latlong');
+  const badge = document.getElementById('gps-status-badge');
+  const btnMap = document.getElementById('btn-quick-map');
+  if (!badge) return;
+
+  const val = input ? input.value.trim() : '';
+  if (val && val.includes(',')) {
+    const parts = val.split(',');
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      badge.className = 'text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1 transition-all';
+      badge.innerHTML = `<span>🟢</span> <span>พิกัดพร้อมใช้งาน (${lat.toFixed(4)}, ${lng.toFixed(4)})</span>`;
+      if (btnMap) btnMap.classList.remove('hidden');
+      return;
+    }
+  }
+
+  badge.className = 'text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1 transition-all';
+  badge.innerHTML = '<span>⚪</span> <span>ยังไม่ได้ระบุพิกัด</span>';
+  if (btnMap) btnMap.classList.add('hidden');
+}
+
+function openCurrentGpsExternal() {
+  triggerHaptic('light');
+  const input = document.getElementById('latlong');
+  const val = input ? input.value.trim() : '';
+  if (val) {
+    window.open(`https://maps.google.com?q=${encodeURIComponent(val)}`, '_blank', 'noopener,noreferrer');
+  } else {
+    showSanToast('กรุณาระบุพิกัดก่อนเปิดแผนที่', 'warning');
+  }
+}
+
+// 6. San APP Center Live Filter & Search
+let currentSanAppCategory = 'all';
+
+function setSanAppFilter(cat, btn) {
+  triggerHaptic('light');
+  currentSanAppCategory = cat || 'all';
+  document.querySelectorAll('.sanapp-filter-pill').forEach(el => el.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  filterSanApps();
+}
+
+function filterSanApps() {
+  const searchInput = document.getElementById('sanapp-search-input');
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const cards = document.querySelectorAll('#sanapp-grid .app-card');
+  let matchCount = 0;
+
+  cards.forEach(card => {
+    const cat = card.getAttribute('data-app-cat') || '';
+    const keywords = (card.getAttribute('data-app-keywords') || '') + ' ' + (card.textContent || '');
+    const matchesCategory = (currentSanAppCategory === 'all' || cat === currentSanAppCategory);
+    const matchesQuery = !q || keywords.toLowerCase().includes(q);
+
+    if (matchesCategory && matchesQuery) {
+      card.classList.remove('hidden');
+      card.style.display = '';
+      matchCount++;
+    } else {
+      card.classList.add('hidden');
+      card.style.display = 'none';
+    }
+  });
+
+  const emptyState = document.getElementById('sanapp-empty-state');
+  if (emptyState) {
+    if (matchCount === 0) {
+      emptyState.classList.remove('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+    }
+  }
+}
+
+function clearSanAppSearch() {
+  const searchInput = document.getElementById('sanapp-search-input');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+  filterSanApps();
+}
+
+// 7. Initialize Global UX Enhancements on Ready
+(function initSanModernUx() {
+  function start() {
+    initTacticalClock();
+    initScrollToTop();
+    updateGpsStatusBadge();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
 
 
 
