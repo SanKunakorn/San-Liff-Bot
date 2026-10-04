@@ -20,6 +20,91 @@ let settings = { shifts: [], brands: {}, colors: [], areas: [] };
 let deleteTargetId = null;
 let liffProfile = null;
 let charts = {};
+let currentReportMode = 'quick';
+
+function getDefaultShift() {
+  const hour = new Date().getHours();
+  // 08:00 - 16:00 = เวร 1, 16:00 - 24:00 = เวร 2, 00:00 - 08:00 = เวร 3
+  if (settings.shifts && settings.shifts.length >= 3) {
+    if (hour >= 8 && hour < 16) return settings.shifts[0];
+    if (hour >= 16 && hour < 24) return settings.shifts[1];
+    return settings.shifts[2];
+  }
+  return (settings.shifts && settings.shifts[0]) || 'เวร 1';
+}
+
+function setReportMode(mode) {
+  currentReportMode = mode;
+  const btnQuick = document.getElementById('btn-mode-quick');
+  const btnFull = document.getElementById('btn-mode-full');
+  const quickAlert = document.getElementById('quick-mode-alert');
+  const fullFields = document.querySelectorAll('.full-mode-only');
+  const vehicleTypeContainer = document.getElementById('field-vehicle-type-container');
+  const submitBtn = document.getElementById('submit-btn');
+  const submitIcon = document.getElementById('submit-icon');
+  const submitText = document.getElementById('submit-text');
+
+  if (mode === 'quick') {
+    if (btnQuick) {
+      btnQuick.className = 'flex-1 py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow-md active:scale-95 cursor-pointer';
+    }
+    if (btnFull) {
+      btnFull.className = 'flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-police-blue hover:bg-blue-50 active:scale-95 cursor-pointer';
+    }
+    if (quickAlert) quickAlert.classList.remove('hidden');
+    fullFields.forEach(el => el.classList.add('hidden'));
+    if (vehicleTypeContainer) {
+      vehicleTypeContainer.className = 'col-span-1 sm:col-span-2 quick-mode-span';
+    }
+
+    if (submitBtn) {
+      submitBtn.className = 'w-full py-4 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white rounded-2xl font-black text-base sm:text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer';
+    }
+    if (submitIcon) submitIcon.textContent = '⚡';
+    if (submitText) submitText.textContent = 'บันทึกรับแจ้งด่วน (30 วินาที)';
+
+    // Pre-populate defaults in background
+    const shiftSelect = document.getElementById('shift');
+    if (shiftSelect && !shiftSelect.value) {
+      shiftSelect.value = getDefaultShift();
+    }
+    const dateInput = document.getElementById('incident-date');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    const timeInput = document.getElementById('incident-time');
+    if (timeInput && !timeInput.value) {
+      const now = new Date();
+      timeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+    const areaSelect = document.getElementById('area');
+    if (areaSelect && !areaSelect.value && areaSelect.options.length > 1) {
+      areaSelect.selectedIndex = 1;
+    }
+    const statusSelect = document.getElementById('status');
+    if (statusSelect && !statusSelect.value) {
+      statusSelect.value = 'pending';
+    }
+  } else {
+    if (btnQuick) {
+      btnQuick.className = 'flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-amber-700 hover:bg-amber-50 active:scale-95 cursor-pointer';
+    }
+    if (btnFull) {
+      btnFull.className = 'flex-1 py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 text-white shadow-md active:scale-95 cursor-pointer';
+    }
+    if (quickAlert) quickAlert.classList.add('hidden');
+    fullFields.forEach(el => el.classList.remove('hidden'));
+    if (vehicleTypeContainer) {
+      vehicleTypeContainer.className = 'col-span-1';
+    }
+
+    if (submitBtn) {
+      submitBtn.className = 'w-full py-4 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white rounded-2xl font-black text-base sm:text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer';
+    }
+    if (submitIcon) submitIcon.textContent = '💾';
+    if (submitText) submitText.textContent = 'บันทึกและส่งรายงานสำนวนฉบับเต็ม';
+  }
+}
 
 // ==================== Element SDK Integration ====================
 async function initElementSdk() {
@@ -476,18 +561,33 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
     ? document.getElementById('color-other').value
     : document.getElementById('color').value;
 
+  const now = new Date();
+  const defaultDate = now.toISOString().split('T')[0];
+  const defaultTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const defaultShift = getDefaultShift();
+  const defaultArea = (settings.areas && settings.areas.length > 0) ? settings.areas[0] : 'เขตพื้นที่รับผิดชอบ';
+
+  const shift = document.getElementById('shift')?.value || defaultShift;
+  const area = document.getElementById('area')?.value || defaultArea;
+  const incidentDate = document.getElementById('incident-date')?.value || defaultDate;
+  const incidentTime = document.getElementById('incident-time')?.value || defaultTime;
+  const status = document.getElementById('status')?.value || 'pending';
+  const contactPhone = document.getElementById('contact-phone')?.value.trim() || '';
+  const timePeriodVal = document.getElementById('time-period')?.value || getTimePeriod(incidentTime);
+
   const data = {
-    shift: document.getElementById('shift').value,
+    shift,
     vehicleType: document.getElementById('vehicle-type').value,
     brand,
     model: document.getElementById('model').value,
     color,
     licensePlate: licensePlate.toUpperCase(),
-    area: document.getElementById('area').value,
+    area,
     location: document.getElementById('location').value,
-    incidentDate: document.getElementById('incident-date').value,
-    incidentTime: document.getElementById('incident-time').value,
-    timePeriod: document.getElementById('time-period')?.value || '',
+    contactPhone,
+    incidentDate,
+    incidentTime,
+    timePeriod: timePeriodVal,
     latitude: document.getElementById('latitude')?.value || (document.getElementById('lat-lng')?.value.split(',')[0]?.trim() || ''),
     longitude: document.getElementById('longitude')?.value || (document.getElementById('lat-lng')?.value.split(',')[1]?.trim() || ''),
     details: document.getElementById('details')?.value || '',
@@ -529,7 +629,7 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
         const newReport = {
           id: `RPT-${Date.now()}`,
           ...data,
-          status: 'pending',
+          status,
           createdAt: new Date().toISOString()
         };
         reports.unshift(newReport);
@@ -539,8 +639,6 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
 
     document.getElementById('report-form').reset();
     document.getElementById('edit-id').value = '';
-    document.getElementById('submit-btn').innerHTML = '📤 ส่งรายงาน';
-    document.getElementById('time-period').value = '';
     const mapLinkEl = document.getElementById('map-link');
     if (mapLinkEl) mapLinkEl.classList.add('hidden');
     const gpsErrEl = document.getElementById('gps-error');
@@ -549,10 +647,14 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
     if (latLngEl) latLngEl.value = '';
     document.getElementById('brand-other-container').classList.add('hidden');
     document.getElementById('color-other-container').classList.add('hidden');
+
+    setReportMode(currentReportMode);
+    renderReports();
+    updateStats();
   }
 
   submitBtn.disabled = false;
-  submitBtn.innerHTML = editId ? '📤 ส่งรายงาน' : '📤 ส่งรายงาน';
+  setReportMode(currentReportMode);
 });
 
 // Time calculation
@@ -773,7 +875,7 @@ function renderReports() {
               </div>
               <div class="flex items-center gap-2 text-xs font-bold text-slate-600">
                 <span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded-md border border-amber-200">🎨 สี: ${report.color}</span>
-                <span class="px-2 py-0.5 bg-blue-50 text-police-blue rounded-md border border-blue-200 font-mono">📋 ทะเบียน: ${report.licensePlate}</span>
+                <span class="px-2 py-0.5 bg-red-200 text-police-blue rounded-md border border-blue-200 font-mono">📋 ทะเบียน: ${report.licensePlate}</span>
               </div>
             </div>
             <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">#${report.id}</span>
@@ -782,11 +884,15 @@ function renderReports() {
           <div class="text-xs text-slate-600 mb-3.5 space-y-1.5 bg-slate-50/70 p-3 rounded-xl border border-slate-200/60">
             <p class="flex items-center gap-1.5">📍 <span class="font-bold text-slate-800">${report.location || '-'}</span> <span class="text-slate-500">(${report.area || '-'})</span></p>
             <p class="flex items-center gap-1.5">📅 <span>${formatThaiDate(report.incidentDate)}</span> ⏰ <span>${formatTime(report.incidentTime)}</span> <span class="text-amber-700 font-semibold">(${report.timePeriod || '-'})</span></p>
+            ${report.contactPhone ? `<p class="flex items-center gap-1.5 text-blue-900 font-bold">📞 <span>ติดต่อผู้เสียหาย/ผู้แจ้ง: <a href="tel:${report.contactPhone}" class="underline hover:text-blue-700">${report.contactPhone}</a></span></p>` : ''}
             <p class="flex items-center gap-1.5">👮 ผู้บันทึก: <span class="font-semibold text-slate-700">${report.reporter || '-'}</span> | 🏢 เวร: <span class="font-semibold text-slate-700">${report.shift || '-'}</span></p>
             ${report.details ? `<p class="mt-1 pt-1 border-t border-slate-200 text-slate-700 italic">📝 "${report.details}"</p>` : ''}
           </div>
           
           <div class="flex items-center gap-1.5 flex-wrap">
+            <button onclick="shareStolenVehicleAlert('${report.id}')" class="px-3 py-1.5 bg-gradient-to-r from-rose-600 via-rose-700 to-red-700 hover:from-rose-700 hover:to-red-800 text-white rounded-lg text-xs font-black shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95">
+              <span>🚨</span> <span>สกัดจับด่วน</span>
+            </button>
             ${report.latitude ? `
               <a href="https://maps.google.com/?q=${report.latitude},${report.longitude}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all flex items-center gap-1">
                 🗺️ แผนที่
@@ -967,6 +1073,65 @@ function shareReport(id) {
         showToast('คัดลอกข้อความแล้ว', 'success');
       });
     }
+  }
+}
+
+// Stolen Vehicle Flash Alert (ใบสกัดจับด่วน APB)
+function shareStolenVehicleAlert(id) {
+  const report = reports.find(r => String(r.id) === String(id));
+  if (!report) {
+    showToast('ไม่พบข้อมูลรถหายสำหรับออกใบสกัดจับ', 'error');
+    return;
+  }
+
+  const mapLink = (report.latitude && report.longitude)
+    ? `https://maps.google.com/?q=${report.latitude},${report.longitude}`
+    : '';
+
+  const contactNumber = report.contactPhone || 'งานสืบสวน สภ.นิคมพัฒนา โทร. 191 หรือ 038-636111';
+
+  const apbText =
+    `🚨 [ใบสกัดจับด่วน - STOLEN VEHICLE FLASH ALERT] 🚨
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 ยานพาหนะ: ${report.vehicleType || 'รถยนต์/จยย.'} ${report.brand || ''} ${report.model || ''}
+📋 ป้ายทะเบียน: ${report.licensePlate || 'ไม่ระบุ'}
+🎨 สีตัวรถ: ${report.color || '-'}
+📍 จุดเกิดเหตุ: ${report.location || '-'} (${report.area || '-'})
+⏰ เวลาเกิดเหตุ: ${formatThaiDate(report.incidentDate)} เวลา ${formatTime(report.incidentTime)}
+${report.details ? `📝 ตำหนิรูปพรรณ/พฤติการณ์: "${report.details}"\n` : ''}${mapLink ? `🗺️ ตำแหน่งพิกัดเกิดเหตุ: ${mapLink}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━
+⚡ สั่งการสายตรวจทุกเขต/จุดสกัด: สังเกตยานพาหนะรูปพรรณดังกล่าว หากพบต้องสงสัยให้เรียกตรวจทันที
+📞 ติดต่อเจ้าของรถ/ร้อยเวร: ${contactNumber}
+👮 ออกประกาศสกัดจับโดย: ${report.reporter || 'ฝ่ายปฏิบัติการ San BOT'}`;
+
+  // Try LINE ShareTargetPicker if in LINE client
+  if (typeof liff !== 'undefined' && liff.isLoggedIn && liff.isLoggedIn() && liff.isApiAvailable && liff.isApiAvailable('shareTargetPicker')) {
+    liff.shareTargetPicker([
+      {
+        type: 'text',
+        text: apbText
+      }
+    ]).then(res => {
+      if (res) {
+        showToast('ส่งใบสกัดจับเข้าห้องสนทนา LINE สำเร็จ', 'success');
+      }
+    }).catch(err => {
+      console.warn('shareTargetPicker failed, fallback to clipboard:', err);
+      copyAlertFallback(apbText);
+    });
+  } else {
+    copyAlertFallback(apbText);
+  }
+}
+
+function copyAlertFallback(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('คัดลอก "ใบสกัดจับด่วน" ลงคลิปบอร์ดแล้ว พร้อมวางส่งเข้ากลุ่มไลน์ทันที', 'success');
+    }).catch(() => {
+      prompt('คัดลอกข้อความใบสกัดจับด่วน:', text);
+    });
+  } else {
+    prompt('คัดลอกข้อความใบสกัดจับด่วน:', text);
   }
 }
 
@@ -1265,6 +1430,7 @@ function updateStats() {
   renderTimeChart();
   renderAreaChart();
   renderBrandChart();
+  renderTacticalExecutiveSummary();
 }
 
 function updateStrategicInsightText() {
@@ -1496,7 +1662,80 @@ function showAnalysisTab(tab) {
   if (tab === 'report') generateMonthlyReport();
 }
 
+// Tactical Executive Summary Briefing
+function renderTacticalExecutiveSummary() {
+  const topAreaEl = document.getElementById('exec-top-area');
+  const topAreaSub = document.getElementById('exec-top-area-sub');
+  const peakTimeEl = document.getElementById('exec-peak-time');
+  const peakTimeSub = document.getElementById('exec-peak-time-sub');
+  const primeTargetEl = document.getElementById('exec-prime-target');
+  const primeTargetSub = document.getElementById('exec-prime-target-sub');
+  const recoveryRateEl = document.getElementById('exec-recovery-rate');
+  const recoveryRateSub = document.getElementById('exec-recovery-rate-sub');
+  const directiveTextEl = document.getElementById('exec-directive-text');
+
+  if (!topAreaEl) return;
+
+  const total = reports.length;
+  if (total === 0) {
+    topAreaEl.textContent = 'ยังไม่มีข้อมูล';
+    peakTimeEl.textContent = 'ยังไม่มีข้อมูล';
+    primeTargetEl.textContent = 'ยังไม่มีข้อมูล';
+    recoveryRateEl.textContent = '0%';
+    if (directiveTextEl) directiveTextEl.textContent = 'ไม่มีรายงานรถหายในระบบ ขณะนี้สถานการณ์ปกติ';
+    return;
+  }
+
+  const areaCounts = {};
+  const timeCounts = {};
+  const targetCounts = {};
+  let recoveredCount = 0;
+
+  reports.forEach(r => {
+    const area = r.area || 'ไม่ระบุพื้นที่';
+    areaCounts[area] = (areaCounts[area] || 0) + 1;
+
+    const timeP = r.timePeriod || (r.incidentTime ? getTimePeriod(r.incidentTime) : 'ไม่ระบุ');
+    timeCounts[timeP] = (timeCounts[timeP] || 0) + 1;
+
+    const target = `${r.brand || 'ไม่ระบุ'} ${r.model || ''}`.trim();
+    targetCounts[target] = (targetCounts[target] || 0) + 1;
+
+    if (r.status === 'arrested' || r.status === 'found' || r.status === 'closed') {
+      recoveredCount++;
+    }
+  });
+
+  const sortedArea = Object.entries(areaCounts).sort((a, b) => b[1] - a[1])[0] || ['ไม่ระบุ', 0];
+  const sortedTime = Object.entries(timeCounts).sort((a, b) => b[1] - a[1])[0] || ['ไม่ระบุ', 0];
+  const sortedTarget = Object.entries(targetCounts).sort((a, b) => b[1] - a[1])[0] || ['ไม่ระบุ', 0];
+  const recRate = ((recoveredCount / total) * 100).toFixed(1);
+
+  topAreaEl.textContent = sortedArea[0];
+  if (topAreaSub) topAreaSub.textContent = `${sortedArea[1]} คดี (${((sortedArea[1] / total) * 100).toFixed(0)}% ของทั้งหมด)`;
+
+  peakTimeEl.textContent = sortedTime[0];
+  if (peakTimeSub) peakTimeSub.textContent = `${sortedTime[1]} ครั้งที่ตรวจพบ`;
+
+  primeTargetEl.textContent = sortedTarget[0];
+  if (primeTargetSub) primeTargetSub.textContent = `${sortedTarget[1]} คันที่เป็นเป้าหมาย`;
+
+  recoveryRateEl.textContent = `${recRate}%`;
+  if (recoveryRateSub) recoveryRateSub.textContent = `พบรถ/ปิดคดี ${recoveredCount}/${total} คัน`;
+
+  if (directiveTextEl) {
+    directiveTextEl.innerHTML = `
+      สั่งการชุดสายตรวจรถจักรยานยนต์และสายตรวจตำบล ยกระดับการตั้งจุดตรวจ/จุดสกัดในเขต 
+      <strong class="text-amber-300 underline font-extrabold">${sortedArea[0]}</strong> 
+      เน้นห้วงเวลา <strong class="text-amber-300 font-extrabold">${sortedTime[0]}</strong> 
+      เพิ่มความเข้มงวดตรวจสอบยานพาหนะกลุ่มเสี่ยง <strong class="text-amber-300 font-extrabold">${sortedTarget[0]}</strong> 
+      และประสานชุดสืบสวนตรวจสอบกล้อง CCTV บริเวณทางออกไปยังถนนสายหลักทันที
+    `;
+  }
+}
+
 function initAnalysis() {
+  renderTacticalExecutiveSummary();
   showAnalysisTab('heatmap');
 }
 
@@ -2200,6 +2439,8 @@ async function init() {
   }
 
   await loadReports();
+  setReportMode('quick');
+  renderTacticalExecutiveSummary();
 }
 
-init();
+init();

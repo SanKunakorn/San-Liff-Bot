@@ -332,7 +332,75 @@ function fillAndSearch(tab, value) {
   }
 }
 
-// 0.2 Quick Universal Search & Detect
+// 0.2 Quick Universal Smart Search & Type Detection
+function detectOmniType(raw) {
+  if (!raw) return { type: 'none', label: '', query: '' };
+  const str = raw.trim();
+  const cleanDigits = str.replace(/[- ]/g, '');
+  const ipWithoutPort = str.replace(/:\d+$/, '').trim();
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+  // Check IP
+  if (ipRegex.test(ipWithoutPort)) {
+    return {
+      type: 'ip',
+      label: '🌐 IP Address',
+      color: 'bg-sky-100 text-sky-800 border-sky-300',
+      query: ipWithoutPort
+    };
+  }
+
+  // Check 13 digits ID Card
+  if (/^\d{13}$/.test(cleanDigits)) {
+    const isValidLuhn = typeof isIDCardValid === 'function' ? isIDCardValid(cleanDigits) : true;
+    return {
+      type: 'idcard',
+      label: isValidLuhn ? '🆔 บัตรประชาชน 13 หลัก' : '🆔 บัตรประชาชน 13 หลัก',
+      color: 'bg-purple-100 text-purple-800 border-purple-300',
+      query: cleanDigits
+    };
+  }
+
+  // Check Phone number (9-10 digits starting with 0)
+  if (/^0\d{8,9}$/.test(cleanDigits)) {
+    return {
+      type: 'phone',
+      label: cleanDigits.length === 10 ? '📱 เบอร์โทรศัพท์มือถือ (10 หลัก)' : '☎️ เบอร์โทรศัพท์บ้าน (9 หลัก)',
+      color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      query: cleanDigits
+    };
+  }
+
+  // Otherwise assume Vehicle / License Plate or general keyword
+  return {
+    type: 'vehicle',
+    label: '🚗 ป้ายทะเบียน / ยานพาหนะ',
+    color: 'bg-rose-100 text-rose-800 border-rose-300',
+    query: str
+  };
+}
+
+function handleOmniInputChange() {
+  const input = document.getElementById('universal-search-input');
+  const indicatorText = document.getElementById('omni-detect-text');
+  if (!input || !indicatorText) return;
+
+  const val = input.value.trim();
+  if (!val) {
+    indicatorText.innerHTML = '<span>💡</span> <span>พิมพ์หรือวางข้อมูล ระบบจะวิเคราะห์ประเภทและค้นหาให้อัตโนมัติ</span>';
+    return;
+  }
+
+  const detected = detectOmniType(val);
+  indicatorText.innerHTML = `
+    <span class="text-slate-500">ตรวจพบประเภท:</span>
+    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg border font-black text-xs ${detected.color} shadow-2xs">
+      ${detected.label}
+    </span>
+    <span class="text-[11px] text-blue-600 font-bold hidden sm:inline">กด Enter หรือปุ่มค้นหาได้ทันที</span>
+  `;
+}
+
 function quickDetectAndSearch() {
   const input = document.getElementById('universal-search-input');
   if (!input) return;
@@ -342,29 +410,11 @@ function quickDetectAndSearch() {
     return;
   }
 
-  const cleanDigits = raw.replace(/[- ]/g, '');
-  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  const detected = detectOmniType(raw);
+  if (detected.type === 'none') return;
 
-  // Check IP
-  if (ipRegex.test(raw)) {
-    fillAndSearch('ip', raw);
-    return;
-  }
-
-  // Check 13 digits ID Card
-  if (/^\d{13}$/.test(cleanDigits)) {
-    fillAndSearch('idcard', cleanDigits);
-    return;
-  }
-
-  // Check Phone number (9-10 digits starting with 0)
-  if (/^0\d{8,9}$/.test(cleanDigits)) {
-    fillAndSearch('phone', cleanDigits);
-    return;
-  }
-
-  // Otherwise assume Vehicle / License Plate or general keyword
-  fillAndSearch('vehicle', raw);
+  saveRecentSearch(detected.type, detected.query);
+  fillAndSearch(detected.type, detected.query);
 }
 
 async function pasteUniversalSearch() {
@@ -405,16 +455,38 @@ async function fetchMyCurrentIP() {
   const input = document.getElementById('txtip');
   try {
     Swal.fire({ title: 'กำลังดึง IP เครื่อง...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-    const res = await fetch('https://api.ipify.org?format=json');
-    const data = await res.json();
+    let currentIP = '';
+
+    // ลำดับที่ 1: ipify
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.ip) currentIP = data.ip;
+      }
+    } catch (e) { }
+
+    // สำรอง 1: ipwho.is (ดึง IP ของตนเองอัตโนมัติ)
+    if (!currentIP) {
+      try {
+        const res2 = await fetch('https://ipwho.is/');
+        if (res2.ok) {
+          const data2 = await res2.json();
+          if (data2 && data2.ip) currentIP = data2.ip;
+        }
+      } catch (e) { }
+    }
+
     Swal.close();
-    if (data && data.ip) {
-      if (input) input.value = data.ip;
+    if (currentIP) {
+      if (input) input.value = currentIP;
       checkIP();
+    } else {
+      Swal.fire({ icon: 'error', title: 'ไม่สามารถดึง IP ได้', text: 'กรุณากรอก IP ด้วยตนเอง', confirmButtonColor: '#1e3a8a' });
     }
   } catch (e) {
     Swal.close();
-    Swal.fire({ icon: 'error', title: 'ไม่สามารถดึง IP ได้', text: e.message });
+    Swal.fire({ icon: 'error', title: 'ไม่สามารถดึง IP ได้', text: e.message, confirmButtonColor: '#dc2626' });
   }
 }
 
@@ -696,7 +768,95 @@ async function checkPhone() {
   }
 }
 
-// 2. ตรวจสอบ IP Address
+// 2. ตรวจสอบ IP Address (ระบบค้นหาเครือข่าย Multi-Provider สำรองอัตโนมัติ)
+async function fetchIPData(ip) {
+  const cleanIP = (ip || '').trim().replace(/^[^\d\w:]+|[^\d\w:]+$/g, '');
+  if (!cleanIP) throw new Error('กรุณากรอก IP Address ให้ถูกต้อง');
+
+  // ลำดับที่ 1: ipwho.is (ฟรี HTTPS รวดเร็ว ข้อมูลครบทั้ง ISP, ASN, ละติจูด, ลองจิจูด, Timezone)
+  try {
+    const res = await fetch(`https://ipwho.is/${encodeURIComponent(cleanIP)}`);
+    if (res.ok) {
+      const d = await res.json();
+      if (d && d.success !== false) {
+        return {
+          ip: d.ip || cleanIP,
+          isp: (d.connection && d.connection.isp) || d.org || '-',
+          org: (d.connection && (d.connection.org || d.connection.isp)) || '-',
+          asn: (d.connection && d.connection.asn) ? ('AS' + d.connection.asn) : '-',
+          city: d.city || '-',
+          region: d.region || '-',
+          country: d.country || '-',
+          country_code: d.country_code || '',
+          flag_emoji: (d.flag && d.flag.emoji) || '🌐',
+          postal: d.postal || '-',
+          timezone: (d.timezone && d.timezone.id) || '-',
+          latitude: d.latitude,
+          longitude: d.longitude
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('ipwho.is error, trying fallback:', e.message);
+  }
+
+  // สำรองที่ 1: freeipapi.com (ฟรี HTTPS ไม่จำกัดคีย์)
+  try {
+    const res = await fetch(`https://freeipapi.com/api/json/${encodeURIComponent(cleanIP)}`);
+    if (res.ok) {
+      const d = await res.json();
+      if (d && d.ipAddress) {
+        return {
+          ip: d.ipAddress || cleanIP,
+          isp: d.asnOrganization || '-',
+          org: d.asnOrganization || '-',
+          asn: d.asn ? ('AS' + d.asn) : '-',
+          city: d.cityName || '-',
+          region: d.regionName || '-',
+          country: d.countryName || '-',
+          country_code: d.countryCode || '',
+          flag_emoji: '🌐',
+          postal: d.zipCode || '-',
+          timezone: (d.timeZones && d.timeZones[0]) || '-',
+          latitude: d.latitude,
+          longitude: d.longitude
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('freeipapi error, trying fallback:', e.message);
+  }
+
+  // สำรองที่ 2: ipapi.co
+  try {
+    const res = await fetch(`https://ipapi.co/${encodeURIComponent(cleanIP)}/json/`);
+    if (res.ok) {
+      const d = await res.json();
+      if (d && !d.error) {
+        return {
+          ip: d.ip || cleanIP,
+          isp: d.org || '-',
+          org: d.org || '-',
+          asn: d.asn || '-',
+          city: d.city || '-',
+          region: d.region || '-',
+          country: d.country_name || '-',
+          country_code: d.country_code || '',
+          flag_emoji: '🌐',
+          postal: d.postal || '-',
+          timezone: d.timezone || '-',
+          latitude: d.latitude,
+          longitude: d.longitude
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('ipapi.co error:', e.message);
+  }
+
+  throw new Error('ไม่สามารถดึงข้อมูล IP ได้ (กรุณาตรวจสอบว่าหมายเลข IP ถูกต้อง)');
+}
+
 async function checkIP() {
   const ipInput = document.getElementById("txtip");
   const ip = ipInput ? ipInput.value.trim() : '';
@@ -706,73 +866,74 @@ async function checkIP() {
     return;
   }
 
-  addRecentSearch('ip', ip);
+  const cleanIP = ip.replace(/^[^\d\w:]+|[^\d\w:]+$/g, '');
+  addRecentSearch('ip', cleanIP);
 
   Swal.fire({
     title: 'กำลังตรวจสอบ IP Address...',
-    text: `ตรวจสอบ: ${ip}`,
+    text: `ตรวจสอบ: ${cleanIP}`,
     allowOutsideClick: false,
     didOpen: () => { Swal.showLoading(); }
   });
 
   try {
-    const res = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`);
-    const data = await res.json();
-
+    const data = await fetchIPData(cleanIP);
     Swal.close();
 
-    if (data && !data.error) {
-      const rawSummary = `[สืบค้น IP Address]\nIP: ${data.ip || ip}\nISP/Org: ${data.org || data.asn || '-'}\nตำแหน่ง: ${data.city || '-'}, ${data.region || '-'}, ${data.country_name || '-'}\nพิกัด: ${data.latitude || '-'}, ${data.longitude || '-'}`;
+    const rawSummary = `[สืบค้น IP Address]\nIP: ${data.ip}\nผู้ให้บริการ (ISP): ${data.isp}\nองค์กร/ASN: ${data.org} (${data.asn})\nตำแหน่ง: ${data.city}, ${data.region}, ${data.country}\nพิกัด: ${data.latitude || '-'}, ${data.longitude || '-'}\nโซนเวลา: ${data.timezone}`;
 
-      renderSearchResultPanel({
-        badgeText: '🌐 IP Address',
-        badgeClass: 'bg-sky-100 text-sky-800 border border-sky-200',
-        rawSummary: rawSummary,
-        htmlContent: `
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-              <div>
-                <span class="text-xs text-slate-400 font-semibold block">IP Address ที่ตรวจสอบ</span>
-                <span class="text-xl font-mono font-black text-sky-700 tracking-wider">${data.ip || ip}</span>
-              </div>
-              <div class="px-3 py-1.5 rounded-lg border bg-sky-50 border-sky-200 text-sky-800 text-xs font-bold">
-                🏢 ${data.org || data.asn || 'ไม่ระบุผู้ให้บริการ'}
-              </div>
+    renderSearchResultPanel({
+      badgeText: '🌐 IP Address',
+      badgeClass: 'bg-sky-100 text-sky-800 border border-sky-200',
+      rawSummary: rawSummary,
+      htmlContent: `
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+            <div>
+              <span class="text-xs text-slate-400 font-semibold block">IP Address ที่ตรวจสอบ</span>
+              <span class="text-xl font-mono font-black text-sky-700 tracking-wider">${data.ip}</span>
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-                <span class="text-slate-400 font-semibold block">📍 ตำแหน่งและภูมิภาค</span>
-                <p class="font-bold text-slate-800 text-sm">${data.city || '-'}, ${data.region || '-'}</p>
-                <p class="text-slate-600">ประเทศ: <span class="font-bold">${data.country_name || '-'} (${data.country_code || '-'})</span></p>
-                <p class="text-slate-500">รหัสไปรษณีย์: ${data.postal || '-'}</p>
-              </div>
-
-              <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-                <span class="text-slate-400 font-semibold block">📡 ข้อมูลโครงข่าย (Network)</span>
-                <p class="text-slate-700">ASN: <span class="font-mono font-bold">${data.asn || '-'}</span></p>
-                <p class="text-slate-700">โซนเวลา: <span class="font-bold">${data.timezone || '-'}</span></p>
-                <p class="text-slate-700">พิกัด: <span class="font-mono font-bold text-blue-600">${data.latitude || '-'}, ${data.longitude || '-'}</span></p>
-              </div>
+            <div class="px-3 py-1.5 rounded-lg border bg-sky-50 border-sky-200 text-sky-800 text-xs font-bold">
+              🏢 ${data.isp || data.org || 'ไม่ระบุผู้ให้บริการ'}
             </div>
-
-            ${data.latitude && data.longitude ? `
-              <div class="pt-1">
-                <a href="https://maps.google.com/?q=${data.latitude},${data.longitude}" target="_blank" class="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all">
-                  <span>🗺️</span> เปิดดูพิกัดโดยประมาณบน Google Maps
-                </a>
-              </div>
-            ` : ''}
           </div>
-        `
-      });
 
-    } else {
-      Swal.fire({ icon: 'info', title: 'ไม่พบข้อมูล IP', text: data.reason || 'กรุณาตรวจสอบความถูกต้องของ IP' });
-    }
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+              <span class="text-slate-400 font-semibold block">📍 ตำแหน่งและภูมิภาค</span>
+              <p class="font-bold text-slate-800 text-sm">${data.city}, ${data.region}</p>
+              <p class="text-slate-600">ประเทศ: <span class="font-bold">${data.flag_emoji} ${data.country} ${data.country_code ? '(' + data.country_code + ')' : ''}</span></p>
+              <p class="text-slate-500">รหัสไปรษณีย์: ${data.postal || '-'}</p>
+            </div>
+
+            <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+              <span class="text-slate-400 font-semibold block">📡 ข้อมูลโครงข่าย (Network)</span>
+              <p class="text-slate-700">องค์กร: <span class="font-bold text-slate-800">${data.org}</span></p>
+              <p class="text-slate-700">ASN: <span class="font-mono font-bold text-sky-600">${data.asn}</span></p>
+              <p class="text-slate-700">โซนเวลา: <span class="font-bold">${data.timezone}</span></p>
+              <p class="text-slate-700">พิกัดเสา: <span class="font-mono font-bold text-blue-600">${data.latitude || '-'}, ${data.longitude || '-'}</span></p>
+            </div>
+          </div>
+
+          ${data.latitude && data.longitude ? `
+            <div class="pt-1">
+              <a href="https://maps.google.com/?q=${data.latitude},${data.longitude}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all">
+                <span>🗺️</span> เปิดดูพิกัดโดยประมาณบน Google Maps
+              </a>
+            </div>
+          ` : ''}
+        </div>
+      `
+    });
+
   } catch (err) {
     Swal.close();
-    Swal.fire({ icon: 'error', title: 'ตรวจสอบ IP ล้มเหลว', text: err.message || 'ไม่สามารถเชื่อมต่อฐานข้อมูล IP ได้' });
+    Swal.fire({
+      icon: 'error',
+      title: 'ตรวจสอบ IP ล้มเหลว',
+      text: err.message || 'ไม่สามารถเชื่อมต่อฐานข้อมูลเครือข่ายได้',
+      confirmButtonColor: '#dc2626'
+    });
   }
 }
 
@@ -2029,6 +2190,11 @@ async function processFlexAction(mode) {
   const flexPayload = buildFlexPayloadFromFields();
   if (!flexPayload) return;
 
+  if (typeof liff === 'undefined') {
+    showTestConsole(flexPayload);
+    return;
+  }
+
   Swal.fire({
     title: 'กำลังตรวจสอบโทเค็น LINE...',
     allowOutsideClick: false,
@@ -2052,19 +2218,19 @@ async function processFlexAction(mode) {
           Swal.close();
         }
       } else {
-        Swal.fire({ icon: 'warning', title: 'ฟีเจอร์ไม่พร้อมใช้งาน', text: 'กรุณาเปิดระบบใช้งานผ่านแอปพลิเคชัน LINE เท่านั้น', confirmButtonColor: '#ff2e97' });
+        Swal.fire({ icon: 'warning', title: 'ฟีเจอร์ไม่พร้อมใช้งาน', text: 'กรุณาเปิดระบบใช้งานผ่านแอปพลิเคชัน LINE เท่านั้น', confirmButtonColor: '#1e3a8a' });
       }
     }
   } catch (error) {
     console.error(`❌ LINE LIFF Error [${mode}]:`, error);
-    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาดในการส่งข้อมูล', text: error.message });
+    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาดในการส่งข้อมูล', text: error.message, confirmButtonColor: '#dc2626' });
   }
 }
 
 // ฟังก์ชันเปิด Alert แจ้งส่งงานสำเร็จ
 function showSuccessAlert(titleText, shouldCloseWindow) {
   Swal.fire({ icon: 'success', title: titleText, timer: 1500, showConfirmButton: false });
-  if (shouldCloseWindow) {
+  if (shouldCloseWindow && typeof liff !== 'undefined' && liff.closeWindow) {
     setTimeout(() => { liff.closeWindow(); }, 1500);
   }
 }
@@ -2085,6 +2251,15 @@ function showTestConsole(payload) {
 initializeLiff()
 async function initializeLiff() {
   try {
+    // 0. ตรวจสอบว่ามีการโหลด LINE LIFF SDK หรือไม่
+    if (typeof liff === 'undefined') {
+      console.warn("⚠️ LINE LIFF SDK is not loaded on this document, skipping initializeLiff()");
+      if (typeof eventFlex === "function") {
+        eventFlex();
+      }
+      return;
+    }
+
     // 1. เริ่มต้นระบบ LIFF 
     await liff.init({ liffId: LIFF_ID });
 
@@ -2602,328 +2777,6 @@ function getCurrentLocation() {
     if (btnIcon) btnIcon.classList.remove('animate-spin');
   }
 }
-
-// ========================================
-// SEARCH FUNCTIONS (แก้ไขใหม่ - รองรับ API)
-// ========================================
-// ฟังก์ชันดึงข้อมูล IP จาก API
-/**
- * 1. ฟังก์ชันดึงข้อมูลรายละเอียดของ IP จาก API (คืนค่าเป็น Object)
- */
-async function getIPFromAPI(userip) {
-  try {
-    // ปรับเป็น https:// เพื่อความปลอดภัยและทำงานบน Web App ได้เสถียรขึ้น
-    const apiUrl = `https://ip-api.com/json/${userip}`;
-    const response = await fetch(apiUrl);
-
-    if (response.ok) {
-      const data = await response.json();
-
-      if (data.status === "success") {
-        // ✅ เปลี่ยนเป็นส่งคู่วัตถุ (Object) กลับไปโดยตรง เพื่อให้ฟังก์ชันแสดงผลนำไปใช้ต่อได้
-        return data;
-      } else {
-        // หาก API ส่งสถานะ fail กลับมา ให้โยน error ออกไป
-        throw new Error(data.message || "ไม่สามารถดึงข้อมูลจากระบบได้");
-      }
-    } else {
-      throw new Error(`Response code ${response.status}`);
-    }
-  } catch (error) {
-    // ส่งต่อ Error ไปให้บล็อก catch ของฟังก์ชันหลักจัดการ
-    throw error;
-  }
-}
-
-/**
- * 2. ฟังก์ชันเรนเดอร์ข้อมูล IP ลงอินเตอร์เฟซ (Tailwind UI)
- */
-function displayIPInfo(ipInfo) {
-  const resultDiv = document.getElementById('result');
-  const statusMessage = document.getElementById('statusMessage');
-
-  // 🗺️ แก้ไขรูปแบบลิงก์ Google Maps ให้เป็นมาตรฐานโลก
-  const googleMapsUrl = `https://www.google.com/maps?q=${ipInfo.lat},${ipInfo.lon}`;
-
-  statusMessage.innerHTML = `
-        <div class="border-l-4 border-blue-500 pl-4 text-left">
-            <h3 class="text-xl font-bold text-blue-700 mb-4">🌐 ผลการตรวจสอบ IP Address</h3>
-            
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600 mb-1">IP Address</p>
-                    <p class="text-lg font-bold text-blue-900">${ipInfo.query}</p>
-                </div>
-                
-                <div class="bg-green-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600 mb-1">ประเทศ</p>
-                    <p class="text-lg font-bold text-green-900">${ipInfo.country} (${ipInfo.countryCode})</p>
-                </div>
-                
-                <div class="bg-purple-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600 mb-1">จังหวัด/รัฐ</p>
-                    <p class="text-lg font-bold text-purple-900">${ipInfo.regionName || '-'}</p>
-                </div>
-                
-                <div class="bg-orange-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600 mb-1">เมือง</p>
-                    <p class="text-lg font-bold text-orange-900">${ipInfo.city || '-'}</p>
-                </div>
-            </div>
-            
-            <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                <p class="text-sm font-bold text-gray-700 mb-2">📍 พิกัดโดยประมาณ (เสาสัญญาณ)</p>
-                <p class="text-gray-800">Latitude: ${ipInfo.lat}, Longitude: ${ipInfo.lon}</p>
-                <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 text-blue-600 hover:text-blue-800 font-semibold hover:underline">
-                    🗺️ เปิดใน Google Maps
-                </a>
-            </div>
-            
-            <div class="bg-indigo-50 p-4 rounded-lg mb-4">
-                <p class="text-sm font-bold text-indigo-700 mb-2">🌐 ผู้ให้บริการ (ISP)</p>
-                <p class="text-gray-800 mb-1"><strong>ISP:</strong> ${ipInfo.isp || '-'}</p>
-                <p class="text-gray-800 mb-1"><strong>Organization:</strong> ${ipInfo.org || '-'}</p>
-                <p class="text-gray-800"><strong>AS:</strong> ${ipInfo.as || '-'}</p>
-            </div>
-            
-            <div class="bg-yellow-50 p-4 rounded-lg">
-                <p class="text-sm font-bold text-yellow-700 mb-2">🕐 เขตเวลา</p>
-                <p class="text-gray-800">${ipInfo.timezone || '-'}</p>
-            </div>
-        </div>
-    `;
-
-  // เปิดซ่อน element เพื่อแสดงผลการสืบค้น
-  if (resultDiv) resultDiv.classList.remove('hidden');
-  if (statusMessage) statusMessage.classList.remove('hidden');
-
-  // สั่งเลื่อนหน้าจอลงมาโฟกัสที่ผลลัพธ์อย่างนุ่มนวล
-  statusMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-/**
- * 3. ฟังก์ชันหลักในการรับค่า ตรวจสอบ และควบคุม SweetAlert2
- */
-async function checkIP() {
-  const txtIpElement = document.getElementById('txtip');
-  if (!txtIpElement) return;
-
-  const ip = txtIpElement.value;
-  if (!ip || ip.trim() === '') {
-    Swal.fire({
-      icon: 'warning',
-      title: 'กรุณากรอก IP Address ให้ถูกต้อง',
-      confirmButtonColor: '#f59e0b'
-    });
-    return;
-  }
-
-  // แสดงกล่องสถานะกำลังโหลดข้อมูล
-  Swal.fire({
-    title: 'กำลังตรวจสอบ...',
-    html: 'กรุณารอสักครู่ ระบบกำลังค้นหาฐานข้อมูลเครือข่าย',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    }
-  });
-
-  try {
-    // เรียกใช้ API ข้อมูลจะคืนค่ามาเป็น Object นำไปส่งต่อได้ทันที
-    const ipInfo = await getIPFromAPI(ip.trim());
-    Swal.close();
-    displayIPInfo(ipInfo);
-  } catch (error) {
-    // ตรวจจับและดักจับข้อผิดพลาดทั้งหมดมาแสดงผลที่หน้าจอ
-    Swal.fire({
-      icon: 'error',
-      title: 'เกิดข้อผิดพลาด',
-      text: error.message || 'ไม่สามารถดึงข้อมูล IP ได้',
-      confirmButtonColor: '#dc2626'
-    });
-  }
-}
-
-function validateThaiID(id) {
-  // ตรวจสอบความยาวของเลขบัตรประชาชน
-  if (id.length !== 13) {
-    return false;
-  }
-  // ตรวจสอบว่าเป็นตัวเลขทั้งหมดหรือไม่
-  if (!/^\d{13}$/.test(id)) {
-    return false;
-  }
-  // คำนวณเช็คดิจิตอล
-  var sum = 0;
-  for (var i = 0; i < 12; i++) {
-    sum += parseInt(id.charAt(i)) * (13 - i);
-  }
-  var checkDigit = (11 - (sum % 11)) % 10;
-  // เปรียบเทียบเช็คดิจิตอล
-  return parseInt(id.charAt(12)) === checkDigit;
-}
-
-function validateIDCard() {
-  const id = document.getElementById('txtid').value;
-  const checkDiv = document.getElementById('idcheck');
-  if (validateThaiID(id)) {
-    checkDiv.innerHTML = '<span class="text-green-500 text-2xl">✅</span>';
-  } else if (id.length > 0) {
-    checkDiv.innerHTML = '<span class="text-red-500 text-2xl">❌</span>';
-  } else {
-    checkDiv.innerHTML = '';
-  }
-}
-
-
-function checkIDCard() {
-  const thaiID = document.getElementById('txtid').value;
-  const resultDiv = document.getElementById('result');
-  const statusMessage = document.getElementById('statusMessage');
-
-  if (!validateThaiID(thaiID)) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'กรุณากรอกหมายเลขบัตรประชาชนให้ถูกต้อง',
-      confirmButtonColor: '#f59e0b'
-    });
-    return;
-  }
-  // ส่งข้อความไปยัง Bot
-  sendMessagebot('Id#' + thaiID);
-  // แสดงผลใน div result
-  statusMessage.innerHTML = `
-        <div class="border-l-4 border-purple-500 pl-4">
-            <h3 class="text-xl font-bold text-purple-700 mb-4">🆔 ผลการตรวจสอบบัตรประชาชน</h3>
-            
-            <div class="bg-green-50 p-4 rounded-lg mb-4">
-                <p class="text-green-800 font-semibold mb-2">✅ หมายเลขบัตรถูกต้อง</p>
-                <p class="text-gray-800"><strong>เลขบัตร:</strong> ${thaiID}</p>
-            </div>
-            
-            <div class="bg-blue-50 p-4 rounded-lg mb-4">
-                <p class="text-sm font-bold text-blue-700 mb-2">📤 ส่งคำขอตรวจสอบแล้ว</p>
-                <p class="text-sm text-blue-600">ระบบได้ส่งคำขอไปยัง Bot เรียบร้อยแล้ว</p>
-                <p class="text-sm text-gray-600 mt-2">รหัสคำขอ: Id#${thaiID}</p>
-            </div>
-            
-            <div class="bg-purple-50 p-4 rounded-lg">
-                <p class="text-sm text-purple-800">💡 เมื่อเชื่อมต่อ API แล้ว จะแสดงข้อมูล:</p>
-                <ul class="text-sm text-purple-700 mt-2 ml-4 list-disc">
-                    <li>ชื่อ-นามสกุล</li>
-                    <li>วันเกิด อายุ</li>
-                    <li>ที่อยู่ตามทะเบียนบ้าน</li>
-                    <li>สถานะบัตร (ใช้งานได้/หมดอายุ)</li>
-                </ul>
-            </div>
-        </div>
-    `;
-
-  resultDiv.classList.remove('hidden');
-  statusMessage.classList.remove('hidden');
-  statusMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  // แสดง Success message
-  Swal.fire({
-    icon: 'success',
-    title: 'ส่งคำขอสำเร็จ',
-    text: 'ระบบกำลังตรวจสอบข้อมูล',
-    timer: 2000,
-    showConfirmButton: false
-  });
-}
-
-
-
-function displaynetwork(info) {
-  const resultDiv = document.getElementById('result');
-  const statusMessage = document.getElementById('statusMessage');
-
-  statusMessage.innerHTML = `
-        <div class="border-l-4 border-green-500 pl-4">
-            <h3 class="text-xl font-bold text-green-700 mb-4">📱 ผลการตรวจสอบเบอร์โทร</h3>
-            
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-lg font-bold text-blue-900">${info || 'ไม่ระบุ'}</p>
-                </div>
-                
-            <div class="bg-blue-50 p-4 rounded-lg">
-                <p class="text-sm text-blue-800">💡 หมายเหตุ: ข้อมูลที่แสดงขึ้นอยู่กับการเชื่อมต่อ API</p>
-            </div>
-        </div>
-    `;
-
-  resultDiv.classList.remove('hidden');
-  statusMessage.classList.remove('hidden');
-  statusMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-async function checkPhone() {
-  const phone = document.getElementById('txtphone').value;
-
-  if (!phone || phone.trim() === '') {
-    Swal.fire({
-      icon: 'warning',
-      title: 'กรุณากรอกหมายเลขโทรศัพท์ให้ถูกต้อง',
-      confirmButtonColor: '#f59e0b'
-    });
-    return;
-  }
-  // แสดง loading
-  Swal.fire({
-    title: 'กำลังตรวจสอบ...',
-    html: 'กรุณารอสักครู่',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    }
-  });
-
-  try {
-    const network = await Checknetwork(phone);
-    Swal.close();
-    displaynetwork(network);
-  } catch (error) {
-    Swal.close();
-    // แสดงข้อมูล Demo เมื่อ API ไม่พร้อม
-    const demoInfo = {
-      phone: phone,
-      network: 'ตัวอย่าง - ต้องเชื่อมต่อ API',
-      type: 'มือถือ',
-      status: 'ไม่ทราบ'
-    };
-    displaynetwork(demoInfo);
-    // แสดง warning
-    Swal.fire({
-      icon: 'info',
-      title: 'แสดงข้อมูลตัวอย่าง',
-      text: 'ต้องเชื่อมต่อ API เพื่อดูข้อมูลจริง',
-      confirmButtonColor: '#3b82f6'
-    });
-  }
-}
-
-async function Checknetwork(phoneno) {
-  try {
-    const response = await fetch(`${GAS_URL}?phone=${phoneno}`);
-
-    if (!response.ok) {
-      return '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
-    }
-
-    const text = await response.text(); // ✅ อ่านเป็นข้อความธรรมดา
-
-    if (text.trim()) {
-      return `📞 ผลการตรวจสอบ:\n${text}`;
-    } else {
-      return 'ไม่พบข้อมูลเบอร์โทรนี้';
-    }
-
-  } catch (error) {
-    return '⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ API';
-  }
-}
-
 
 // ========================================
 // APP FUNCTIONS

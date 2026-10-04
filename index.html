@@ -486,13 +486,13 @@
 
                 <!-- Universal Smart Search Bar -->
                 <div
-                    class="bg-gradient-to-r from-blue-50 via-indigo-50/40 to-slate-50 rounded-2xl p-4 sm:p-5 border border-blue-200/80 shadow-sm space-y-3">
+                    class="bg-gradient-to-r from-blue-50 via-indigo-50/40 to-slate-50 rounded-2xl p-4 sm:p-5 border-2 border-blue-200 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
                         <label class="text-xs font-bold text-police-blue flex items-center gap-1.5">
-                            <span class="text-base">⚡</span> ค้นหาด่วนอัจฉริยะ (Universal Smart Search):
+                            <span class="text-base">⚡</span> กล่องสืบค้นอัจฉริยะช่องเดียว (Smart Omni-Search):
                         </label>
                         <span class="text-[11px] text-slate-500 font-medium hidden sm:inline">ระบบตรวจจับประเภท
-                            (เบอร์/IP/บัตร/ทะเบียน) อัตโนมัติ</span>
+                            (เบอร์ / IP / เลขบัตร 13 หลัก / ทะเบียนรถ) อัตโนมัติ</span>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2">
                         <div class="relative flex-1">
@@ -501,8 +501,9 @@
                                 🔎
                             </div>
                             <input type="text" id="universal-search-input"
-                                placeholder="พิมพ์เบอร์โทร, IP, เลขบัตร 13 หลัก หรือทะเบียนรถ..."
+                                placeholder="พิมพ์หรือวาง: 0812345678, 1.1.1.1, 1234567890123 หรือ กข 1234..."
                                 class="search-input-modern w-full pl-11 pr-20 py-3 rounded-xl text-sm sm:text-base font-semibold text-slate-800"
+                                oninput="handleOmniInputChange()"
                                 onkeypress="if(event.key==='Enter') quickDetectAndSearch()">
                             <div class="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
                                 <button type="button" onclick="pasteUniversalSearch()"
@@ -518,9 +519,19 @@
                             </div>
                         </div>
                         <button type="button" onclick="quickDetectAndSearch()"
-                            class="px-5 py-3 bg-gradient-to-r from-police-blue to-blue-600 hover:from-blue-900 hover:to-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 whitespace-nowrap">
+                            class="px-5 py-3 bg-gradient-to-r from-police-blue to-blue-600 hover:from-blue-900 hover:to-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer">
                             <span>⚡</span> ค้นหาทันที
                         </button>
+                    </div>
+
+                    <!-- Live Detection Indicator -->
+                    <div id="omni-detect-indicator" class="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white/80 border border-blue-200/60 shadow-2xs">
+                        <div class="flex items-center gap-1.5 font-bold text-slate-600" id="omni-detect-text">
+                            <span>💡</span> <span>พิมพ์หรือวางข้อมูล ระบบจะวิเคราะห์ประเภทและค้นหาให้อัตโนมัติ</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-[11px] font-bold text-slate-400">
+                            <span class="hidden sm:inline">กด Enter เพื่อค้นหา</span>
+                        </div>
                     </div>
 
                     <!-- Recent Searches Chips -->

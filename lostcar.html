@@ -219,7 +219,32 @@
         <!-- 1. PAGE: REPORT (แบบฟอร์มแจ้งรถหาย) -->
         <!-- ======================================================== -->
         <section id="page-report" class="page fade-in">
+          <!-- Mode Switcher Banner -->
+          <div class="bg-white p-2 rounded-2xl border-2 border-blue-200 shadow-sm flex items-center gap-2 mb-4">
+            <button type="button" id="btn-mode-quick" onclick="setReportMode('quick')" class="flex-1 py-3 px-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow-md active:scale-95 cursor-pointer">
+              <span class="text-base">⚡</span> <span>โหมดรับแจ้งด่วน (30 วินาที)</span>
+            </button>
+            <button type="button" id="btn-mode-full" onclick="setReportMode('full')" class="flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-police-blue hover:bg-blue-50 active:scale-95 cursor-pointer">
+              <span class="text-base">📋</span> <span>โหมดสำนวนฉบับเต็ม</span>
+            </button>
+          </div>
+
+          <!-- Quick Mode Helper Alert -->
+          <div id="quick-mode-alert" class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-3.5 mb-4 text-xs text-amber-950 font-bold flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm shadow-sm flex-shrink-0">⚡</span>
+              <div>
+                <div class="font-black text-amber-900 text-xs sm:text-sm">โหมดด่วนพิเศษสำหรับสายตรวจ & ร้อยเวร</div>
+                <div class="text-[11px] text-amber-800/90 font-semibold mt-0.5">กรอกเฉพาะ ยานพาหนะ + จุดเกิดเหตุ + เบอร์ติดต่อ ระบบจะเติมผลัดเวร/เวลา/พิกัดให้อัตโนมัติ</div>
+              </div>
+            </div>
+            <span class="hidden sm:inline-flex bg-amber-200 text-amber-950 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">Fast Dispatch</span>
+          </div>
+
           <form id="report-form" class="space-y-4">
+            <!-- Hidden Edit ID -->
+            <input type="hidden" id="edit-id" value="">
+
             <!-- Step 1: Basic Info -->
             <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-6 shadow-sm space-y-4">
               <h3 class="font-black text-police-blue text-sm sm:text-base flex items-center gap-2.5 pb-2 border-b border-blue-100">
@@ -227,19 +252,19 @@
                 <span>ข้อมูลเบื้องต้นและประเภทรถ</span>
               </h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
+                <div id="field-shift-container" class="full-mode-only hidden">
                   <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">ผลัดเวรปฏิบัติการ <span class="text-rose-500">*</span></label>
-                  <select id="shift" required class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-semibold bg-white text-slate-800 shadow-sm transition">
+                  <select id="shift" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-semibold bg-white text-slate-800 shadow-sm transition">
                     <option value="">เลือกผลัดเวร</option>
                   </select>
                 </div>
-                <div>
+                <div id="field-vehicle-type-container" class="col-span-1 sm:col-span-2 quick-mode-span">
                   <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">ประเภทยานพาหนะ <span class="text-rose-500">*</span></label>
-                  <select id="vehicle-type" required class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-semibold bg-white text-slate-800 shadow-sm transition" onchange="updateBrands()">
+                  <select id="vehicle-type" required class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-black text-police-blue bg-white shadow-sm transition" onchange="updateBrands()">
                     <option value="">เลือกประเภท</option>
-                    <option value="จักรยานยนต์">จักรยานยนต์</option>
-                    <option value="รถยนต์">รถยนต์</option>
-                    <option value="รถกระบะ">รถกระบะ</option>
+                    <option value="จักรยานยนต์">🏍️ จักรยานยนต์</option>
+                    <option value="รถยนต์">🚗 รถยนต์</option>
+                    <option value="รถกระบะ">🛻 รถกระบะ</option>
                   </select>
                 </div>
               </div>
@@ -249,7 +274,7 @@
             <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-6 shadow-sm space-y-4">
               <h3 class="font-black text-police-blue text-sm sm:text-base flex items-center gap-2.5 pb-2 border-b border-blue-100">
                 <span class="step-badge">2</span>
-                <span>รายละเอียดรูปพรรณยานพาหนะ</span>
+                <span>รายละเอียดรูปพรรณยานพาหนะ & การติดต่อ</span>
               </h3>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                 <div>
@@ -279,6 +304,15 @@
                   <input type="text" id="license-plate" required placeholder="เช่น 1กข 1234 ระยอง" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-bold text-police-blue bg-white shadow-sm transition">
                   <p id="license-error" class="hidden text-xs text-rose-500 font-bold mt-1">กรุณาระบุเลขทะเบียนให้ถูกต้อง</p>
                 </div>
+                <div class="col-span-2 sm:col-span-4 mt-1 pt-3 border-t border-slate-100">
+                  <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                      <span>📞 เบอร์โทรผู้แจ้ง / เจ้าของรถ (เพื่อประสานงานด่วน)</span>
+                    </span>
+                    <span class="text-[11px] font-semibold text-slate-400">ระบุหรือไม่ก็ได้</span>
+                  </label>
+                  <input type="tel" id="contact-phone" placeholder="เช่น 0812345678" maxlength="12" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-bold text-slate-800 bg-white shadow-sm transition">
+                </div>
               </div>
             </div>
 
@@ -288,70 +322,77 @@
                 <span class="step-badge">3</span>
                 <span>สถานที่และวันเวลาเกิดเหตุ</span>
               </h3>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-3">
-                <div>
-                  <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">เขต/พื้นที่รับผิดชอบ <span class="text-rose-500">*</span></label>
-                  <select id="area" required class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-semibold bg-white text-slate-800 shadow-sm transition">
-                    <option value="">เลือกพื้นที่</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">วันที่เกิดเหตุ <span class="text-rose-500">*</span></label>
-                  <input type="date" id="incident-date" required class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition">
-                </div>
-                <div>
-                  <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">เวลาโดยประมาณ</label>
-                  <input type="time" id="incident-time" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" onchange="autoSelectTimePeriod()">
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">สถานที่เกิดเหตุ (จุดสังเกต/ชื่อร้าน/ซอย) <span class="text-rose-500">*</span></label>
-                <input type="text" id="location" required placeholder="เช่น หน้าร้าน 7-11 ตลาดนิคมฯ ซอย 4" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition">
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <label class="block text-xs sm:text-sm font-bold text-slate-700">พิกัดแผนที่ (Latitude, Longitude)</label>
-                    <button type="button" onclick="getCurrentLocation()" class="text-[11px] text-blue-600 hover:text-police-blue font-bold flex items-center gap-1 cursor-pointer">
-                      <i class="fa-solid fa-crosshairs"></i> <span>ระบุตำแหน่งฉัน</span>
-                    </button>
-                  </div>
-                  <div class="flex gap-2">
-                    <input type="text" id="lat-lng" placeholder="เช่น 12.823400, 101.123400" oninput="parseLatLngInput()" class="flex-1 px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue text-xs sm:text-sm font-mono bg-white text-slate-800 shadow-sm transition">
-                    <button type="button" id="get-location-btn" onclick="getCurrentLocation()" class="px-3.5 sm:px-4 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer whitespace-nowrap" title="ดึงพิกัด GPS ตำแหน่งปัจจุบัน">
-                      <span id="gps-icon">📍</span>
-                      <span id="gps-loading" class="hidden"><i class="fa-solid fa-circle-notch fa-spin text-police-blue"></i></span>
-                      <span>พิกัดฉัน</span>
-                    </button>
-                  </div>
-                  <!-- Hidden inputs for backward compatibility with form data & API -->
-                  <input type="hidden" id="latitude" name="latitude">
-                  <input type="hidden" id="longitude" name="longitude">
 
-                  <!-- GPS Validation & Google Maps Preview -->
-                  <div id="gps-error" class="hidden text-rose-500 text-xs font-semibold mt-1.5 flex items-center gap-1">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span id="gps-error-text">พิกัดอยู่นอกประเทศไทย หรือไม่ถูกต้อง</span>
+              <!-- Primary Location (Required in both Quick and Full modes) -->
+              <div>
+                <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">สถานที่เกิดเหตุ (จุดสังเกต/ชื่อร้าน/ซอย) <span class="text-rose-500">*</span></label>
+                <input type="text" id="location" required placeholder="เช่น หน้าร้าน 7-11 ตลาดนิคมฯ ซอย 4" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-bold text-slate-800 bg-white shadow-sm transition">
+              </div>
+
+              <!-- Extra details for Full Dossier Mode -->
+              <div class="full-mode-only hidden space-y-3.5 pt-2 border-t border-slate-100">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">เขต/พื้นที่รับผิดชอบ <span class="text-rose-500">*</span></label>
+                    <select id="area" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-semibold bg-white text-slate-800 shadow-sm transition">
+                      <option value="">เลือกพื้นที่</option>
+                    </select>
                   </div>
-                  <div id="map-link" class="hidden mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-blue-700">
-                    <i class="fa-solid fa-map-location-dot"></i>
-                    <a id="google-maps-link" href="#" target="_blank" class="hover:underline text-police-blue font-bold">เปิดดูตำแหน่งบน Google Maps ↗</a>
+                  <div>
+                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">วันที่เกิดเหตุ <span class="text-rose-500">*</span></label>
+                    <input type="date" id="incident-date" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition">
+                  </div>
+                  <div>
+                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">เวลาโดยประมาณ</label>
+                    <input type="time" id="incident-time" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-medium bg-white text-slate-800 shadow-sm transition" onchange="autoSelectTimePeriod()">
                   </div>
                 </div>
-                <div>
-                  <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">ช่วงเวลาเกิดเหตุ</label>
-                  <select id="time-period" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-semibold bg-white text-slate-800 shadow-sm transition">
-                    <option value="เช้า (06:00-12:00)">เช้า (06:00-12:00)</option>
-                    <option value="บ่าย (12:00-18:00)">บ่าย (12:00-18:00)</option>
-                    <option value="ค่ำ (18:00-24:00)">ค่ำ (18:00-24:00)</option>
-                    <option value="ดึก (00:00-06:00)">ดึก (00:00-06:00)</option>
-                  </select>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <label class="block text-xs sm:text-sm font-bold text-slate-700">พิกัดแผนที่ (Latitude, Longitude)</label>
+                      <button type="button" onclick="getCurrentLocation()" class="text-[11px] text-blue-600 hover:text-police-blue font-bold flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-crosshairs"></i> <span>ระบุตำแหน่งฉัน</span>
+                      </button>
+                    </div>
+                    <div class="flex gap-2">
+                      <input type="text" id="lat-lng" placeholder="เช่น 12.823400, 101.123400" oninput="parseLatLngInput()" class="flex-1 px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue text-xs sm:text-sm font-mono bg-white text-slate-800 shadow-sm transition">
+                      <button type="button" id="get-location-btn" onclick="getCurrentLocation()" class="px-3.5 sm:px-4 py-3 bg-white hover:bg-blue-50 text-police-blue border-2 border-blue-200 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer whitespace-nowrap" title="ดึงพิกัด GPS ตำแหน่งปัจจุบัน">
+                        <span id="gps-icon">📍</span>
+                        <span id="gps-loading" class="hidden"><i class="fa-solid fa-circle-notch fa-spin text-police-blue"></i></span>
+                        <span>พิกัดฉัน</span>
+                      </button>
+                    </div>
+                    <!-- Hidden inputs for backward compatibility with form data & API -->
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+
+                    <!-- GPS Validation & Google Maps Preview -->
+                    <div id="gps-error" class="hidden text-rose-500 text-xs font-semibold mt-1.5 flex items-center gap-1">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                      <span id="gps-error-text">พิกัดอยู่นอกประเทศไทย หรือไม่ถูกต้อง</span>
+                    </div>
+                    <div id="map-link" class="hidden mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-blue-700">
+                      <i class="fa-solid fa-map-location-dot"></i>
+                      <a id="google-maps-link" href="#" target="_blank" class="hover:underline text-police-blue font-bold">เปิดดูตำแหน่งบน Google Maps ↗</a>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">ช่วงเวลาเกิดเหตุ</label>
+                    <select id="time-period" class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-4 focus:ring-police-blue/20 focus:border-police-blue font-semibold bg-white text-slate-800 shadow-sm transition">
+                      <option value="เช้า (06:00-12:00)">เช้า (06:00-12:00)</option>
+                      <option value="บ่าย (12:00-18:00)">บ่าย (12:00-18:00)</option>
+                      <option value="ค่ำ (18:00-24:00)">ค่ำ (18:00-24:00)</option>
+                      <option value="ดึก (00:00-06:00)">ดึก (00:00-06:00)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Step 4: Details and Status -->
-            <div class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+            <!-- Step 4: Details and Status (Full Mode Only) -->
+            <div id="step-4-card" class="rounded-2xl border border-blue-100 bg-white p-5 sm:p-6 shadow-sm space-y-4 full-mode-only hidden">
               <h3 class="font-black text-police-blue text-sm sm:text-base flex items-center gap-2.5 pb-2 border-b border-blue-100">
                 <span class="step-badge">4</span>
                 <span>พฤติการณ์คนร้ายและหมายเหตุสืบสวน</span>
@@ -378,8 +419,8 @@
             </div>
 
             <!-- Submit Action -->
-            <button type="submit" id="submit-btn" class="w-full py-4 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white rounded-2xl font-black text-base sm:text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
-              <span>💾</span> <span>บันทึกและส่งรายงานรถหาย</span>
+            <button type="submit" id="submit-btn" class="w-full py-4 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white rounded-2xl font-black text-base sm:text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+              <span id="submit-icon">⚡</span> <span id="submit-text">บันทึกรับแจ้งด่วน (30 วินาที)</span>
             </button>
           </form>
         </section>
@@ -562,6 +603,75 @@
         <!-- 4. PAGE: ANALYSIS (การวิเคราะห์เชิงยุทธวิธีขั้นสูง) -->
         <!-- ======================================================== -->
         <section id="page-analysis" class="page hidden space-y-4">
+          <!-- One-Page Tactical Executive Summary Card (Real-time Command Intelligence) -->
+          <div id="tactical-executive-summary" class="rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-5 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="flex items-center justify-between pb-3 border-b border-white/15 mb-4 flex-wrap gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 flex items-center justify-center font-black text-lg shadow-lg">🛡️</span>
+                <div>
+                  <h3 class="font-black text-white text-sm sm:text-base flex items-center gap-2">
+                    <span>สรุปยุทธวิธีสกัดกั้นและปราบปราม</span>
+                    <span class="text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">Tactical Brief</span>
+                  </h3>
+                  <p class="text-[11px] text-blue-200/80 font-medium">ประมวลผลข้อมูลเชิงยุทธวิธีอัตโนมัติ สำหรับฝ่ายสืบสวนและสายตรวจ</p>
+                </div>
+              </div>
+              <button onclick="renderTacticalExecutiveSummary()" class="text-xs font-bold text-blue-200 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/20 transition active:scale-95 cursor-pointer flex items-center gap-1.5">
+                <span>🔄</span> <span>ประมวลผลใหม่</span>
+              </button>
+            </div>
+
+            <!-- 4 Tactical Metric Pills -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+                <div class="text-[11px] font-bold text-rose-300 flex items-center gap-1">
+                  <span>🚨</span> <span>จุดเสี่ยงสูงสุด</span>
+                </div>
+                <div id="exec-top-area" class="text-base sm:text-lg font-black text-white mt-1 truncate">-</div>
+                <div id="exec-top-area-sub" class="text-[10px] text-slate-300 font-medium truncate">คดีสะสมสูงสุด</div>
+              </div>
+
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+                <div class="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                  <span>⏰</span> <span>ช่วงเวลาเสี่ยงก่อเหตุ</span>
+                </div>
+                <div id="exec-peak-time" class="text-base sm:text-lg font-black text-white mt-1 truncate">-</div>
+                <div id="exec-peak-time-sub" class="text-[10px] text-slate-300 font-medium truncate">ความถี่สูงสุด</div>
+              </div>
+
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+                <div class="text-[11px] font-bold text-blue-300 flex items-center gap-1">
+                  <span>🎯</span> <span>เป้าหมายยอดนิยม</span>
+                </div>
+                <div id="exec-prime-target" class="text-base sm:text-lg font-black text-white mt-1 truncate">-</div>
+                <div id="exec-prime-target-sub" class="text-[10px] text-slate-300 font-medium truncate">ยี่ห้อ/รุ่นที่ถูกขโมยมากสุด</div>
+              </div>
+
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+                <div class="text-[11px] font-bold text-emerald-300 flex items-center gap-1">
+                  <span>📈</span> <span>อัตราติดตามคืน</span>
+                </div>
+                <div id="exec-recovery-rate" class="text-base sm:text-lg font-black text-emerald-400 mt-1 truncate">-</div>
+                <div id="exec-recovery-rate-sub" class="text-[10px] text-slate-300 font-medium truncate">จับกุม/พบรถ</div>
+              </div>
+            </div>
+
+            <!-- Operational Directive Banner -->
+            <div class="bg-gradient-to-r from-blue-900/90 to-indigo-900/90 border border-blue-400/30 rounded-xl p-3.5 flex items-start gap-3">
+              <span class="text-xl mt-0.5">⚡</span>
+              <div class="flex-1 text-xs sm:text-sm">
+                <div class="font-extrabold text-amber-300 mb-0.5 flex items-center gap-1.5">
+                  <span>ข้อสั่งการปฏิบัติการหน้างาน (Tactical Directive)</span>
+                </div>
+                <div id="exec-directive-text" class="text-blue-100 font-medium leading-relaxed">
+                  กำลังวิเคราะห์แนวโน้มเพื่อออกข้อสั่งการสายตรวจ...
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Analysis Subtabs -->
           <div class="flex items-center gap-1.5 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold overflow-x-auto scrollbar-hide">
             <button onclick="showAnalysisTab('heatmap')" class="subtab-pill flex-1 min-w-max px-3.5 py-2.5 rounded-xl active cursor-pointer" data-tab="heatmap">

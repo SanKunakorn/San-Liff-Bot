@@ -593,39 +593,39 @@ const knowledgeData = [
                                     ${item.icon}
                                 </div>
                                 <div>
-                                    <span class="badge-cat px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/15 text-police-blue dark:text-blue-400 border border-blue-200 dark:border-blue-500/25">
+                                    <span class="badge-cat px-2.5 py-0.5 rounded-full bg-blue-50 text-police-blue border border-blue-200 font-bold">
                                         ${item.category}
                                     </span>
                                 </div>
                             </div>
                             
                             <!-- Star Favorite Button -->
-                            <button onclick="toggleFavorite('${item.id}', event)" class="star-fav w-8 h-8 rounded-xl bg-slate-100 hover:bg-amber-50 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center transition cursor-pointer" title="${fav ? 'ลบออกจากรายการโปรด' : 'ปักหมุดรายการโปรด'}">
+                            <button onclick="toggleFavorite('${item.id}', event)" class="star-fav w-8 h-8 rounded-xl bg-slate-100 hover:bg-amber-50 border border-slate-200 flex items-center justify-center transition cursor-pointer" title="${fav ? 'ลบออกจากรายการโปรด' : 'ปักหมุดรายการโปรด'}">
                                 <i class="${fav ? 'fa-solid fa-star text-amber-500' : 'fa-regular fa-star text-slate-400'}"></i>
                             </button>
                         </div>
 
                         <!-- Title: Crisp Police Blue & High Contrast -->
-                        <h3 class="card-title font-black text-police-blue dark:text-white text-base mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+                        <h3 class="card-title font-black text-police-blue text-base mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                             ${displayTitle}
                         </h3>
 
                         <!-- Description -->
-                        <p class="card-desc text-slate-600 dark:text-slate-300 text-xs line-clamp-2 leading-relaxed mb-4 font-medium">
+                        <p class="card-desc text-slate-600 text-xs line-clamp-2 leading-relaxed mb-4 font-medium">
                             ${displayDesc}
                         </p>
                     </div>
 
                     <!-- Bottom Action Bar: Quick Copy + Read Full -->
-                    <div class="pt-3 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between gap-2 text-xs font-semibold">
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs font-semibold">
                         <!-- Quick Copy Button -->
-                        <button onclick="quickCopyRawText('${item.id}', event)" class="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-police-blue dark:bg-slate-800/80 dark:hover:bg-slate-700 dark:text-slate-300 border border-blue-200 dark:border-slate-700 flex items-center gap-1.5 transition font-bold cursor-pointer" title="คัดลอกสรุปนำไปใช้งานได้ทันที">
-                            <i class="fa-regular fa-copy text-blue-600 dark:text-blue-400"></i>
+                        <button onclick="quickCopyRawText('${item.id}', event)" class="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-police-blue border border-blue-200 flex items-center gap-1.5 transition font-bold cursor-pointer" title="คัดลอกสรุปนำไปใช้งานได้ทันที">
+                            <i class="fa-regular fa-copy text-blue-600"></i>
                             <span>คัดลอกด่วน</span>
                         </button>
 
                         <!-- Read Full Indicator -->
-                        <div class="text-police-blue dark:text-blue-400 flex items-center gap-1 font-bold group-hover:translate-x-1 transition-transform">
+                        <div class="text-police-blue flex items-center gap-1 font-bold group-hover:translate-x-1 transition-transform">
                             <span>อ่านฉบับเต็ม</span>
                             <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </div>
@@ -662,7 +662,7 @@ const knowledgeData = [
                 // Inject enriched content with auto copy buttons for code/template blocks
                 const modalBody = document.getElementById('modalBody');
                 modalBody.innerHTML = item.content;
-                modalBody.className = `p-6 text-slate-300 leading-relaxed space-y-4 font-normal text-${currentFontSize}`;
+                modalBody.className = `p-6 text-slate-700 leading-relaxed space-y-4 font-normal text-${currentFontSize}`;
 
                 // Add inline copy buttons to all template/select-all boxes
                 enhanceModalTemplateBlocks();
@@ -800,7 +800,6 @@ const knowledgeData = [
             const textToCopy = `[SOP สืบสวน] ${currentActiveItem.title}\n\n${currentActiveItem.rawText || currentActiveItem.description}\n\n(ที่มา: คลังความรู้ตำรวจสืบสวน San BOT)`;
             
             navigator.clipboard.writeText(textToCopy).then(() => {
-                const isDark = document.documentElement.classList.contains('dark');
                 Swal.fire({
                     icon: 'success',
                     title: 'คัดลอกข้อความสำเร็จ',
@@ -809,8 +808,8 @@ const knowledgeData = [
                     position: 'top-end',
                     showConfirmButton: false,
                     timer: 2500,
-                    background: isDark ? '#0f172a' : '#ffffff',
-                    color: isDark ? '#ffffff' : '#1e3a8a'
+                    background: '#ffffff',
+                    color: '#1e3a8a'
                 });
             }).catch(() => {
                 fallbackCopy(textToCopy);
@@ -835,7 +834,6 @@ const knowledgeData = [
         }
 
         function showToast(msg, icon = 'info') {
-            const isDark = document.documentElement.classList.contains('dark');
             Swal.fire({
                 icon: icon,
                 title: msg,
@@ -843,8 +841,8 @@ const knowledgeData = [
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 2000,
-                background: isDark ? '#0f172a' : '#ffffff',
-                color: isDark ? '#ffffff' : '#1e3a8a'
+                background: '#ffffff',
+                color: '#1e3a8a'
             });
         }
 
@@ -913,31 +911,28 @@ const knowledgeData = [
         }
 
         // ========================================
-        // THEME MANAGEMENT (DARK / LIGHT TOGGLE)
+        // THEME MANAGEMENT (UNIFIED ROYAL POLICE LIGHT)
         // ========================================
         function initTheme() {
-            const savedTheme = localStorage.getItem('san_kb_theme') || 'light';
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-                updateThemeUI(true);
-            } else {
-                document.documentElement.classList.remove('dark');
-                updateThemeUI(false);
-            }
+            // Synchronize and enforce unified Royal Police Light theme
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('san_kb_theme', 'light');
+            updateThemeUI(false);
         }
 
         function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('san_kb_theme', isDark ? 'dark' : 'light');
-            updateThemeUI(isDark);
+            // Re-enforce light theme matching the main system
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('san_kb_theme', 'light');
+            updateThemeUI(false);
             renderCards(getCurrentlyFilteredList());
         }
 
         function updateThemeUI(isDark) {
             const icon = document.getElementById('themeIcon');
             const label = document.getElementById('themeLabel');
-            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
-            if (label) label.textContent = isDark ? 'สว่าง' : 'มืด';
+            if (icon) icon.textContent = '☀️';
+            if (label) label.textContent = 'สว่าง';
         }
 
         // Close modal on escape or background click
@@ -950,6 +945,27 @@ const knowledgeData = [
                 closeModal();
             }
         });
+
+        // ========================================
+        // FIELD DECISION MATRIX INTERACTION
+        // ========================================
+        function toggleDecisionCard(card) {
+            if (!card) return;
+            const body = card.querySelector('.decision-body');
+            const chevron = card.querySelector('.decision-chevron');
+            if (!body) return;
+
+            const isHidden = body.classList.contains('hidden');
+            if (isHidden) {
+                body.classList.remove('hidden');
+                card.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50/40');
+                if (chevron) chevron.style.transform = 'rotate(180deg)';
+            } else {
+                body.classList.add('hidden');
+                card.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50/40');
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            }
+        }
 
         // Initialize App
         initTheme();

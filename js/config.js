@@ -55,7 +55,8 @@ async function callGasApi(action, payloadData = {}, method = 'GET', targetApi = 
     'getTimeline', 'addTimeline', 'readSuspects', 'createSuspect', 'saveSuspect',
     'deleteSuspect', 'readTimeline', 'createTimeline', 'saveTimeline', 'deleteTimeline', 'readNotes',
     'getReportTemplates', 'getTemplates', 'saveReportTemplate', 'deleteReportTemplate',
-    'sendTelegram', 'testTelegram', 'pingTelegram'
+    'sendTelegram', 'testTelegram', 'pingTelegram',
+    'getTrackingLogs', 'readTrackingLogs', 'logTracking', 'logTrackingData'
   ];
 
   const primaryUrl = (targetApi === 'lostcar' || (!targetApi && lostCarActions.includes(action)))
